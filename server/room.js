@@ -12,6 +12,7 @@ export class Room {
     this.playback = { playing: false, position: 0, rate: 1, updatedAt: now(), by: null };
     this.subs = null;
     this.cams = {};
+    this.drawings = [];
   }
 
   /**
@@ -78,6 +79,18 @@ export class Room {
     this.subs = null;
   }
 
+  addDrawStroke(stroke) {
+    if (!stroke || !Array.isArray(stroke.points)) return;
+    this.drawings.push(stroke);
+    if (this.drawings.length > 200) {
+      this.drawings.splice(0, this.drawings.length - 200);
+    }
+  }
+
+  clearDrawings() {
+    this.drawings = [];
+  }
+
   peerList() {
     return [...this.peers.values()].map(({ id, session, name, seat, device }) => ({ id, session, name, seat, device }));
   }
@@ -89,6 +102,7 @@ export class Room {
       playback: this.playback,
       subs: this.subs,
       cams: this.cams,
+      drawings: this.drawings,
     };
   }
 }

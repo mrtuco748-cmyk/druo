@@ -182,7 +182,13 @@ wss.on('connection', (ws) => {
       case 'buffering':
       case 'cap':
       case 'react':
+        return toOther(me.id, { ...m, from: me.id });
       case 'draw':
+        if (m.action === 'commit' && m.stroke) {
+          room.addDrawStroke(m.stroke);
+        } else if (m.action === 'clear') {
+          room.clearDrawings();
+        }
         return toOther(me.id, { ...m, from: me.id });
     }
   });

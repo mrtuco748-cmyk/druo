@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { CameraTile, CamFraming } from './components/CameraTile';
 import { CinemaScreen, RoomSource, RoomSubs } from './components/CinemaScreen';
-import { DrawEvent } from './components/DrawingCanvas';
+import { DrawEvent, DrawStroke } from './components/DrawingCanvas';
 import { QualityDrawer } from './components/QualityDrawer';
 import { SourceDrawer } from './components/SourceDrawer';
 import { AudioPresetId, VideoPresetId } from './lib/quality';
@@ -81,7 +81,8 @@ export const App: React.FC = () => {
   const [floatingReacts, setFloatingReacts] = useState<{ id: number; emoji: string }[]>([]);
   const [drawingActive, setDrawingActive] = useState(false);
   const [drawingColor, setDrawingColor] = useState('#ffcf6b');
-  const [incomingDrawEvent, setIncomingDrawEvent] = useState<DrawEvent | null>(null);
+  const [initialDrawings, setInitialDrawings] = useState<DrawStroke[]>([]);
+  const drawReceiverRef = useRef<((ev: DrawEvent) => void) | null>(null);
 
   const [stats, setStats] = useState<CallStats>({
     connected: false,
@@ -205,6 +206,7 @@ export const App: React.FC = () => {
             setSource(m.state.source || null);
             if (m.state.playback) setPlayback(m.state.playback);
             setSubs(m.state.subs || null);
+            if (m.state.drawings) setInitialDrawings(m.state.drawings);
             const other = (m.state.peers || []).find((p: any) => p.id !== myId);
             if (other && m.state.cams?.[other.id]) {
               setPeerFraming(m.state.cams[other.id]);
@@ -235,7 +237,7 @@ export const App: React.FC = () => {
         } else if (m.t === 'react' && m.emoji) {
           spawnReaction(m.emoji);
         } else if (m.t === 'draw') {
-          setIncomingDrawEvent(m);
+          drawReceiverRef.current?.(m);
         }
       },
       (online) => setWsOnline(online)
@@ -493,10 +495,16 @@ export const App: React.FC = () => {
           onPickLocalFile={(f) => handleSelectLocalFile(f, false)}
           drawingActive={drawingActive}
           drawingColor={drawingColor}
+          peerName={otherPeer?.name}
+          initialStrokes={initialDrawings}
           onEmitDraw={(ev) => sigRef.current?.send(ev)}
-          incomingDrawEvent={incomingDrawEvent}
+          onRegisterDrawReceiver={(receiver) => {
+            drawReceiverRef.current = receiver;
+          }}
           onCloseDrawing={() => setDrawingActive(false)}
-          onClearDrawing={() => setIncomingDrawEvent(null)}
+          onClearDrawing={() => {
+            setInitialDrawings([]);
+          }}
           onAutoplayBlockedChange={setMovieAudioBlocked}
         />
 

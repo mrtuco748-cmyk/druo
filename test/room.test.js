@@ -62,3 +62,15 @@ test('classify reconoce YouTube, MediaFire, Google Drive, Dropbox y HLS', () => 
   const hls = classify('https://cdn.example.com/live/master.m3u8');
   assert.equal(hls.kind, 'hls');
 });
+
+test('Room almacena y limpia trazos de dibujo en snapshot', () => {
+  const room = new Room();
+  assert.deepEqual(room.snapshot().drawings, []);
+
+  room.addDrawStroke({ id: 's1', color: '#ffcf6b', width: 4, points: [{ x: 0.1, y: 0.1 }] });
+  assert.equal(room.snapshot().drawings.length, 1);
+  assert.equal(room.snapshot().drawings[0].id, 's1');
+
+  room.clearDrawings();
+  assert.equal(room.snapshot().drawings.length, 0);
+});

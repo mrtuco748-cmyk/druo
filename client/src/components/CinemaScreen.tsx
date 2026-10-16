@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import Hls from 'hls.js';
 import { decideSync, expectedPosition, PlaybackState } from '../lib/sync';
 import { srtToVtt } from '../lib/subtitles';
-import { DrawingCanvas, DrawEvent } from './DrawingCanvas';
+import { DrawingCanvas, DrawEvent, DrawStroke } from './DrawingCanvas';
 
 export interface MovieVersion {
   key: string;
@@ -49,8 +49,10 @@ interface Props {
   onPickLocalFile: (f: File) => void;
   drawingActive: boolean;
   drawingColor: string;
+  peerName?: string;
+  initialStrokes?: DrawStroke[];
   onEmitDraw: (ev: DrawEvent) => void;
-  incomingDrawEvent: DrawEvent | null;
+  onRegisterDrawReceiver?: (receiver: (ev: DrawEvent) => void) => void;
   onCloseDrawing: () => void;
   onClearDrawing: () => void;
   onAutoplayBlockedChange?: (blocked: boolean) => void;
@@ -110,8 +112,10 @@ export const CinemaScreen: React.FC<Props> = ({
   onPickLocalFile,
   drawingActive,
   drawingColor,
+  peerName,
+  initialStrokes,
   onEmitDraw,
-  incomingDrawEvent,
+  onRegisterDrawReceiver,
   onCloseDrawing,
   onClearDrawing,
   onAutoplayBlockedChange,
@@ -586,8 +590,10 @@ export const CinemaScreen: React.FC<Props> = ({
           active={drawingActive}
           color={drawingColor}
           width={4}
+          peerName={peerName}
+          initialStrokes={initialStrokes}
           onEmitDraw={onEmitDraw}
-          incomingEvent={incomingDrawEvent}
+          onRegisterReceiver={onRegisterDrawReceiver}
           onCloseDrawing={onCloseDrawing}
           onClearDrawing={onClearDrawing}
         />
