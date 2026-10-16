@@ -65,36 +65,53 @@ const BROWSER_HEADERS = {
 export async function resolveCuevana(cuevanaUrl) {
   let html1 = '';
   try {
-    const r1 = await fetch(cuevanaUrl, { headers: BROWSER_HEADERS, signal: AbortSignal.timeout(8000) });
+    const r1 = await fetch(cuevanaUrl, { headers: BROWSER_HEADERS, signal: AbortSignal.timeout(6000) });
     if (r1.ok) {
       html1 = await r1.text();
-    } else if (r1.status === 403 || r1.status === 503) {
-      const rProxy = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(cuevanaUrl)}`, {
+    }
+  } catch {}
+
+  // Fallback 1: Jina Reader HTML (bypass ultra-rápido para Cloudflare)
+  if (!html1 || !html1.includes('/vidurl/')) {
+    try {
+      const rJina = await fetch(`https://r.jina.ai/${cuevanaUrl}`, {
+        headers: { 'X-Return-Format': 'html' },
         signal: AbortSignal.timeout(10000),
       });
-      if (rProxy.ok) html1 = await rProxy.text();
-    }
-  } catch {
+      if (rJina.ok) html1 = await rJina.text();
+    } catch {}
+  }
+
+  // Fallback 2: allorigins
+  if (!html1 || !html1.includes('/vidurl/')) {
     try {
       const rProxy = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(cuevanaUrl)}`, {
-        signal: AbortSignal.timeout(10000),
+        signal: AbortSignal.timeout(12000),
       });
       if (rProxy.ok) html1 = await rProxy.text();
     } catch {}
   }
-  if (!html1) throw Object.assign(new Error('No se pudo cargar la página de Cuevana'), { status: 502 });
 
-  const titleMatch = html1.match(/<title>([^<]+)<\/title>/i);
+  const titleMatch = html1 ? html1.match(/<title>([^<]+)<\/title>/i) : null;
   const title = (titleMatch ? titleMatch[1] : 'Película')
     .replace(' - CuevanaPRO', '')
     .replace('Ver ', '')
     .replace(' Online', '')
     .trim();
 
-  const vidurlMatch = html1.match(/<iframe[^>]+src=["'](\/vidurl\/[^"']+)["']/i);
-  if (!vidurlMatch) throw Object.assign(new Error('No encontré el reproductor de video en Cuevana'), { status: 502 });
+  const vidurlMatch = html1 ? html1.match(/<iframe[^>]+src=["'](\/vidurl\/[^"']+)["']/i) : null;
+  const vidurl = vidurlMatch ? new URL(vidurlMatch[1], cuevanaUrl).href : null;
 
-  const vidurl = new URL(vidurlMatch[1], cuevanaUrl).href;
+  // Si no pudimos obtener vidurl, fallback al link directo embebido
+  if (!vidurl) {
+    return {
+      kind: 'embed',
+      url: cuevanaUrl,
+      title: title || 'Cuevana',
+      via: 'cuevana',
+    };
+  }
+
   let html2 = '';
   try {
     const r2 = await fetch(vidurl, {
@@ -103,19 +120,24 @@ export async function resolveCuevana(cuevanaUrl) {
         Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
         Referer: cuevanaUrl,
       },
-      signal: AbortSignal.timeout(8000),
+      signal: AbortSignal.timeout(6000),
     });
     if (r2.ok) html2 = await r2.text();
   } catch {}
-  if (!html2) throw Object.assign(new Error('No se pudo cargar el reproductor de Cuevana'), { status: 502 });
 
   const challengeMatch = html2.match(/const POW_CHALLENGE = '([^']+)';/);
   const difficultyMatch = html2.match(/const POW_DIFFICULTY = (\d+);/);
   const saltMatch = html2.match(/const POW_SALT = '([^']+)';/);
   const dataLinkMatch = html2.match(/let dataLink = (\[[\s\S]*?\]);/);
 
+  // Si no se puede descifrar el reproductor en el servidor, usamos el reproductor vidurl embebido directamente
   if (!challengeMatch || !dataLinkMatch) {
-    throw Object.assign(new Error('No pude extraer los datos del reproductor de Cuevana'), { status: 502 });
+    return {
+      kind: 'embed',
+      url: vidurl,
+      title: `${title} (Cuevana)`,
+      via: 'cuevana',
+    };
   }
 
   const challenge = challengeMatch[1];

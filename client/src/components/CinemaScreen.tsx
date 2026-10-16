@@ -12,7 +12,7 @@ export interface MovieVersion {
 }
 
 export interface RoomSource {
-  kind: 'library' | 'file' | 'hls' | 'youtube' | 'local';
+  kind: 'library' | 'file' | 'hls' | 'youtube' | 'local' | 'embed';
   title: string;
   url?: string;
   id?: string; // youtube id
@@ -675,7 +675,18 @@ export const CinemaScreen: React.FC<Props> = ({
           </div>
         )}
 
-        {source && source.kind !== 'youtube' && (
+        {source?.kind === 'embed' && source.url && (
+          <div className="embed-wrap">
+            <iframe
+              src={source.url}
+              className="cinema-embed"
+              allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
+              allowFullScreen
+            />
+          </div>
+        )}
+
+        {source && source.kind !== 'youtube' && source.kind !== 'embed' && (
           <video
             ref={videoRef}
             className={`cinema-video ${!resolvedUrl ? 'is-hidden' : ''}`}

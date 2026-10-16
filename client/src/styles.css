@@ -437,7 +437,9 @@ select:focus {
 .cinema-video,
 .yt-wrap,
 .yt-host,
-.yt-wrap iframe {
+.yt-wrap iframe,
+.embed-wrap,
+.cinema-embed {
   width: 100%;
   height: 100%;
   object-fit: contain;
