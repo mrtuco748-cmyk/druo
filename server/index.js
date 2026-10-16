@@ -95,25 +95,6 @@ const routes = {
   'POST /api/library/delete': async (b) => (needStorage(), storage.deleteKeys(b.keys || [])),
   'POST /api/resolve': async (b) => classify(b.url),
   'POST /api/keepalive': async () => ({ ok: true, peers: room.peers.size, uptime: Math.round(process.uptime()), serverTime: Date.now() }),
-  'GET /api/debug-cuevana': async (b, req) => {
-    const target = new URL(req.url, 'http://x').searchParams.get('url') || 'https://cuevanapro.org/pelicula/buddy-wXqOV4';
-    const log = [];
-    try {
-      const r1 = await fetch(target, { headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' }, signal: AbortSignal.timeout(5000) });
-      log.push(`Direct r1: status=${r1.status}`);
-    } catch (e) {
-      log.push(`Direct r1 error: ${e.message}`);
-    }
-    try {
-      const pUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(target)}`;
-      const rp = await fetch(pUrl, { signal: AbortSignal.timeout(10000) });
-      const t = await rp.text();
-      log.push(`Allorigins: status=${rp.status}, len=${t.length}, iframe=${t.includes('/vidurl/')}`);
-    } catch (e) {
-      log.push(`Allorigins error: ${e.message}`);
-    }
-    return { log };
-  },
 };
 
 const server = http.createServer(async (req, res) => {

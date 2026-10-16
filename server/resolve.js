@@ -219,10 +219,10 @@ export async function resolveCuevana(cuevanaUrl) {
 
         if (hlsUrl) {
           return {
+            kind: 'hls',
+            url: `/api/hls-proxy?url=${encodeURIComponent(hlsUrl)}&ref=${encodeURIComponent(cand.url)}`,
             title: `${title} (${cand.lang.toUpperCase()})`,
-            hlsUrl,
-            referer: cand.url,
-            lang: cand.lang,
+            via: 'cuevana',
           };
         }
       }
@@ -231,7 +231,13 @@ export async function resolveCuevana(cuevanaUrl) {
     }
   }
 
-  throw Object.assign(new Error('No se pudo extraer el stream de video de los servidores de Cuevana'), { status: 502 });
+  // Fallback si ningún servidor extrajo HLS directo: reproducir vidurl embebido
+  return {
+    kind: 'embed',
+    url: vidurl,
+    title: `${title} (Cuevana)`,
+    via: 'cuevana',
+  };
 }
 
 // ---------- HLS Playlist Rewriting & Proxy ----------
@@ -375,13 +381,7 @@ export async function classify(raw) {
 
   // Soporte nativo para Cuevana (cuevanapro.org / cuevana.pro / etc.)
   if (host.includes('cuevanapro') || host.includes('cuevana')) {
-    const cuev = await resolveCuevana(href);
-    return {
-      kind: 'hls',
-      url: `/api/hls-proxy?url=${encodeURIComponent(cuev.hlsUrl)}&ref=${encodeURIComponent(cuev.referer)}`,
-      title: cuev.title,
-      via: 'cuevana',
-    };
+    return await resolveCuevana(href);
   }
 
   if (host.endsWith('mediafire.com')) {
