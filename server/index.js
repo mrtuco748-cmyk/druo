@@ -207,6 +207,8 @@ setInterval(() => {
       ws.ping();
     } catch {}
   }
+}, 10_000).unref();
+
 // Keep-alive: si hay personas en la sala, ping a sí mismo cada 6 minutos para que Render no suspenda el servicio
 const renderUrl = process.env.RENDER_EXTERNAL_URL || 'https://druo.onrender.com';
 setInterval(async () => {
