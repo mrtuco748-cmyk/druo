@@ -1718,20 +1718,22 @@ select:focus {
     display: none;
   }
 
-  /* Vista Cine Celular: Película arriba (16:9), Cámara del otro grande abajo, mi cámara chiquita en la esquina (PIP) */
+  /* Vista Cine Celular: Película arriba (16:9 prioritario), Cámara del otro abajo, mi cámara chiquita en la esquina (PIP) */
   .theater-shell.view-cinema .theater-grid {
     position: relative;
     display: flex;
     flex-direction: column;
     height: 100%;
-    padding: 6px;
-    gap: 8px;
+    padding: 4px;
+    gap: 6px;
     overflow: hidden;
   }
   .theater-shell.view-cinema .cinema-stage {
     flex: 0 0 auto;
     width: 100%;
-    height: clamp(200px, 45vh, 340px);
+    height: auto;
+    aspect-ratio: 16 / 9;
+    max-height: 54vh;
     min-height: 0;
   }
   .theater-shell.view-cinema .screen-bezel {
@@ -1739,7 +1741,8 @@ select:focus {
     height: 100%;
     aspect-ratio: 16 / 9;
     max-height: 100%;
-    border-radius: 14px;
+    max-width: 100%;
+    border-radius: 12px;
   }
 
   /* Cámara remota (el otro en PC) ocupa el espacio inferior en grande */
@@ -1866,11 +1869,28 @@ select:focus {
     display: none;
   }
 
-  /* Vista Enfoque Película Celular */
+  /* Vista Enfoque Película Celular: Película máxima y cámaras como mini-PIPs */
+  .theater-shell.view-focus-movie .theater-grid {
+    padding: 3px;
+    height: 100%;
+  }
+  .theater-shell.view-focus-movie .cinema-stage {
+    width: 100%;
+    height: 100%;
+    max-height: 100%;
+  }
+  .theater-shell.view-focus-movie .screen-bezel {
+    width: 100%;
+    max-width: 100%;
+    max-height: calc(100dvh - 54px);
+    aspect-ratio: 16 / 9;
+    border-radius: 12px;
+  }
   .theater-shell.view-focus-movie .cam-slot {
-    bottom: 64px;
-    width: 105px;
-    height: 78px;
+    bottom: 56px;
+    width: 78px;
+    height: 58px;
+    z-index: 25;
   }
   .theater-shell.view-focus-movie .cam-left {
     left: 8px;
@@ -1879,18 +1899,28 @@ select:focus {
     right: 8px;
   }
 
-  /* Vista Dúo Celular: Película 44% arriba, Cámaras 56% abajo ampliadas */
+  /* Vista Dúo Celular: Película priorizada al 62% arriba, Cámaras 38% abajo */
   .theater-shell.view-duo .theater-grid {
     grid-template-columns: 1fr 1fr;
-    grid-template-rows: 44% 56%;
+    grid-template-rows: 62% 38%;
     grid-template-areas:
       'screen screen'
       'left right';
-    gap: 8px;
-    padding: 6px 8px;
+    gap: 6px;
+    padding: 4px 6px;
   }
   .theater-shell.view-duo .cinema-stage {
     grid-area: screen;
+    width: 100%;
+    height: 100%;
+    max-height: 100%;
+  }
+  .theater-shell.view-duo .screen-bezel {
+    width: 100%;
+    max-width: 100%;
+    max-height: 100%;
+    aspect-ratio: 16 / 9;
+    border-radius: 12px;
   }
   .theater-shell.view-duo .cam-left {
     grid-area: left;
@@ -1928,7 +1958,7 @@ select:focus {
   }
 }
 
-/* Celular horizontal */
+/* Celular horizontal (priorizar película al máximo) */
 @media (max-height: 520px) and (orientation: landscape) {
   .theater-topbar {
     padding: 3px 8px;
@@ -1940,12 +1970,41 @@ select:focus {
     -webkit-overflow-scrolling: touch;
   }
   .theater-shell.view-cinema .theater-grid {
-    grid-template-columns: clamp(95px, 15vw, 150px) minmax(0, 1fr) clamp(95px, 15vw, 150px);
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) clamp(80px, 14vw, 125px);
+    grid-template-rows: 1fr 1fr;
+    grid-template-areas:
+      'screen right'
+      'screen left';
     gap: 6px;
-    padding: 4px 8px;
+    padding: 3px 6px;
+  }
+  .theater-shell.view-cinema .cinema-stage {
+    grid-area: screen;
+    width: 100%;
+    height: 100%;
+    max-height: 100%;
+  }
+  .theater-shell.view-cinema .screen-bezel {
+    width: 100%;
+    height: auto;
+    max-height: 100%;
+    aspect-ratio: 16 / 9;
+  }
+  .theater-shell.view-cinema .cam-left {
+    grid-area: left;
+    height: 100%;
+    max-height: none;
+  }
+  .theater-shell.view-cinema .cam-right {
+    grid-area: right;
+    height: 100%;
+    max-height: none;
   }
   .theater-shell.view-cinema .cam-slot {
-    height: 82dvh;
+    height: 100%;
+    max-height: 100%;
+    width: 100%;
   }
 
   .theater-shell.view-call-only .theater-grid {
@@ -1958,10 +2017,45 @@ select:focus {
     height: 82dvh;
   }
 
+  .theater-shell.view-focus-movie .theater-grid {
+    padding: 2px;
+  }
+  .theater-shell.view-focus-movie .cinema-stage {
+    width: 100%;
+    height: 100%;
+  }
+  .theater-shell.view-focus-movie .screen-bezel {
+    width: 100%;
+    max-width: 100%;
+    max-height: 100%;
+  }
   .theater-shell.view-focus-movie .cam-slot {
-    bottom: 42px;
-    width: 95px;
-    height: 70px;
+    bottom: 34px;
+    width: 70px;
+    height: 52px;
+  }
+
+  .theater-shell.view-duo .theater-grid {
+    grid-template-columns: minmax(0, 1fr) clamp(80px, 14vw, 125px);
+    grid-template-rows: 1fr 1fr;
+    grid-template-areas:
+      'screen right'
+      'screen left';
+    gap: 6px;
+    padding: 3px 6px;
+  }
+  .theater-shell.view-duo .cinema-stage {
+    grid-area: screen;
+    height: 100%;
+    width: 100%;
+  }
+  .theater-shell.view-duo .cam-left {
+    grid-area: left;
+    height: 100%;
+  }
+  .theater-shell.view-duo .cam-right {
+    grid-area: right;
+    height: 100%;
   }
 }
 

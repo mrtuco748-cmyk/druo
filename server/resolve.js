@@ -182,16 +182,29 @@ export async function resolveCuevana(cuevanaUrl) {
 
   for (const cand of candidateEmbeds) {
     try {
-      const rEmbed = await fetch(cand.url, {
-        headers: {
-          'User-Agent': UA,
-          Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-          Referer: 'https://cuevanapro.org/',
-        },
-        signal: AbortSignal.timeout(20000),
-      });
-      if (!rEmbed.ok) continue;
-      const embedHtml = await rEmbed.text();
+      let embedHtml = '';
+      try {
+        const rEmbed = await fetch(cand.url, {
+          headers: {
+            'User-Agent': UA,
+            Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+          },
+          signal: AbortSignal.timeout(6000),
+        });
+        if (rEmbed.ok) embedHtml = await rEmbed.text();
+      } catch {}
+
+      // Fallback si direct timeout: proxy allorigins
+      if (!embedHtml || !embedHtml.includes('eval(')) {
+        try {
+          const rProxy = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(cand.url)}`, {
+            signal: AbortSignal.timeout(6000),
+          });
+          if (rProxy.ok) embedHtml = await rProxy.text();
+        } catch {}
+      }
+
+      if (!embedHtml) continue;
 
       const scripts = [...embedHtml.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/gi)].map((m) => m[1]);
       for (const s of scripts) {
@@ -204,8 +217,8 @@ export async function resolveCuevana(cuevanaUrl) {
         if (linksObjMatch) {
           try {
             const links = JSON.parse(linksObjMatch[1]);
-            // Priorizar hls3 (master.txt que no tiene padding) o hls4/hls2
-            hlsUrl = links.hls3 || links.hls4 || links.hls2;
+            // Priorizar hls3 (master.txt que no tiene padding) o hls2/hls4
+            hlsUrl = links.hls3 || links.hls2 || links.hls4;
             if (hlsUrl && hlsUrl.startsWith('/')) {
               hlsUrl = new URL(hlsUrl, cand.url).href;
             }
@@ -231,10 +244,11 @@ export async function resolveCuevana(cuevanaUrl) {
     }
   }
 
-  // Fallback si ningún servidor extrajo HLS directo: reproducir vidurl embebido
+  // Fallback si ningún servidor extrajo HLS directo: reproducir el reproductor descifrado (no vidurl que falla en mobile por blob worker)
+  const fallbackEmbed = candidateEmbeds[0]?.url || vidurl;
   return {
     kind: 'embed',
-    url: vidurl,
+    url: fallbackEmbed,
     title: `${title} (Cuevana)`,
     via: 'cuevana',
   };
