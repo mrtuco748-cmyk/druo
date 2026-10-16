@@ -458,6 +458,58 @@ export const CinemaScreen: React.FC<Props> = ({
     return () => clearInterval(t);
   }, [playback, resolvedUrl, source?.kind, waitOnBuffer, peerBuffering]);
 
+  // Fullscreen support
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  useEffect(() => {
+    const onFsChange = () => setIsFullscreen(Boolean(document.fullscreenElement));
+    document.addEventListener('fullscreenchange', onFsChange);
+    document.addEventListener('webkitfullscreenchange', onFsChange);
+    return () => {
+      document.removeEventListener('fullscreenchange', onFsChange);
+      document.removeEventListener('webkitfullscreenchange', onFsChange);
+    };
+  }, []);
+
+  const toggleFullscreen = () => {
+    const el = document.querySelector('.screen-bezel') as any;
+    if (!el) return;
+    if (document.fullscreenElement) {
+      document.exitFullscreen().catch(() => {});
+    } else if (el.requestFullscreen) {
+      el.requestFullscreen().catch(() => {});
+    } else if (el.webkitRequestFullscreen) {
+      el.webkitRequestFullscreen();
+    }
+  };
+
+  // Scrubber behavior (evita que la barra salte o pelee contra el dedo)
+  const [isScrubbing, setIsScrubbing] = useState(false);
+  const [scrubPos, setScrubPos] = useState(0);
+  const [hoverPos, setHoverPos] = useState<number | null>(null);
+  const [hoverX, setHoverX] = useState(0);
+  const timelineRef = useRef<HTMLDivElement | null>(null);
+
+  // Porcentaje cargado en buffer
+  const [bufferedPct, setBufferedPct] = useState(0);
+  useEffect(() => {
+    const v = videoRef.current;
+    if (!v) return;
+    const updateBuf = () => {
+      if (!v.duration || !v.buffered.length) {
+        setBufferedPct(0);
+        return;
+      }
+      for (let i = 0; i < v.buffered.length; i++) {
+        if (v.buffered.start(i) <= v.currentTime && v.currentTime <= v.buffered.end(i)) {
+          setBufferedPct((v.buffered.end(i) / v.duration) * 100);
+          return;
+        }
+      }
+    };
+    v.addEventListener('progress', updateBuf);
+    return () => v.removeEventListener('progress', updateBuf);
+  }, [resolvedUrl]);
+
   // Acciones de usuario en los controles compartidos (funcionan igual desde compu o celular)
   const togglePlay = () => {
     const nextPlaying = !playback.playing;
@@ -488,6 +540,92 @@ export const CinemaScreen: React.FC<Props> = ({
     onEmitSync({ playing: playback.playing, position: clamped }, 'seek');
   };
 
+  const [prevVol, setPrevVol] = useState(1);
+  const toggleMute = () => {
+    if (volume > 0) {
+      setPrevVol(volume);
+      setVolume(0);
+    } else {
+      setVolume(prevVol > 0 ? prevVol : 1);
+    }
+  };
+
+  const handleTimelinePointerDown = (e: React.PointerEvent) => {
+    const rect = timelineRef.current?.getBoundingClientRect();
+    if (!rect || !duration) return;
+    const clientX = e.clientX;
+    const ratio = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+    const target = ratio * duration;
+    setIsScrubbing(true);
+    setScrubPos(target);
+    try {
+      (e.target as HTMLElement).setPointerCapture(e.pointerId);
+    } catch {}
+  };
+
+  const handleTimelinePointerMove = (e: React.PointerEvent) => {
+    const rect = timelineRef.current?.getBoundingClientRect();
+    if (!rect || !duration) return;
+    const clientX = e.clientX;
+    const ratio = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+    const target = ratio * duration;
+    setHoverX(Math.max(0, Math.min(rect.width, clientX - rect.left)));
+    setHoverPos(target);
+    if (isScrubbing) {
+      setScrubPos(target);
+    }
+  };
+
+  const handleTimelinePointerUp = (e: React.PointerEvent) => {
+    if (isScrubbing) {
+      seekTo(scrubPos);
+      setTimeout(() => setIsScrubbing(false), 200);
+    }
+    try {
+      (e.target as HTMLElement).releasePointerCapture(e.pointerId);
+    } catch {}
+  };
+
+  const handleTimelinePointerLeave = () => {
+    if (!isScrubbing) setHoverPos(null);
+  };
+
+  // Atajos de teclado en PC
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (['INPUT', 'TEXTAREA', 'SELECT'].includes((e.target as HTMLElement)?.tagName)) return;
+      if (!source) return;
+
+      if (e.code === 'Space') {
+        e.preventDefault();
+        togglePlay();
+      } else if (e.code === 'ArrowLeft') {
+        e.preventDefault();
+        seekTo(currentPos - 10);
+      } else if (e.code === 'ArrowRight') {
+        e.preventDefault();
+        seekTo(currentPos + 10);
+      } else if (e.code === 'ArrowUp') {
+        e.preventDefault();
+        setVolume((v) => Math.min(1, Math.round((v + 0.05) * 100) / 100));
+      } else if (e.code === 'ArrowDown') {
+        e.preventDefault();
+        setVolume((v) => Math.max(0, Math.round((v - 0.05) * 100) / 100));
+      } else if (e.key === 'm' || e.key === 'M') {
+        e.preventDefault();
+        toggleMute();
+      } else if (e.key === 'f' || e.key === 'F') {
+        e.preventDefault();
+        toggleFullscreen();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [source, playback.playing, currentPos, volume, duration]);
+
+  const displayPos = isScrubbing ? scrubPos : currentPos;
+  const progressPct = duration > 0 ? (displayPos / duration) * 100 : 0;
+
   return (
     <main
       className={`cinema-stage ${controlsVisible ? 'show-ui' : 'hide-ui'}`}
@@ -502,7 +640,7 @@ export const CinemaScreen: React.FC<Props> = ({
             <div className="empty-marquee">SALA DRUO</div>
             <h2>La pantalla está lista</h2>
             <p>
-              Elegí una película de la biblioteca, subí un archivo o pegá un link de YouTube / MediaFire / Drive.
+              Elegí una película de la biblioteca, subí un archivo o pegá un link de Cuevana / YouTube / MediaFire / Drive.
               Lo que pongas, pauses o adelantes se sincroniza al instante en los dos.
             </p>
             <button type="button" className="cta-primary" onClick={onOpenSources}>
@@ -600,40 +738,138 @@ export const CinemaScreen: React.FC<Props> = ({
 
         {source && (
           <div className="cinema-controls" onClick={(e) => e.stopPropagation()}>
-            <button type="button" className="ctrl-btn" onClick={togglePlay} title="Reproducir / Pausar para ambos">
-              {playback.playing || isPlaying ? '⏸' : '▶️'}
-            </button>
-            <button type="button" className="ctrl-btn" onClick={() => seekTo(currentPos - 10)} title="Retroceder 10 s">
-              ⏪ 10s
-            </button>
-            <button type="button" className="ctrl-btn" onClick={() => seekTo(currentPos + 10)} title="Adelantar 10 s">
-              10s ⏩
+            <button
+              type="button"
+              className="ctrl-btn ctrl-play-btn"
+              onClick={togglePlay}
+              title={playback.playing || isPlaying ? 'Pausar para ambos (Espacio)' : 'Reproducir para ambos (Espacio)'}
+              aria-label={playback.playing || isPlaying ? 'Pausar' : 'Reproducir'}
+            >
+              {playback.playing || isPlaying ? (
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+                  <path d="M7 5a1.5 1.5 0 0 1 1.5 1.5v11a1.5 1.5 0 0 1-3 0v-11A1.5 1.5 0 0 1 7 5zm10 0a1.5 1.5 0 0 1 1.5 1.5v11a1.5 1.5 0 0 1-3 0v-11A1.5 1.5 0 0 1 17 5z" />
+                </svg>
+              ) : (
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+                  <path d="M8 5.14v13.72a1 1 0 0 0 1.54.84l11.1-6.86a1 1 0 0 0 0-1.68L9.54 4.3A1 1 0 0 0 8 5.14z" />
+                </svg>
+              )}
             </button>
 
-            <input
-              type="range"
-              className="ctrl-timeline"
-              min={0}
-              max={Math.max(1, duration)}
-              step={0.5}
-              value={Math.min(duration || 1, currentPos)}
-              onChange={(e) => seekTo(Number(e.target.value))}
-            />
+            <button
+              type="button"
+              className="ctrl-btn"
+              onClick={() => seekTo(currentPos - 10)}
+              title="Retroceder 10 segundos (←)"
+              aria-label="Retroceder 10 segundos"
+            >
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M4 12a8 8 0 0 1 14.93-3.93M4 12V7m0 5H9" />
+                <text x="12" y="15" fontSize="7.5" fontWeight="bold" fill="currentColor" stroke="none" textAnchor="middle">10</text>
+              </svg>
+            </button>
+
+            <button
+              type="button"
+              className="ctrl-btn"
+              onClick={() => seekTo(currentPos + 10)}
+              title="Adelantar 10 segundos (→)"
+              aria-label="Adelantar 10 segundos"
+            >
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M20 12a8 8 0 0 0-14.93-3.93M20 12V7m0 5h-5" />
+                <text x="12" y="15" fontSize="7.5" fontWeight="bold" fill="currentColor" stroke="none" textAnchor="middle">10</text>
+              </svg>
+            </button>
+
+            <div
+              ref={timelineRef}
+              className={`ctrl-timeline-wrap ${isScrubbing ? 'is-scrubbing' : ''}`}
+              onPointerDown={handleTimelinePointerDown}
+              onPointerMove={handleTimelinePointerMove}
+              onPointerUp={handleTimelinePointerUp}
+              onPointerCancel={handleTimelinePointerUp}
+              onPointerLeave={handleTimelinePointerLeave}
+              role="slider"
+              aria-valuemin={0}
+              aria-valuemax={duration || 0}
+              aria-valuenow={displayPos}
+              tabIndex={0}
+            >
+              <div className="ctrl-timeline-track">
+                <div className="ctrl-timeline-buffer" style={{ width: `${bufferedPct}%` }} />
+                <div className="ctrl-timeline-progress" style={{ width: `${progressPct}%` }} />
+                <div className="ctrl-timeline-thumb" style={{ left: `${progressPct}%` }} />
+              </div>
+
+              {hoverPos !== null && duration > 0 && (
+                <div className="ctrl-time-bubble" style={{ left: `${hoverX}px` }}>
+                  {fmtTime(hoverPos)}
+                </div>
+              )}
+            </div>
 
             <span className="ctrl-time">
-              {fmtTime(currentPos)} / {fmtTime(duration)}
+              {fmtTime(displayPos)} <span className="ctrl-time-sep">/</span> {fmtTime(duration)}
             </span>
 
-            <input
-              type="range"
-              className="ctrl-vol"
-              min={0}
-              max={1}
-              step={0.05}
-              value={volume}
-              onChange={(e) => setVolume(Number(e.target.value))}
-              title="Tu volumen de la película"
-            />
+            <div className="ctrl-vol-wrap">
+              <button
+                type="button"
+                className="ctrl-btn ctrl-vol-btn"
+                onClick={toggleMute}
+                title={volume === 0 ? 'Activar sonido (M)' : 'Silenciar (M)'}
+                aria-label="Volumen"
+              >
+                {volume === 0 ? (
+                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" fill="currentColor" />
+                    <line x1="23" y1="9" x2="17" y2="15" />
+                    <line x1="17" y1="9" x2="23" y2="15" />
+                  </svg>
+                ) : volume < 0.5 ? (
+                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" fill="currentColor" />
+                    <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+                  </svg>
+                ) : (
+                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" fill="currentColor" />
+                    <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+                    <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
+                  </svg>
+                )}
+              </button>
+              <input
+                type="range"
+                className="ctrl-vol"
+                min={0}
+                max={1}
+                step={0.05}
+                value={volume}
+                onChange={(e) => setVolume(Number(e.target.value))}
+                title={`Volumen: ${Math.round(volume * 100)}%`}
+                aria-label="Ajustar volumen"
+              />
+            </div>
+
+            <button
+              type="button"
+              className="ctrl-btn ctrl-fs-btn"
+              onClick={toggleFullscreen}
+              title={isFullscreen ? 'Salir de pantalla completa (F)' : 'Pantalla completa (F)'}
+              aria-label="Pantalla completa"
+            >
+              {isFullscreen ? (
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M4 14h6m0 0v6m0-6L3 21m17-11h-6m0 0V4m0 6l7-7M14 14h6m-6 0v6m0-6l7 7M4 10h6m0 0V4m0 6L3 3" />
+                </svg>
+              ) : (
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" />
+                </svg>
+              )}
+            </button>
           </div>
         )}
       </div>

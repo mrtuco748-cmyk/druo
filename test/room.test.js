@@ -43,23 +43,23 @@ test('Room sincroniza play/pausa/seek acotando timestamps', () => {
   assert.equal(pb.updatedAt, 9_800);
 });
 
-test('classify reconoce YouTube, MediaFire, Google Drive, Dropbox y HLS', () => {
+test('classify reconoce YouTube, MediaFire, Google Drive, Dropbox y HLS', async () => {
   assert.equal(youtubeId('https://youtu.be/dQw4w9WgXcQ'), 'dQw4w9WgXcQ');
-  assert.equal(classify('https://www.youtube.com/watch?v=dQw4w9WgXcQ').kind, 'youtube');
+  assert.equal((await classify('https://www.youtube.com/watch?v=dQw4w9WgXcQ')).kind, 'youtube');
 
-  const mf = classify('https://www.mediafire.com/file/abc123/peli.mp4/file');
+  const mf = await classify('https://www.mediafire.com/file/abc123/peli.mp4/file');
   assert.equal(mf.kind, 'file');
   assert.equal(mf.via, 'mediafire');
   assert.ok(mf.url.startsWith('/api/stream?link='));
 
-  const dr = classify('https://drive.google.com/file/d/1AbCdEfGhIjKlMnOpQrStUvWxYz/view?usp=sharing');
+  const dr = await classify('https://drive.google.com/file/d/1AbCdEfGhIjKlMnOpQrStUvWxYz/view?usp=sharing');
   assert.equal(dr.via, 'drive');
 
-  const db = classify('https://www.dropbox.com/s/xyz/video.mp4?dl=0');
+  const db = await classify('https://www.dropbox.com/s/xyz/video.mp4?dl=0');
   assert.equal(db.via, 'dropbox');
   assert.ok(db.url.includes('raw=1'));
 
-  const hls = classify('https://cdn.example.com/live/master.m3u8');
+  const hls = await classify('https://cdn.example.com/live/master.m3u8');
   assert.equal(hls.kind, 'hls');
 });
 

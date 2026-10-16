@@ -273,18 +273,18 @@ export const SourceDrawer: React.FC<Props> = ({
         {tab === 'link' && (
           <form className="modal-body" onSubmit={handleLinkSubmit}>
             <label className="field-block">
-              <span>Pegá un link de YouTube, MediaFire, Google Drive, Dropbox o un archivo .mp4 / .m3u8</span>
+              <span>Pegá un link de Cuevana, YouTube, MediaFire, Google Drive, Dropbox o un archivo .mp4 / .m3u8</span>
               <input
                 type="url"
-                placeholder="https://www.mediafire.com/file/... o https://youtu.be/..."
+                placeholder="https://cuevanapro.org/pelicula/... o https://youtu.be/..."
                 value={linkInput}
                 onChange={(e) => setLinkInput(e.target.value)}
                 required
               />
             </label>
             <p className="hint-text">
-              • <strong>MediaFire / Google Drive / Dropbox:</strong> subís el video gratis ahí, pegás el link de
-              compartir acá y Druo lo reproduce directo en la pantalla de ambos con soporte para adelantar/atrasar.
+              • <strong>Cuevana (cuevanapro.org):</strong> pegás el link de la película o serie (ej. <em>https://cuevanapro.org/pelicula/buddy-wXqOV4</em>) y Druo extrae el video en alta definición sin popups ni anuncios, sincronizado para ambos.
+              <br />• <strong>MediaFire / Google Drive / Dropbox:</strong> reproducen directo con soporte para adelantar/atrasar.
               <br />• <strong>YouTube:</strong> se reproduce sincronizado para los dos.
               <br />• <strong>Stream .m3u8 (HLS) o .mp4 directo:</strong> permite elegir calidad en vivo.
             </p>

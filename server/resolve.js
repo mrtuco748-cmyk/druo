@@ -1,7 +1,8 @@
-// Resolución de links pegados por el usuario (YouTube, MediaFire, Google Drive, Dropbox, MP4/HLS directo)
-// y streaming con soporte de Range para los hosts que no dan link directo reproducible.
+// Resolución de links pegados por el usuario (Cuevana, YouTube, MediaFire, Google Drive, Dropbox, MP4/HLS directo)
+// y streaming con soporte de Range / proxy HLS con CORS para todos los dispositivos.
 
 import { Readable } from 'node:stream';
+import crypto from 'node:crypto';
 import { mimeFor } from './storage.js';
 
 const UA =
@@ -19,8 +20,278 @@ function driveId(url) {
   return m ? m[1] : null;
 }
 
+// ---------- Cuevana Decryption & Resolver ----------
+
+function decryptAES(b64, keyBuf) {
+  const raw = Buffer.from(b64, 'base64');
+  const iv = raw.subarray(0, 16);
+  const ciphertext = raw.subarray(16);
+  const decipher = crypto.createDecipheriv('aes-256-cbc', keyBuf, iv);
+  let decrypted = decipher.update(ciphertext);
+  decrypted = Buffer.concat([decrypted, decipher.final()]);
+  return decrypted.toString('utf8');
+}
+
+function unpackDeanEdwards(script) {
+  const m = script.match(/}\('(.*)',\s*(\d+),\s*(\d+),\s*'(.*)'\.split\('\|'\)/s);
+  if (!m) return null;
+  let p = m[1];
+  const a = parseInt(m[2], 10);
+  let c = parseInt(m[3], 10);
+  const k = m[4].split('|');
+
+  while (c--) {
+    if (k[c]) {
+      p = p.replace(new RegExp('\\b' + c.toString(a) + '\\b', 'g'), k[c]);
+    }
+  }
+  return p;
+}
+
+export async function resolveCuevana(cuevanaUrl) {
+  const r1 = await fetch(cuevanaUrl, { headers: { 'User-Agent': UA } });
+  if (!r1.ok) throw Object.assign(new Error(`Error ${r1.status} al cargar Cuevana`), { status: 502 });
+  const html1 = await r1.text();
+
+  const titleMatch = html1.match(/<title>([^<]+)<\/title>/i);
+  const title = (titleMatch ? titleMatch[1] : 'Película')
+    .replace(' - CuevanaPRO', '')
+    .replace('Ver ', '')
+    .replace(' Online', '')
+    .trim();
+
+  const vidurlMatch = html1.match(/<iframe[^>]+src=["'](\/vidurl\/[^"']+)["']/i);
+  if (!vidurlMatch) throw Object.assign(new Error('No encontré el reproductor de video en Cuevana'), { status: 502 });
+
+  const vidurl = new URL(vidurlMatch[1], cuevanaUrl).href;
+  const r2 = await fetch(vidurl, {
+    headers: { 'User-Agent': UA, Referer: cuevanaUrl },
+  });
+  if (!r2.ok) throw Object.assign(new Error(`Error ${r2.status} al cargar vidurl de Cuevana`), { status: 502 });
+  const html2 = await r2.text();
+
+  const challengeMatch = html2.match(/const POW_CHALLENGE = '([^']+)';/);
+  const difficultyMatch = html2.match(/const POW_DIFFICULTY = (\d+);/);
+  const saltMatch = html2.match(/const POW_SALT = '([^']+)';/);
+  const dataLinkMatch = html2.match(/let dataLink = (\[[\s\S]*?\]);/);
+
+  if (!challengeMatch || !dataLinkMatch) {
+    throw Object.assign(new Error('No pude extraer los datos del reproductor de Cuevana'), { status: 502 });
+  }
+
+  const challenge = challengeMatch[1];
+  const difficulty = parseInt(difficultyMatch ? difficultyMatch[1] : '3', 10);
+  const salt = saltMatch ? saltMatch[1] : '';
+  const dataLink = JSON.parse(dataLinkMatch[1]);
+
+  // Resolver Proof of Work
+  const prefix = '0'.repeat(difficulty);
+  let nonce = 0;
+  while (true) {
+    const hash = crypto.createHash('sha256').update(challenge + nonce).digest('hex');
+    if (hash.startsWith(prefix)) break;
+    nonce++;
+  }
+  const keyHash = crypto.createHash('sha256').update(challenge + nonce + salt).digest();
+
+  // Decodificar enlaces de servidores
+  const candidateEmbeds = [];
+  for (const file of dataLink) {
+    const lang = file.video_language || 'SUB';
+    for (const embed of file.sortedEmbeds || []) {
+      try {
+        const decryptedUrl = decryptAES(embed.link, keyHash);
+        if (decryptedUrl && /^https?:/.test(decryptedUrl)) {
+          candidateEmbeds.push({
+            server: embed.servername,
+            url: decryptedUrl,
+            lang,
+          });
+        }
+      } catch {}
+    }
+  }
+
+  // Priorizar servidores que dan streams HLS limpios (vidhide, streamwish)
+  candidateEmbeds.sort((a, b) => {
+    if (a.server === 'vidhide') return -1;
+    if (b.server === 'vidhide') return 1;
+    return 0;
+  });
+
+  for (const cand of candidateEmbeds) {
+    try {
+      const rEmbed = await fetch(cand.url, {
+        headers: {
+          'User-Agent': UA,
+          Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+          Referer: 'https://cuevanapro.org/',
+        },
+        signal: AbortSignal.timeout(8000),
+      });
+      if (!rEmbed.ok) continue;
+      const embedHtml = await rEmbed.text();
+
+      const scripts = [...embedHtml.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/gi)].map((m) => m[1]);
+      for (const s of scripts) {
+        if (!s.includes('eval(function(p,a,c,k,e,d)')) continue;
+        const unpacked = unpackDeanEdwards(s);
+        if (!unpacked) continue;
+
+        let hlsUrl = null;
+        const linksObjMatch = unpacked.match(/var links\s*=\s*(\{[\s\S]*?\});/);
+        if (linksObjMatch) {
+          try {
+            const links = JSON.parse(linksObjMatch[1]);
+            // Priorizar hls3 (master.txt que no tiene padding) o hls4/hls2
+            hlsUrl = links.hls3 || links.hls4 || links.hls2;
+            if (hlsUrl && hlsUrl.startsWith('/')) {
+              hlsUrl = new URL(hlsUrl, cand.url).href;
+            }
+          } catch {}
+        }
+
+        if (!hlsUrl) {
+          const m3u8Match = unpacked.match(/https?:[^\s"'<>]+\.(?:m3u8|txt)[^\s"'<>?]*(?:\?[^\s"'<>]*)?/i);
+          if (m3u8Match) hlsUrl = m3u8Match[0];
+        }
+
+        if (hlsUrl) {
+          return {
+            title: `${title} (${cand.lang.toUpperCase()})`,
+            hlsUrl,
+            referer: cand.url,
+            lang: cand.lang,
+          };
+        }
+      }
+    } catch (err) {
+      // Intentar con el siguiente servidor candidato
+    }
+  }
+
+  throw Object.assign(new Error('No se pudo extraer el stream de video de los servidores de Cuevana'), { status: 502 });
+}
+
+// ---------- HLS Playlist Rewriting & Proxy ----------
+
+function rewritePlaylist(m3u8Text, baseUrl, referer) {
+  const lines = m3u8Text.split('\n');
+  const out = [];
+
+  for (let line of lines) {
+    const trimmed = line.trim();
+    if (!trimmed) {
+      out.push(line);
+      continue;
+    }
+
+    if (trimmed.startsWith('#')) {
+      // Reescribir atributos URI="..." en etiquetas (#EXT-X-KEY o #EXT-X-I-FRAME-STREAM-INF)
+      line = line.replace(/URI="([^"]+)"/g, (_, uri) => {
+        const full = new URL(uri, baseUrl).href;
+        return `URI="/api/hls-proxy?url=${encodeURIComponent(full)}&ref=${encodeURIComponent(referer)}"`;
+      });
+      out.push(line);
+    } else {
+      // Es una URL de sub-playlist o segmento (.m3u8 / .ts / .woff2 / .image)
+      const full = new URL(trimmed, baseUrl).href;
+      out.push(`/api/hls-proxy?url=${encodeURIComponent(full)}&ref=${encodeURIComponent(referer)}`);
+    }
+  }
+
+  return out.join('\n');
+}
+
+/** Proxy de HLS con CORS universal y descifrado de padding/PNG para cualquier navegador */
+export async function proxyHls(req, res, targetUrl, referer = '') {
+  if (!targetUrl || !/^https?:/.test(targetUrl)) {
+    res.writeHead(400, { 'Content-Type': 'text/plain' }).end('URL inválida');
+    return;
+  }
+
+  const ac = new AbortController();
+  req.on('close', () => ac.abort());
+
+  try {
+    const headers = { 'User-Agent': UA };
+    if (referer) headers.Referer = referer;
+    if (req.headers.range) headers.Range = req.headers.range;
+
+    const up = await fetch(targetUrl, {
+      headers,
+      redirect: 'follow',
+      signal: ac.signal,
+    });
+
+    if (!up.ok && up.status !== 206) {
+      res.writeHead(up.status, { 'Content-Type': 'text/plain' }).end(`Error upstream: ${up.status}`);
+      return;
+    }
+
+    const ct = (up.headers.get('content-type') || '').toLowerCase();
+    const isPlaylist =
+      ct.includes('mpegurl') ||
+      ct.includes('application/x-mpegurl') ||
+      targetUrl.includes('.m3u8') ||
+      targetUrl.includes('master.txt') ||
+      (targetUrl.includes('index-') && targetUrl.endsWith('.txt'));
+
+    if (isPlaylist) {
+      const text = await up.text();
+      if (text.includes('#EXTM3U') || text.includes('#EXTINF')) {
+        const rewritten = rewritePlaylist(text, targetUrl, referer);
+        res.writeHead(200, {
+          'Content-Type': 'application/vnd.apple.mpegurl',
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'GET, HEAD, OPTIONS',
+          'Access-Control-Allow-Headers': '*',
+          'Cache-Control': 'no-cache',
+        });
+        res.end(rewritten);
+        return;
+      }
+    }
+
+    // Segmento binario de video
+    const outHeaders = {
+      'Content-Type': 'video/mp2t',
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, HEAD, OPTIONS',
+      'Access-Control-Allow-Headers': '*',
+      'Accept-Ranges': 'bytes',
+      'Cache-Control': 'public, max-age=86400',
+    };
+
+    const cr = up.headers.get('content-range');
+    if (cr) outHeaders['Content-Range'] = cr;
+
+    const buf = Buffer.from(await up.arrayBuffer());
+    let payload = buf;
+    // Si el host disfrazó el segmento TS con cabecera PNG falsa, removerla
+    if (buf.length > 70 && buf[0] === 0x89 && buf[1] === 0x50 && buf[2] === 0x4e && buf[3] === 0x47) {
+      const iendIdx = buf.indexOf(Buffer.from('IEND'));
+      if (iendIdx !== -1) {
+        payload = buf.subarray(iendIdx + 8);
+      }
+    }
+
+    outHeaders['Content-Length'] = payload.length;
+    res.writeHead(up.status === 206 ? 206 : 200, outHeaders);
+    res.end(payload);
+  } catch (err) {
+    if (ac.signal.aborted) return;
+    if (!res.headersSent) {
+      res.writeHead(502, { 'Content-Type': 'text/plain' });
+    }
+    res.end(err.message || 'Error proxying HLS');
+  }
+}
+
+// ---------- Clasificador de links ----------
+
 /** Clasifica un link. Devuelve la fuente que se comparte con la sala. */
-export function classify(raw) {
+export async function classify(raw) {
   let url;
   try {
     url = new URL(String(raw).trim());
@@ -41,7 +312,20 @@ export function classify(raw) {
   const host = url.hostname.replace(/^www\./, '');
   const name = decodeURIComponent(url.pathname.split('/').filter(Boolean).pop() || host);
 
-  if (host.endsWith('mediafire.com')) return { kind: 'file', url: `/api/stream?link=${encodeURIComponent(href)}`, title: name, via: 'mediafire' };
+  // Soporte nativo para Cuevana (cuevanapro.org / cuevana.pro / etc.)
+  if (host.includes('cuevanapro') || host.includes('cuevana')) {
+    const cuev = await resolveCuevana(href);
+    return {
+      kind: 'hls',
+      url: `/api/hls-proxy?url=${encodeURIComponent(cuev.hlsUrl)}&ref=${encodeURIComponent(cuev.referer)}`,
+      title: cuev.title,
+      via: 'cuevana',
+    };
+  }
+
+  if (host.endsWith('mediafire.com')) {
+    return { kind: 'file', url: `/api/stream?link=${encodeURIComponent(href)}`, title: name, via: 'mediafire' };
+  }
   if (host === 'drive.google.com') {
     const id = driveId(href);
     if (!id) {
@@ -56,7 +340,13 @@ export function classify(raw) {
     url.searchParams.set('raw', '1');
     return { kind: 'file', url: url.href, title: name, via: 'dropbox' };
   }
-  if (/\.m3u8($|\?)/i.test(url.pathname + url.search)) return { kind: 'hls', url: href, title: name };
+  if (/\.m3u8($|\?)/i.test(url.pathname + url.search)) {
+    return {
+      kind: 'hls',
+      url: `/api/hls-proxy?url=${encodeURIComponent(href)}`,
+      title: name,
+    };
+  }
   return { kind: 'file', url: href, title: name };
 }
 

@@ -7,7 +7,7 @@ import { WebSocketServer } from 'ws';
 import { Room } from './room.js';
 import { getIceServers, turnConfigured } from './turn.js';
 import * as storage from './storage.js';
-import { classify, streamLink } from './resolve.js';
+import { classify, streamLink, proxyHls } from './resolve.js';
 
 try {
   process.loadEnvFile(); // .env local (en Render se usan variables de entorno)
@@ -98,9 +98,21 @@ const routes = {
 };
 
 const server = http.createServer(async (req, res) => {
+  if (req.method === 'OPTIONS') {
+    res.writeHead(204, {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, HEAD, OPTIONS, POST',
+      'Access-Control-Allow-Headers': '*',
+    });
+    return res.end();
+  }
+
   const url = new URL(req.url, 'http://x');
   const key = `${req.method} ${url.pathname}`;
   try {
+    if (key === 'GET /api/hls-proxy') {
+      return await proxyHls(req, res, url.searchParams.get('url') || '', url.searchParams.get('ref') || '');
+    }
     if (key === 'GET /api/stream') return await streamLink(req, res, url.searchParams.get('link') || '');
     const handler = routes[key];
     if (handler) {
