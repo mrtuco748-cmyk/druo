@@ -123,11 +123,15 @@ export const App: React.FC = () => {
     try {
       stream = await navigator.mediaDevices.getUserMedia({
         audio: {
-          echoCancellation: true,
-          noiseSuppression: true,
-          autoGainControl: true,
+          echoCancellation: { ideal: true },
+          noiseSuppression: { ideal: true },
+          autoGainControl: { ideal: true },
           channelCount: 1,
-        },
+          googEchoCancellation: { ideal: true },
+          googAutoGainControl: { ideal: true },
+          googNoiseSuppression: { ideal: true },
+          googHighpassFilter: { ideal: true },
+        } as any,
         video: {
           width: { ideal: 480 },
           height: { ideal: 360 },

@@ -35,11 +35,13 @@ export const CameraTile: React.FC<Props> = ({
   useEffect(() => {
     const el = videoRef.current;
     if (!el) return;
+    el.muted = isMe;
+    el.defaultMuted = isMe;
     if (el.srcObject !== stream) {
       el.srcObject = stream || null;
       if (stream) el.play().catch(() => {});
     }
-  }, [stream, stream?.getTracks().length]);
+  }, [stream, stream?.getTracks().length, isMe]);
 
   // Detector de voz liviano (AnalyserNode) para iluminar el borde y bajar un poquito la peli (ducking)
   useEffect(() => {

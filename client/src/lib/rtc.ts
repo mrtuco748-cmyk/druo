@@ -26,34 +26,11 @@ export interface CallStats {
   fps: number;
 }
 
-function mungeOpusSdp(sdp: string, maxAvgBitrate: number): string {
-  const lines = sdp.split('\r\n');
-  let opusPt: string | null = null;
-  for (const l of lines) {
-    const m = l.match(/^a=rtpmap:(\d+)\s+opus\/48000/i);
-    if (m) {
-      opusPt = m[1];
-      break;
-    }
-  }
-  if (!opusPt) return sdp;
-  const params = `minptime=10;useinbandfec=1;usedtx=1;stereo=0;sprop-stereo=0;maxplaybackrate=24000;maxaveragebitrate=${maxAvgBitrate}`;
-  let found = false;
-  const out = lines.map((l) => {
-    if (l.startsWith(`a=fmtp:${opusPt} `)) {
-      found = true;
-      const base = l
-        .replace(/;?(useinbandfec|usedtx|stereo|sprop-stereo|maxaveragebitrate|maxplaybackrate)=[^;\s]+/gi, '')
-        .trim();
-      return `${base};${params}`;
-    }
-    return l;
+function mungeOpusSdp(sdp: string, _maxAvgBitrate: number): string {
+  if (!sdp.includes('opus/48000')) return sdp;
+  return sdp.replace(/(a=fmtp:\d+ [^\r\n]+)/g, (match) => {
+    return `${match};stereo=0;sprop-stereo=0;useinbandfec=1;usedtx=1`;
   });
-  if (!found) {
-    const idx = out.findIndex((l) => l.startsWith(`a=rtpmap:${opusPt} `));
-    if (idx >= 0) out.splice(idx + 1, 0, `a=fmtp:${opusPt} ${params}`);
-  }
-  return out.join('\r\n');
 }
 
 export class PeerCall {
@@ -161,13 +138,6 @@ export class PeerCall {
 
     pc.ontrack = (ev) => {
       const track = ev.track;
-      // Reducir jitter buffer al mínimo razonable para que la voz sea instantánea
-      try {
-        const recv: any = ev.receiver;
-        if (recv && 'playoutDelayHint' in recv) {
-          recv.playoutDelayHint = track.kind === 'audio' ? 0.04 : 0.08;
-        }
-      } catch {}
       const existing = this.remoteStream.getTracks().find((t) => t.kind === track.kind && t.id !== track.id);
       if (existing) this.remoteStream.removeTrack(existing);
       if (!this.remoteStream.getTracks().some((t) => t.id === track.id)) {
