@@ -478,6 +478,51 @@ select:focus {
   left: 12px;
   right: 12px;
   bottom: 12px;
+}
+
+/* ---------------- Capa de Dibujo sobre la Pantalla ---------------- */
+.drawing-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 15;
+}
+
+.drawing-overlay.is-passthrough {
+  pointer-events: none;
+}
+
+.drawing-overlay.is-active {
+  pointer-events: auto;
+  cursor: crosshair;
+}
+
+.drawing-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.drawing-toolbar {
+  position: absolute;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(18, 10, 18, 0.92);
+  border: 1px solid var(--gold);
+  border-radius: 999px;
+  padding: 6px 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(8px);
+}
+
+.cinema-controls {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 12px;
   background: rgba(10, 6, 12, 0.84);
   border: 1px solid rgba(255, 255, 255, 0.14);
   backdrop-filter: blur(10px);

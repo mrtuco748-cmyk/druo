@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import Hls from 'hls.js';
 import { decideSync, expectedPosition, PlaybackState } from '../lib/sync';
 import { srtToVtt } from '../lib/subtitles';
+import { DrawingCanvas, DrawEvent } from './DrawingCanvas';
 
 export interface MovieVersion {
   key: string;
@@ -46,6 +47,12 @@ interface Props {
   onOpenSources: () => void;
   localFileUrl: string | null;
   onPickLocalFile: (f: File) => void;
+  drawingActive: boolean;
+  drawingColor: string;
+  onEmitDraw: (ev: DrawEvent) => void;
+  incomingDrawEvent: DrawEvent | null;
+  onCloseDrawing: () => void;
+  onClearDrawing: () => void;
 }
 
 declare global {
@@ -100,6 +107,12 @@ export const CinemaScreen: React.FC<Props> = ({
   onOpenSources,
   localFileUrl,
   onPickLocalFile,
+  drawingActive,
+  drawingColor,
+  onEmitDraw,
+  incomingDrawEvent,
+  onCloseDrawing,
+  onClearDrawing,
 }) => {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const hlsRef = useRef<Hls | null>(null);
@@ -509,6 +522,16 @@ export const CinemaScreen: React.FC<Props> = ({
         {waitOnBuffer && peerBuffering && (
           <div className="buffer-pill">⏳ Esperando un segundo a que cargue en el otro dispositivo…</div>
         )}
+
+        <DrawingCanvas
+          active={drawingActive}
+          color={drawingColor}
+          width={4}
+          onEmitDraw={onEmitDraw}
+          incomingEvent={incomingDrawEvent}
+          onCloseDrawing={onCloseDrawing}
+          onClearDrawing={onClearDrawing}
+        />
 
         {source && (
           <div className="cinema-controls" onClick={(e) => e.stopPropagation()}>

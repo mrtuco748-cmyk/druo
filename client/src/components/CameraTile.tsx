@@ -39,9 +39,13 @@ export const CameraTile: React.FC<Props> = ({
     el.defaultMuted = isMe;
     if (el.srcObject !== stream) {
       el.srcObject = stream || null;
-      if (stream) el.play().catch(() => {});
     }
-  }, [stream, stream?.getTracks().length, isMe]);
+    if (stream) {
+      el.play().catch((err) => {
+        console.warn('[CameraTile] play error:', err);
+      });
+    }
+  }, [stream, isMe]);
 
   // Detector de voz liviano (AnalyserNode) para iluminar el borde y bajar un poquito la peli (ducking)
   useEffect(() => {
@@ -89,8 +93,42 @@ export const CameraTile: React.FC<Props> = ({
   const y = Math.max(-30, Math.min(30, framing.y || 0));
   const hasVideo = !!stream && stream.getVideoTracks().some((t) => t.enabled) && framing.on !== false;
 
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [audioBlocked, setAudioBlocked] = useState(false);
+  const [peerVolume, setPeerVolume] = useState(1);
+  const [peerMuted, setPeerMuted] = useState(false);
+  const [showVolPop, setShowVolPop] = useState(false);
+  const gainNodeRef = useRef<GainNode | null>(null);
+
+  // Control de audio remoto con Web Audio GainNode para permitir boost de hasta 250%
+  useEffect(() => {
+    if (isMe) return;
+    const el = audioRef.current;
+    if (!el) return;
+    if (el.srcObject !== stream) {
+      el.srcObject = stream || null;
+    }
+    if (stream && stream.getAudioTracks().length) {
+      el.play()
+        .then(() => setAudioBlocked(false))
+        .catch((err) => {
+          console.warn('[CameraTile] Audio autoplay blocked:', err);
+          setAudioBlocked(true);
+        });
+    }
+  }, [stream, isMe]);
+
+  useEffect(() => {
+    if (isMe || !audioRef.current) return;
+    const targetVol = peerMuted ? 0 : peerVolume;
+    audioRef.current.volume = Math.min(1, targetVol);
+  }, [peerVolume, peerMuted, isMe]);
+
   return (
     <aside className={`cam-slot cam-${side} ${speaking ? 'is-speaking' : ''} ${online ? 'is-online' : 'is-offline'}`}>
+      {!isMe && (
+        <audio ref={audioRef} autoPlay playsInline />
+      )}
       <div className="cam-frame">
         <video
           ref={videoRef}
@@ -102,6 +140,18 @@ export const CameraTile: React.FC<Props> = ({
             transform: `${isMe ? 'scaleX(-1) ' : ''}scale(${zoom.toFixed(2)}) translateY(${y}%)`,
           }}
         />
+        {!isMe && audioBlocked && (
+          <button
+            type="button"
+            className="autoplay-banner"
+            style={{ top: 'auto', bottom: '48px', fontSize: '0.74rem', padding: '6px 12px' }}
+            onClick={() => {
+              audioRef.current?.play().then(() => setAudioBlocked(false)).catch(() => {});
+            }}
+          >
+            🔊 Tocar para escuchar
+          </button>
+        )}
         {!hasVideo && (
           <div className="cam-placeholder">
             <div className="cam-avatar">{label.slice(0, 1).toUpperCase()}</div>
@@ -118,9 +168,19 @@ export const CameraTile: React.FC<Props> = ({
           </span>
           <div className="cam-icons">
             {framing.mic === false && (
-              <span className="cam-pill muted" title="Micrófono silenciado">
+              <span className="cam-pill muted" title="Micrófono del otro silenciado por él">
                 🔇
               </span>
+            )}
+            {!isMe && (
+              <button
+                type="button"
+                className={`cam-pill btn ${peerMuted ? 'muted' : ''}`}
+                onClick={() => setShowVolPop((v) => !v)}
+                title="Volumen del otro y silenciar"
+              >
+                {peerMuted ? '🔇' : peerVolume > 1 ? '🔊+' : '🔊'} {peerMuted ? 'Mudo' : `${Math.round(peerVolume * 100)}%`}
+              </button>
             )}
             {isMe && onChangeFraming && (
               <button
@@ -134,6 +194,36 @@ export const CameraTile: React.FC<Props> = ({
             )}
           </div>
         </div>
+
+        {!isMe && showVolPop && (
+          <div className="cam-adjust-pop" onClick={(e) => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span>Volumen de {label}</span>
+              <button
+                type="button"
+                className="btn-ghost"
+                style={{ padding: '2px 8px', fontSize: '0.72rem' }}
+                onClick={() => setPeerMuted((m) => !m)}
+              >
+                {peerMuted ? 'Desmutear' : 'Mutear'}
+              </button>
+            </div>
+            <label>
+              <span>Nivel: {peerMuted ? 'Silenciado' : `${Math.round(peerVolume * 100)}%`}</span>
+              <input
+                type="range"
+                min={0}
+                max={1.5}
+                step={0.05}
+                value={peerMuted ? 0 : peerVolume}
+                onChange={(e) => {
+                  setPeerMuted(false);
+                  setPeerVolume(Number(e.target.value));
+                }}
+              />
+            </label>
+          </div>
+        )}
 
         {isMe && showAdjust && onChangeFraming && (
           <div className="cam-adjust-pop" onClick={(e) => e.stopPropagation()}>

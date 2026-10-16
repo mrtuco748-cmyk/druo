@@ -181,6 +181,7 @@ wss.on('connection', (ws) => {
       case 'buffering':
       case 'cap':
       case 'react':
+      case 'draw':
         return toOther(me.id, { ...m, from: me.id });
     }
   });

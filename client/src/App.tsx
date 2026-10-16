@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { CameraTile, CamFraming } from './components/CameraTile';
 import { CinemaScreen, RoomSource, RoomSubs } from './components/CinemaScreen';
+import { DrawEvent } from './components/DrawingCanvas';
 import { QualityDrawer } from './components/QualityDrawer';
 import { SourceDrawer } from './components/SourceDrawer';
 import { AudioPresetId, VideoPresetId } from './lib/quality';
@@ -75,6 +76,9 @@ export const App: React.FC = () => {
   const [showSources, setShowSources] = useState(false);
   const [showQuality, setShowQuality] = useState(false);
   const [floatingReacts, setFloatingReacts] = useState<{ id: number; emoji: string }[]>([]);
+  const [drawingActive, setDrawingActive] = useState(false);
+  const [drawingColor, setDrawingColor] = useState('#ffcf6b');
+  const [incomingDrawEvent, setIncomingDrawEvent] = useState<DrawEvent | null>(null);
 
   const [stats, setStats] = useState<CallStats>({
     connected: false,
@@ -197,6 +201,8 @@ export const App: React.FC = () => {
           setPeerBuffering(!!m.value);
         } else if (m.t === 'react' && m.emoji) {
           spawnReaction(m.emoji);
+        } else if (m.t === 'draw') {
+          setIncomingDrawEvent(m);
         }
       },
       (online) => setWsOnline(online)
@@ -357,6 +363,34 @@ export const App: React.FC = () => {
           <button type="button" className="top-btn accent" onClick={() => setShowSources(true)}>
             🎬 Película
           </button>
+          <button
+            type="button"
+            className={`top-btn ${drawingActive ? 'accent' : ''}`}
+            onClick={() => setDrawingActive((d) => !d)}
+            title="Activar pizarra para dibujar sobre la película"
+          >
+            ✏️ Dibujar
+          </button>
+          {drawingActive && (
+            <div style={{ display: 'inline-flex', gap: '3px', alignItems: 'center' }}>
+              {['#ffcf6b', '#e8455b', '#4cd97b', '#4aa3df', '#ffffff'].map((c) => (
+                <button
+                  key={c}
+                  type="button"
+                  style={{
+                    width: '18px',
+                    height: '18px',
+                    borderRadius: '50%',
+                    background: c,
+                    border: drawingColor === c ? '2px solid #fff' : '1px solid rgba(0,0,0,0.4)',
+                    cursor: 'pointer',
+                    padding: 0,
+                  }}
+                  onClick={() => setDrawingColor(c)}
+                />
+              ))}
+            </div>
+          )}
           <button type="button" className="top-btn" onClick={() => setShowQuality(true)}>
             ⚙️ Calidad
           </button>
@@ -413,6 +447,12 @@ export const App: React.FC = () => {
           onOpenSources={() => setShowSources(true)}
           localFileUrl={localFileUrl}
           onPickLocalFile={(f) => handleSelectLocalFile(f, false)}
+          drawingActive={drawingActive}
+          drawingColor={drawingColor}
+          onEmitDraw={(ev) => sigRef.current?.send(ev)}
+          incomingDrawEvent={incomingDrawEvent}
+          onCloseDrawing={() => setDrawingActive(false)}
+          onClearDrawing={() => setIncomingDrawEvent(null)}
         />
 
         <CameraTile

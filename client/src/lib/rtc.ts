@@ -185,6 +185,7 @@ export class PeerCall {
     const vTrack = this.localStream.getVideoTracks()[0] || null;
 
     if (aTrack) {
+      aTrack.enabled = true;
       if (this.audioSender) {
         await this.audioSender.replaceTrack(aTrack);
       } else {
