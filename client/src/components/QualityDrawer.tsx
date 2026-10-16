@@ -234,7 +234,7 @@ export const QualityDrawer: React.FC<Props> = ({
                 <span>Zoom de cámara ({myFraming.zoom.toFixed(1)}×)</span>
                 <input
                   type="range"
-                  min={1.1}
+                  min={1.0}
                   max={3.4}
                   step={0.1}
                   value={myFraming.zoom}

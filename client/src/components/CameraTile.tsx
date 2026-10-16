@@ -40,6 +40,8 @@ export const CameraTile: React.FC<Props> = ({
     // Las cámaras siempre van muteadas para evitar acoples y que Android no bloquee el video
     el.muted = true;
     el.defaultMuted = true;
+    (el as any).setAttribute('playsinline', 'true');
+    (el as any).setAttribute('webkit-playsinline', 'true');
     if (el.srcObject !== stream) {
       el.srcObject = stream || null;
     }
@@ -48,7 +50,7 @@ export const CameraTile: React.FC<Props> = ({
         console.warn('[CameraTile] play error:', err);
       });
     }
-  }, [stream]);
+  }, [stream, framing.on]);
 
   // Detector de voz liviano (AnalyserNode) para iluminar el borde
   useEffect(() => {
@@ -92,7 +94,7 @@ export const CameraTile: React.FC<Props> = ({
     };
   }, [stream, framing.mic]);
 
-  const zoom = Math.max(1, Math.min(3.5, framing.zoom || 2.1));
+  const zoom = Math.max(1, Math.min(3.5, typeof framing.zoom === 'number' && !isNaN(framing.zoom) ? framing.zoom : 1.0));
   const y = Math.max(-30, Math.min(30, framing.y || 0));
   const hasVideo = !!stream && stream.getVideoTracks().some((t) => t.enabled) && framing.on !== false;
 
@@ -206,7 +208,9 @@ export const CameraTile: React.FC<Props> = ({
   };
 
   return (
-    <aside className={`cam-slot cam-${side} ${speaking ? 'is-speaking' : ''} ${online ? 'is-online' : 'is-offline'}`}>
+    <aside
+      className={`cam-slot cam-${side} ${isMe ? 'is-local is-me' : 'is-remote'} ${speaking ? 'is-speaking' : ''} ${online ? 'is-online' : 'is-offline'}`}
+    >
       {!isMe && (
         <audio ref={audioRef} autoPlay playsInline />
       )}
@@ -234,7 +238,7 @@ export const CameraTile: React.FC<Props> = ({
         {!hasVideo && (
           <div className="cam-placeholder">
             <div className="cam-avatar">{label.slice(0, 1).toUpperCase()}</div>
-            <span>{online ? 'Cámara en pausa' : 'Esperando…'}</span>
+            <span>{online ? (isMe ? 'Tu cámara está pausada' : 'Cámara en pausa') : 'Esperando…'}</span>
           </div>
         )}
 

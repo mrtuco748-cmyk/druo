@@ -257,18 +257,21 @@ select:focus {
 /* ---------------- Grid 3 columnas: Cam Izq | Pantalla Grande | Cam Der ---------------- */
 .theater-grid {
   display: grid;
-  grid-template-columns: clamp(120px, 14vw, 225px) minmax(0, 1fr) clamp(120px, 14vw, 225px);
+  grid-template-columns: clamp(190px, 18vw, 290px) minmax(0, 1fr) clamp(190px, 18vw, 290px);
   align-items: center;
-  gap: 10px;
-  padding: 10px 12px;
+  justify-content: center;
+  gap: 14px;
+  padding: 10px 16px;
   height: 100%;
   min-height: 0;
 }
 
-/* Cámaras laterales con encuadre cercano de cara */
+/* Cámaras laterales con encuadre cómodo y centrado */
 .cam-slot {
-  height: min(68vh, 430px);
+  height: min(72vh, 480px);
   width: 100%;
+  max-width: 290px;
+  margin: 0 auto;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -278,6 +281,8 @@ select:focus {
   position: relative;
   width: 100%;
   height: 100%;
+  aspect-ratio: 9 / 14;
+  max-height: 100%;
   border-radius: 18px;
   overflow: hidden;
   background: #0d080f;
@@ -295,6 +300,7 @@ select:focus {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  object-position: center 25%;
   transform-origin: center center;
   transition: transform 0.12s ease-out;
 }
@@ -421,7 +427,9 @@ select:focus {
   position: relative;
   width: 100%;
   height: 100%;
-  max-height: calc(100dvh - 62px);
+  aspect-ratio: 16 / 9;
+  max-width: 100%;
+  max-height: calc(100dvh - 66px);
   background: #000;
   border-radius: 18px;
   border: 1.5px solid rgba(255, 207, 107, 0.22);
@@ -1060,7 +1068,401 @@ select:focus {
   box-shadow: 0 0 10px rgba(255, 207, 107, 0.18);
 }
 
-/* Modo 2: Solo Videollamada (Cámaras gigantes cara a cara) */
+/* ---------------- Menú Desplegable Superior Unificado ---------------- */
+.topbar-menu-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 80;
+  animation: fadeIn 0.15s ease-out;
+}
+
+.topbar-dropdown-menu {
+  position: fixed;
+  top: 54px;
+  right: 14px;
+  width: min(390px, calc(100vw - 20px));
+  max-height: calc(100dvh - 68px);
+  background: #140b17;
+  border: 1.5px solid rgba(255, 207, 107, 0.35);
+  border-radius: 20px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.9), 0 0 30px rgba(255, 207, 107, 0.12);
+  overflow-y: auto;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  z-index: 85;
+  animation: dropMenuIn 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes dropMenuIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.dropdown-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.dropdown-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--gold);
+}
+
+.dropdown-close-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-dim);
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+}
+.dropdown-close-btn:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.dropdown-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.dropdown-section-label {
+  font-size: 0.74rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-dim);
+  font-weight: 600;
+}
+
+/* Modos de vista grid */
+.dropdown-modes-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.dropdown-mode-card {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  padding: 8px 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-align: left;
+  cursor: pointer;
+  color: var(--text-main);
+  transition: all 0.16s ease;
+}
+
+.dropdown-mode-card:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+.dropdown-mode-card.active {
+  background: rgba(255, 207, 107, 0.16);
+  border-color: var(--gold);
+  color: var(--gold);
+  box-shadow: 0 0 14px rgba(255, 207, 107, 0.22);
+}
+
+.mode-emoji {
+  font-size: 1.25rem;
+}
+
+.mode-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.mode-text strong {
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
+.mode-text small {
+  font-size: 0.68rem;
+  color: var(--text-dim);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.dropdown-mode-card.active .mode-text small {
+  color: rgba(255, 207, 107, 0.85);
+}
+
+/* Acciones de pelis y dibujo */
+.dropdown-action-row {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 12px;
+  color: var(--text-main);
+  font-size: 0.84rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.dropdown-action-row.accent {
+  background: rgba(255, 207, 107, 0.12);
+  border-color: rgba(255, 207, 107, 0.4);
+  color: var(--gold);
+}
+
+.dropdown-action-row:hover {
+  background: rgba(255, 207, 107, 0.22);
+}
+
+.row-chevron {
+  font-size: 1.1rem;
+}
+
+.dropdown-draw-box {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 8px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.draw-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.82rem;
+}
+
+.draw-switch-btn {
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.74rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+
+.draw-switch-btn.on {
+  background: rgba(76, 217, 123, 0.2);
+  border-color: #4cd97b;
+  color: #4cd97b;
+}
+
+.draw-switch-btn.off {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.15);
+  color: var(--text-dim);
+}
+
+.draw-palette-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.palette-label {
+  font-size: 0.74rem;
+  color: var(--text-dim);
+}
+
+.palette-dots {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.palette-dot {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 1px solid rgba(0, 0, 0, 0.4);
+  cursor: pointer;
+  padding: 0;
+  transition: transform 0.15s ease;
+}
+
+.palette-dot.selected {
+  transform: scale(1.2);
+  border: 2.5px solid #fff;
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
+}
+
+/* Dispositivos mic / cam */
+.dropdown-device-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.device-btn {
+  padding: 8px 10px;
+  border-radius: 10px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-main);
+  text-align: center;
+}
+
+.device-btn.active {
+  background: rgba(76, 217, 123, 0.15);
+  border-color: rgba(76, 217, 123, 0.45);
+  color: #7ef7b2;
+}
+
+.device-btn.is-off {
+  background: rgba(232, 69, 91, 0.18);
+  border-color: rgba(232, 69, 91, 0.45);
+  color: #ff8b99;
+}
+
+/* Sliders */
+.dropdown-sliders {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 12px;
+  padding: 8px 12px;
+}
+
+.slider-item {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.slider-title {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.74rem;
+  color: var(--text-dim);
+}
+
+.slider-title strong {
+  color: var(--gold);
+}
+
+.slider-item input[type='range'] {
+  accent-color: var(--gold);
+  width: 100%;
+  cursor: pointer;
+}
+
+/* Footer del menú */
+.dropdown-footer {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  padding-top: 4px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.footer-btn {
+  padding: 8px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  color: var(--text-main);
+  font-size: 0.75rem;
+  cursor: pointer;
+  text-align: center;
+}
+
+.footer-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+/* Botón flotante Volver al Cine */
+.call-return-btn {
+  position: absolute;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(14, 8, 16, 0.92);
+  border: 1.5px solid var(--gold);
+  border-radius: 999px;
+  padding: 7px 18px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--gold);
+  cursor: pointer;
+  z-index: 35;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.75), 0 0 16px rgba(255, 207, 107, 0.3);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+
+.call-return-btn:hover {
+  transform: translateX(-50%) scale(1.05);
+  background: rgba(25, 14, 28, 0.96);
+}
+
+/* Botón único de Menú en Topbar */
+.menu-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 9px;
+  background: rgba(255, 207, 107, 0.12);
+  border: 1.5px solid rgba(255, 207, 107, 0.35);
+  color: var(--gold);
+}
+
+.menu-toggle-btn:hover,
+.menu-toggle-btn.accent {
+  background: rgba(255, 207, 107, 0.22);
+  border-color: var(--gold);
+  box-shadow: 0 0 12px rgba(255, 207, 107, 0.3);
+}
+
+.menu-btn-icon {
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.quick-mic-btn {
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9px;
+  font-size: 1rem;
+}
+
+/* Modo 2: Solo Videollamada (PC) */
 .theater-shell.view-call-only .cinema-stage {
   display: none !important;
 }
@@ -1077,34 +1479,17 @@ select:focus {
   height: 100%;
   max-height: calc(100dvh - 75px);
   width: 100%;
+  max-width: none;
 }
 
 .theater-shell.view-call-only .cam-frame {
   border-radius: 24px;
   border: 2px solid rgba(255, 255, 255, 0.18);
   box-shadow: 0 18px 55px rgba(0, 0, 0, 0.85);
+  aspect-ratio: unset;
 }
 
-.call-only-banner {
-  position: absolute;
-  top: 52px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: rgba(14, 8, 16, 0.92);
-  border: 1px solid var(--gold);
-  border-radius: 999px;
-  padding: 6px 16px;
-  font-size: 0.8rem;
-  color: var(--gold);
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  z-index: 25;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.7);
-  backdrop-filter: blur(8px);
-}
-
-/* Modo 3: Enfoque Película (Pantalla completa con cámaras flotantes) */
+/* Modo 3: Enfoque Película (PC) */
 .theater-shell.view-focus-movie .theater-grid {
   position: relative;
   display: block;
@@ -1146,9 +1531,10 @@ select:focus {
   border-radius: 16px;
   border: 2px solid rgba(255, 255, 255, 0.28);
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.88);
+  aspect-ratio: unset;
 }
 
-/* Modo 4: Dúo (Cámaras ampliadas + Película en PC) */
+/* Modo 4: Dúo (PC) */
 .theater-shell.view-duo .theater-grid {
   grid-template-columns: 1fr clamp(230px, 25vw, 340px);
   grid-template-rows: 1fr 1fr;
@@ -1167,73 +1553,186 @@ select:focus {
 .theater-shell.view-duo .cam-left {
   grid-area: left;
   height: 100%;
+  max-width: none;
 }
 
 .theater-shell.view-duo .cam-right {
   grid-area: right;
   height: 100%;
+  max-width: none;
+}
+
+.theater-shell.view-duo .cam-frame {
+  aspect-ratio: unset;
 }
 
 /* ---------------- Celular vertical: Vistas adaptadas ---------------- */
 @media (max-width: 768px) and (orientation: portrait) {
   .theater-topbar {
-    padding: 4px 8px;
+    padding: 6px 10px;
     gap: 6px;
   }
   .brand-title {
-    font-size: 1.25rem;
+    font-size: 1.3rem;
   }
   .action-cluster {
     flex-wrap: nowrap;
-    overflow-x: auto;
-    scrollbar-width: none;
-    -webkit-overflow-scrolling: touch;
-    padding-right: 4px;
-    gap: 5px;
-  }
-  .action-cluster::-webkit-scrollbar {
-    display: none;
+    gap: 6px;
   }
   .top-btn {
     padding: 5px 8px;
     font-size: 0.74rem;
-    white-space: nowrap;
-    flex-shrink: 0;
+  }
+  .now-playing {
+    display: none;
   }
 
-  /* Vista Cine Celular */
+  /* Vista Cine Celular: Película arriba (16:9), Cámara del otro grande abajo, mi cámara chiquita en la esquina (PIP) */
   .theater-shell.view-cinema .theater-grid {
-    grid-template-columns: 1fr 1fr;
-    grid-template-rows: minmax(0, 1fr) clamp(135px, 24vh, 185px);
-    grid-template-areas:
-      'screen screen'
-      'left right';
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    padding: 6px;
     gap: 8px;
-    padding: 6px 8px;
+    overflow: hidden;
   }
   .theater-shell.view-cinema .cinema-stage {
-    grid-area: screen;
+    flex: 0 0 auto;
+    width: 100%;
+    height: clamp(200px, 45vh, 340px);
+    min-height: 0;
   }
-  .theater-shell.view-cinema .cam-left {
-    grid-area: left;
+  .theater-shell.view-cinema .screen-bezel {
+    width: 100%;
     height: 100%;
-  }
-  .theater-shell.view-cinema .cam-right {
-    grid-area: right;
-    height: 100%;
+    aspect-ratio: 16 / 9;
+    max-height: 100%;
+    border-radius: 14px;
   }
 
-  /* Vista Solo Videollamada Celular: 50% arriba el otro / 50% abajo yo */
-  .theater-shell.view-call-only .theater-grid {
-    grid-template-columns: 1fr;
-    grid-template-rows: 1fr 1fr;
-    gap: 8px;
-    padding: 6px;
+  /* Cámara remota (el otro en PC) ocupa el espacio inferior en grande */
+  .theater-shell.view-cinema .cam-slot.is-remote {
+    flex: 1 1 0;
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    max-height: none;
+    max-width: none;
+    margin: 0;
+  }
+  .theater-shell.view-cinema .cam-slot.is-remote .cam-frame {
+    border-radius: 16px;
+    width: 100%;
+    height: 100%;
+    aspect-ratio: unset;
+  }
+  .theater-shell.view-cinema .cam-slot.is-remote .cam-video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center 25%;
+  }
+
+  /* Mi cámara (local) en chiquito flotando abajo a la derecha */
+  .theater-shell.view-cinema .cam-slot.is-local {
+    position: absolute;
+    bottom: 12px;
+    right: 12px;
+    width: 88px;
+    height: 128px;
+    z-index: 20;
+    margin: 0;
+    max-height: none;
+    max-width: none;
+  }
+  .theater-shell.view-cinema .cam-slot.is-local .cam-frame {
+    border-radius: 14px;
+    border: 2px solid rgba(255, 207, 107, 0.75);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.9);
+    aspect-ratio: unset;
+    width: 100%;
     height: 100%;
   }
-  .theater-shell.view-call-only .cam-slot {
-    height: 100%;
+  .theater-shell.view-cinema .cam-slot.is-local .cam-video {
     width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .theater-shell.view-cinema .cam-slot.is-local .cam-badge-row {
+    display: none;
+  }
+
+  /* Vista Solo Videollamada Celular: Cámara de él en grande y vertical a pantalla completa, mi cámara abajo pequeñito */
+  .theater-shell.view-call-only .theater-grid {
+    position: relative;
+    display: block;
+    width: 100%;
+    height: 100%;
+    padding: 0;
+    margin: 0;
+    overflow: hidden;
+  }
+  .theater-shell.view-call-only .cam-slot.is-remote {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    max-height: 100%;
+    max-width: 100%;
+    margin: 0;
+    z-index: 1;
+  }
+  .theater-shell.view-call-only .cam-slot.is-remote .cam-frame {
+    border-radius: 0;
+    border: none;
+    box-shadow: none;
+    width: 100%;
+    height: 100%;
+    aspect-ratio: unset;
+  }
+  .theater-shell.view-call-only .cam-slot.is-remote .cam-video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center 25%;
+  }
+  .theater-shell.view-call-only .cam-slot.is-remote .cam-badge-row {
+    position: absolute;
+    bottom: 24px;
+    left: 16px;
+    right: auto;
+    z-index: 10;
+  }
+
+  /* Mi cámara en Solo Videollamada: abajo pequeñito (estilo WhatsApp / FaceTime) */
+  .theater-shell.view-call-only .cam-slot.is-local {
+    position: absolute;
+    bottom: 24px;
+    right: 16px;
+    width: 105px;
+    height: 155px;
+    max-height: none;
+    max-width: none;
+    margin: 0;
+    z-index: 25;
+  }
+  .theater-shell.view-call-only .cam-slot.is-local .cam-frame {
+    border-radius: 16px;
+    border: 2.5px solid rgba(255, 207, 107, 0.7);
+    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.9);
+    overflow: hidden;
+    width: 100%;
+    height: 100%;
+    aspect-ratio: unset;
+  }
+  .theater-shell.view-call-only .cam-slot.is-local .cam-video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .theater-shell.view-call-only .cam-slot.is-local .cam-badge-row {
+    display: none;
   }
 
   /* Vista Enfoque Película Celular */

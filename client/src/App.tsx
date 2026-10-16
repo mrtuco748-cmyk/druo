@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { CameraTile, CamFraming } from './components/CameraTile';
 import { CinemaScreen, RoomSource, RoomSubs } from './components/CinemaScreen';
 import { DrawEvent, DrawStroke } from './components/DrawingCanvas';
+import { OptionsMenu } from './components/OptionsMenu';
 import { QualityDrawer } from './components/QualityDrawer';
 import { SourceDrawer } from './components/SourceDrawer';
 import { AudioPresetId, VideoPresetId } from './lib/quality';
@@ -54,10 +55,11 @@ export const App: React.FC = () => {
       const saved = JSON.parse(localStorage.getItem('druo.framing') || 'null');
       if (saved && typeof saved.zoom === 'number') return { ...saved, on: true, mic: true };
     } catch {}
-    // Por defecto zoom 2.2x para que se vea bien la cara de cerca
-    return { zoom: 2.2, y: 0, on: true, mic: true };
+    // Por defecto zoom 1.0x para que la cara quede perfectamente encuadrada sin cortes
+    return { zoom: 1.0, y: 0, on: true, mic: true };
   });
-  const [peerFraming, setPeerFraming] = useState<CamFraming>({ zoom: 2.2, y: 0, on: true, mic: true });
+  const [peerFraming, setPeerFraming] = useState<CamFraming>({ zoom: 1.0, y: 0, on: true, mic: true });
+  const [showMenu, setShowMenu] = useState(false);
 
   const [meSpeaking, setMeSpeaking] = useState(false);
   const [peerSpeaking, setPeerSpeaking] = useState(false);
@@ -170,29 +172,29 @@ export const App: React.FC = () => {
     try {
       stream = await navigator.mediaDevices.getUserMedia({
         audio: {
-          echoCancellation: { ideal: true },
-          noiseSuppression: { ideal: true },
-          autoGainControl: { ideal: true },
-          channelCount: 1,
-          googEchoCancellation: { ideal: true },
-          googAutoGainControl: { ideal: true },
-          googNoiseSuppression: { ideal: true },
-          googHighpassFilter: { ideal: true },
-        } as any,
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+        },
         video: {
-          width: { ideal: 480 },
-          height: { ideal: 360 },
-          frameRate: { ideal: 20, max: 24 },
           facingMode: 'user',
+          width: { ideal: 640 },
+          height: { ideal: 480 },
         },
       });
       setLocalStream(stream);
-    } catch (e) {
-      console.warn('Sin cámara/mic o permiso denegado, intentando solo audio:', e);
+    } catch (e1) {
+      console.warn('Fallo getUserMedia con constraints ideales, reintentando básico audio+video:', e1);
       try {
-        stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+        stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
         setLocalStream(stream);
-      } catch {}
+      } catch (e2) {
+        console.warn('Fallo cámara y audio, reintentando solo audio:', e2);
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+          setLocalStream(stream);
+        } catch {}
+      }
     }
 
     const iceRes = await fetch('/api/ice')
@@ -236,7 +238,7 @@ export const App: React.FC = () => {
           setSubs(m.subs || null);
         } else if (m.t === 'cam' && m.id !== myId) {
           setPeerFraming({
-            zoom: Number(m.zoom) || 2.2,
+            zoom: Number(m.zoom) || 1.0,
             y: Number(m.y) || 0,
             on: m.on !== false,
             mic: m.mic !== false,
@@ -391,111 +393,9 @@ export const App: React.FC = () => {
         </div>
 
         <div className="action-cluster">
-          {/* Botón rápido de Solo Videollamada / Volver al Cine */}
-          {viewMode === 'call-only' ? (
-            <button
-              type="button"
-              className="top-btn accent"
-              onClick={() => handleSelectViewMode('cinema')}
-              title="Volver a la pantalla de cine"
-            >
-              🎬 Volver al Cine
-            </button>
-          ) : (
-            <button
-              type="button"
-              className="top-btn accent"
-              onClick={() => handleSelectViewMode('call-only')}
-              title="Solo videollamada a pantalla completa (sin película)"
-            >
-              💬 Solo Llamada
-            </button>
-          )}
-
-          {/* Selector de Modos de Vista */}
-          <div className="view-pill-group" title="Modos de vista">
-            <button
-              type="button"
-              className={`view-pill-btn ${viewMode === 'cinema' ? 'active' : ''}`}
-              onClick={() => handleSelectViewMode('cinema')}
-            >
-              🎬 Cine
-            </button>
-            <button
-              type="button"
-              className={`view-pill-btn ${viewMode === 'call-only' ? 'active' : ''}`}
-              onClick={() => handleSelectViewMode('call-only')}
-            >
-              💬 Llamada
-            </button>
-            <button
-              type="button"
-              className={`view-pill-btn ${viewMode === 'focus-movie' ? 'active' : ''}`}
-              onClick={() => handleSelectViewMode('focus-movie')}
-            >
-              ⛶ Enfoque
-            </button>
-            <button
-              type="button"
-              className={`view-pill-btn ${viewMode === 'duo' ? 'active' : ''}`}
-              onClick={() => handleSelectViewMode('duo')}
-            >
-              📱 Dúo
-            </button>
-          </div>
-
-          <button
-            type="button"
-            className={`top-btn ${myFraming.mic ? '' : 'is-off'}`}
-            onClick={toggleMic}
-            title="Activar / silenciar micrófono"
-          >
-            {myFraming.mic ? '🎙️ Mic' : '🔇 Mudo'}
-          </button>
-          <button
-            type="button"
-            className={`top-btn ${myFraming.on ? '' : 'is-off'}`}
-            onClick={toggleCam}
-            title="Encender / pausar cámara"
-          >
-            {myFraming.on ? '📷 Cámara' : '🚫 Cámara'}
-          </button>
-          <button type="button" className="top-btn accent" onClick={() => setShowSources(true)}>
-            🎬 Película
-          </button>
-          <button
-            type="button"
-            className={`top-btn ${drawingActive ? 'accent' : ''}`}
-            onClick={() => setDrawingActive((d) => !d)}
-            title="Activar pizarra para dibujar sobre la película"
-          >
-            ✏️ Dibujar
-          </button>
-          {drawingActive && (
-            <div style={{ display: 'inline-flex', gap: '3px', alignItems: 'center' }}>
-              {['#ffcf6b', '#e8455b', '#4cd97b', '#4aa3df', '#ffffff'].map((c) => (
-                <button
-                  key={c}
-                  type="button"
-                  style={{
-                    width: '18px',
-                    height: '18px',
-                    borderRadius: '50%',
-                    background: c,
-                    border: drawingColor === c ? '2px solid #fff' : '1px solid rgba(0,0,0,0.4)',
-                    cursor: 'pointer',
-                    padding: 0,
-                  }}
-                  onClick={() => setDrawingColor(c)}
-                />
-              ))}
-            </div>
-          )}
-          <button type="button" className="top-btn" onClick={() => setShowQuality(true)}>
-            ⚙️ Calidad
-          </button>
+          {/* Reacciones rápidas */}
           <div className="react-bar">
-            {['❤️', '😂', '😮', '🥰'].map((em) => (
+            {['❤️', '😂', '🥰'].map((em) => (
               <button
                 key={em}
                 type="button"
@@ -509,11 +409,48 @@ export const App: React.FC = () => {
               </button>
             ))}
           </div>
-          <button type="button" className="top-btn" onClick={toggleFullscreen} title="Pantalla completa">
-            ⛶
+
+          {/* Botón rápido de mic */}
+          <button
+            type="button"
+            className={`top-btn quick-mic-btn ${myFraming.mic ? '' : 'is-off'}`}
+            onClick={toggleMic}
+            title={myFraming.mic ? 'Silenciar micrófono' : 'Activar micrófono'}
+          >
+            {myFraming.mic ? '🎙️' : '🔇'}
+          </button>
+
+          {/* Único botón de Menú desplegable */}
+          <button
+            type="button"
+            className={`top-btn menu-toggle-btn ${showMenu ? 'accent' : ''}`}
+            onClick={() => setShowMenu((v) => !v)}
+            title="Abrir menú de opciones, modos y películas"
+          >
+            <span className="menu-btn-icon">☰</span>
+            <span className="menu-btn-label">Menú</span>
           </button>
         </div>
       </header>
+
+      {/* Menú desplegable unificado */}
+      <OptionsMenu
+        open={showMenu}
+        onClose={() => setShowMenu(false)}
+        viewMode={viewMode}
+        onSelectViewMode={handleSelectViewMode}
+        onOpenSources={() => setShowSources(true)}
+        drawingActive={drawingActive}
+        onToggleDrawing={() => setDrawingActive((d) => !d)}
+        drawingColor={drawingColor}
+        onSelectDrawingColor={setDrawingColor}
+        myFraming={myFraming}
+        onToggleMic={toggleMic}
+        onToggleCam={toggleCam}
+        onChangeFraming={updateMyFraming}
+        onOpenQuality={() => setShowQuality(true)}
+        onToggleFullscreen={toggleFullscreen}
+      />
 
       {/* Banner de audio para celulares si el navegador bloquea sonido */}
       {(movieAudioBlocked || voiceAudioBlocked) && (
@@ -525,17 +462,14 @@ export const App: React.FC = () => {
       {/* Escenario principal: Cámara Izquierda | Pantalla de Cine | Cámara Derecha */}
       <div className="theater-grid">
         {viewMode === 'call-only' && (
-          <div className="call-only-banner">
-            <span>💬 Modo Solo Videollamada — Cámaras a pantalla completa</span>
-            <button
-              type="button"
-              className="btn-ghost"
-              style={{ padding: '2px 8px', fontSize: '0.74rem' }}
-              onClick={() => handleSelectViewMode('cinema')}
-            >
-              🎬 Volver al Cine
-            </button>
-          </div>
+          <button
+            type="button"
+            className="call-return-btn"
+            onClick={() => handleSelectViewMode('cinema')}
+            title="Volver a la pantalla de cine"
+          >
+            🎬 Volver al Cine
+          </button>
         )}
 
         <CameraTile
