@@ -155,8 +155,13 @@ select:focus {
 
 /* ---------------- Sala de cine ---------------- */
 .theater-shell {
-  width: 100%;
+  width: 100vw;
+  height: 100vh;
   height: 100dvh;
+  max-height: 100vh;
+  max-height: 100dvh;
+  overflow: hidden;
+  position: relative;
   display: grid;
   grid-template-rows: auto 1fr;
   padding: env(safe-area-inset-top, 0) env(safe-area-inset-right, 0) env(safe-area-inset-bottom, 0)
@@ -168,11 +173,16 @@ select:focus {
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  padding: 6px 14px;
-  background: rgba(8, 5, 11, 0.78);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  height: 48px;
+  min-height: 48px;
+  max-height: 48px;
+  padding: 0 14px;
+  background: rgba(8, 5, 11, 0.85);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   backdrop-filter: blur(10px);
-  z-index: 10;
+  -webkit-backdrop-filter: blur(10px);
+  z-index: 50;
+  flex-shrink: 0;
 }
 
 .brand-cluster,
@@ -257,38 +267,48 @@ select:focus {
 /* ---------------- Grid 3 columnas: Cam Izq | Pantalla Grande | Cam Der ---------------- */
 .theater-grid {
   display: grid;
-  grid-template-columns: clamp(190px, 18vw, 290px) minmax(0, 1fr) clamp(190px, 18vw, 290px);
+  grid-template-columns: clamp(160px, 15vw, 260px) minmax(0, 1fr) clamp(160px, 15vw, 260px);
+  grid-template-rows: 1fr;
   align-items: center;
   justify-content: center;
-  gap: 14px;
-  padding: 10px 16px;
+  gap: 12px;
+  padding: 8px 14px;
   height: 100%;
+  max-height: 100%;
   min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+  position: relative;
 }
 
 /* Cámaras laterales con encuadre cómodo y centrado */
 .cam-slot {
-  height: min(72vh, 480px);
+  height: 100%;
+  max-height: 100%;
   width: 100%;
-  max-width: 290px;
+  max-width: 260px;
   margin: 0 auto;
   display: flex;
   align-items: center;
   justify-content: center;
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .cam-frame {
   position: relative;
   width: 100%;
   height: 100%;
+  max-height: min(72vh, 460px);
   aspect-ratio: 9 / 14;
-  max-height: 100%;
   border-radius: 18px;
   overflow: hidden;
   background: #0d080f;
   border: 1.5px solid rgba(255, 255, 255, 0.12);
   box-shadow: 0 14px 40px rgba(0, 0, 0, 0.7);
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  margin: auto;
 }
 
 .cam-slot.is-speaking .cam-frame {
@@ -417,19 +437,22 @@ select:focus {
 .cinema-stage {
   width: 100%;
   height: 100%;
+  max-height: 100%;
   min-height: 0;
+  min-width: 0;
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow: hidden;
 }
 
 .screen-bezel {
   position: relative;
   width: 100%;
-  height: 100%;
+  height: auto;
+  max-width: calc((100vh - 64px) * 16 / 9);
+  max-height: 100%;
   aspect-ratio: 16 / 9;
-  max-width: 100%;
-  max-height: calc(100dvh - 66px);
   background: #000;
   border-radius: 18px;
   border: 1.5px solid rgba(255, 207, 107, 0.22);
@@ -440,6 +463,7 @@ select:focus {
   display: flex;
   align-items: center;
   justify-content: center;
+  margin: auto;
 }
 
 .cinema-video,
@@ -1437,10 +1461,10 @@ select:focus {
 /* Botón flotante Volver al Cine */
 .call-return-btn {
   position: absolute;
-  top: 14px;
+  top: 58px;
   left: 50%;
   transform: translateX(-50%);
-  background: rgba(14, 8, 16, 0.92);
+  background: rgba(14, 8, 16, 0.94);
   border: 1.5px solid var(--gold);
   border-radius: 999px;
   padding: 7px 18px;
@@ -1448,7 +1472,7 @@ select:focus {
   font-weight: 700;
   color: var(--gold);
   cursor: pointer;
-  z-index: 35;
+  z-index: 60;
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.75), 0 0 16px rgba(255, 207, 107, 0.3);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
@@ -1502,22 +1526,35 @@ select:focus {
 }
 
 .theater-shell.view-call-only .theater-grid {
+  display: grid;
   grid-template-columns: 1fr 1fr;
   grid-template-rows: 1fr;
   gap: 16px;
-  padding: 14px 18px;
+  padding: 12px 18px;
   height: 100%;
+  max-height: 100%;
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+  position: relative;
 }
 
 .theater-shell.view-call-only .cam-slot {
   height: 100%;
-  max-height: calc(100dvh - 75px);
+  max-height: 100%;
   width: 100%;
   max-width: none;
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .theater-shell.view-call-only .cam-frame {
-  border-radius: 24px;
+  width: 100%;
+  height: 100%;
+  max-height: 100%;
+  max-width: 100%;
+  border-radius: 20px;
   border: 2px solid rgba(255, 255, 255, 0.18);
   box-shadow: 0 18px 55px rgba(0, 0, 0, 0.85);
   aspect-ratio: unset;
@@ -1526,27 +1563,48 @@ select:focus {
 /* Modo 3: Enfoque Película (PC) */
 .theater-shell.view-focus-movie .theater-grid {
   position: relative;
-  display: block;
-  padding: 6px 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 12px;
   height: 100%;
+  max-height: 100%;
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .theater-shell.view-focus-movie .cinema-stage {
   width: 100%;
   height: 100%;
+  max-height: 100%;
+  min-height: 0;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
 }
 
 .theater-shell.view-focus-movie .screen-bezel {
-  max-height: calc(100dvh - 56px);
+  max-height: 100%;
+  max-width: calc((100vh - 60px) * 16 / 9);
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 9;
+  margin: auto;
 }
 
 .theater-shell.view-focus-movie .cam-slot {
   position: absolute;
-  bottom: 22px;
-  width: clamp(110px, 15vw, 175px);
-  height: clamp(80px, 11vw, 125px);
+  bottom: 20px;
+  width: clamp(100px, 13vw, 160px);
+  height: clamp(75px, 9.5vw, 115px);
+  max-height: none;
+  max-width: none;
   z-index: 25;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
+  overflow: hidden;
 }
 
 .theater-shell.view-focus-movie .cam-slot:hover {
@@ -1562,7 +1620,11 @@ select:focus {
 }
 
 .theater-shell.view-focus-movie .cam-frame {
-  border-radius: 16px;
+  width: 100%;
+  height: 100%;
+  max-height: 100%;
+  max-width: 100%;
+  border-radius: 14px;
   border: 2px solid rgba(255, 255, 255, 0.28);
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.88);
   aspect-ratio: unset;
@@ -1570,34 +1632,69 @@ select:focus {
 
 /* Modo 4: Dúo (PC) */
 .theater-shell.view-duo .theater-grid {
-  grid-template-columns: 1fr clamp(230px, 25vw, 340px);
+  display: grid;
+  grid-template-columns: 1fr clamp(200px, 22vw, 320px);
   grid-template-rows: 1fr 1fr;
   grid-template-areas:
     'screen right'
     'screen left';
   gap: 12px;
-  padding: 10px 14px;
+  padding: 8px 14px;
   height: 100%;
+  max-height: 100%;
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .theater-shell.view-duo .cinema-stage {
   grid-area: screen;
+  height: 100%;
+  max-height: 100%;
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.theater-shell.view-duo .screen-bezel {
+  max-height: 100%;
+  max-width: calc((100vh - 66px) * 16 / 9);
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 9;
+  margin: auto;
 }
 
 .theater-shell.view-duo .cam-left {
   grid-area: left;
   height: 100%;
+  max-height: 100%;
+  min-height: 0;
+  min-width: 0;
   max-width: none;
+  overflow: hidden;
 }
 
 .theater-shell.view-duo .cam-right {
   grid-area: right;
   height: 100%;
+  max-height: 100%;
+  min-height: 0;
+  min-width: 0;
   max-width: none;
+  overflow: hidden;
 }
 
 .theater-shell.view-duo .cam-frame {
+  width: 100%;
+  height: 100%;
+  max-height: 100%;
+  max-width: 100%;
   aspect-ratio: unset;
+  border-radius: 14px;
 }
 
 /* ---------------- Celular vertical: Vistas adaptadas ---------------- */

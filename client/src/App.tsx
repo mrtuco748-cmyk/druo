@@ -459,18 +459,20 @@ export const App: React.FC = () => {
         </button>
       )}
 
+      {/* Botón flotante para volver al cine en Solo Videollamada */}
+      {viewMode === 'call-only' && (
+        <button
+          type="button"
+          className="call-return-btn"
+          onClick={() => handleSelectViewMode('cinema')}
+          title="Volver a la pantalla de cine"
+        >
+          🎬 Volver al Cine
+        </button>
+      )}
+
       {/* Escenario principal: Cámara Izquierda | Pantalla de Cine | Cámara Derecha */}
       <div className="theater-grid">
-        {viewMode === 'call-only' && (
-          <button
-            type="button"
-            className="call-return-btn"
-            onClick={() => handleSelectViewMode('cinema')}
-            title="Volver a la pantalla de cine"
-          >
-            🎬 Volver al Cine
-          </button>
-        )}
 
         <CameraTile
           side="left"
