@@ -454,6 +454,40 @@ select:focus {
   border: none;
 }
 
+.embed-helper-banner {
+  position: absolute;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(18, 10, 22, 0.9);
+  border: 1px solid rgba(255, 207, 107, 0.45);
+  color: var(--gold);
+  border-radius: 999px;
+  padding: 6px 18px;
+  font-size: 0.78rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 6px 22px rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  pointer-events: none;
+  z-index: 15;
+  animation: fadeInOutEmbed 6s forwards;
+}
+
+.embed-helper-banner small {
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 0.72rem;
+}
+
+@keyframes fadeInOutEmbed {
+  0% { opacity: 0; transform: translate(-50%, -10px); }
+  15% { opacity: 1; transform: translate(-50%, 0); }
+  75% { opacity: 1; }
+  100% { opacity: 0; pointer-events: none; }
+}
+
 .cinema-video::cue {
   background: rgba(0, 0, 0, 0.72);
   color: #fff;

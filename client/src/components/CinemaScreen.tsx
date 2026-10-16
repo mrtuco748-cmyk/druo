@@ -594,7 +594,7 @@ export const CinemaScreen: React.FC<Props> = ({
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (['INPUT', 'TEXTAREA', 'SELECT'].includes((e.target as HTMLElement)?.tagName)) return;
-      if (!source) return;
+      if (!source || source.kind === 'embed') return;
 
       if (e.code === 'Space') {
         e.preventDefault();
@@ -683,6 +683,10 @@ export const CinemaScreen: React.FC<Props> = ({
               allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
               allowFullScreen
             />
+            <div className="embed-helper-banner">
+              <span>🎬 Reproductor Cuevana listo</span>
+              <small>Usá los controles dentro del video para reproducir, pausar o cambiar audio</small>
+            </div>
           </div>
         )}
 
@@ -747,7 +751,7 @@ export const CinemaScreen: React.FC<Props> = ({
           onClearDrawing={onClearDrawing}
         />
 
-        {source && (
+        {source && source.kind !== 'embed' && (
           <div className="cinema-controls" onClick={(e) => e.stopPropagation()}>
             <button
               type="button"

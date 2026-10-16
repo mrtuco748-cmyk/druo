@@ -120,7 +120,7 @@ export async function resolveCuevana(cuevanaUrl) {
         Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
         Referer: cuevanaUrl,
       },
-      signal: AbortSignal.timeout(6000),
+      signal: AbortSignal.timeout(15000),
     });
     if (r2.ok) html2 = await r2.text();
   } catch {}
@@ -188,7 +188,7 @@ export async function resolveCuevana(cuevanaUrl) {
           Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
           Referer: 'https://cuevanapro.org/',
         },
-        signal: AbortSignal.timeout(8000),
+        signal: AbortSignal.timeout(20000),
       });
       if (!rEmbed.ok) continue;
       const embedHtml = await rEmbed.text();
