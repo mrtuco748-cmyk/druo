@@ -16,6 +16,7 @@ interface Props {
   framing: CamFraming;
   onChangeFraming?: (next: CamFraming) => void;
   onSpeakingChange?: (speaking: boolean) => void;
+  onAudioBlockedChange?: (blocked: boolean) => void;
 }
 
 export const CameraTile: React.FC<Props> = ({
@@ -27,6 +28,7 @@ export const CameraTile: React.FC<Props> = ({
   framing,
   onChangeFraming,
   onSpeakingChange,
+  onAudioBlockedChange,
 }) => {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const [speaking, setSpeaking] = useState(false);
@@ -35,8 +37,9 @@ export const CameraTile: React.FC<Props> = ({
   useEffect(() => {
     const el = videoRef.current;
     if (!el) return;
-    el.muted = isMe;
-    el.defaultMuted = isMe;
+    // Las cámaras siempre van muteadas para evitar acoples y que Android no bloquee el video
+    el.muted = true;
+    el.defaultMuted = true;
     if (el.srcObject !== stream) {
       el.srcObject = stream || null;
     }
@@ -45,9 +48,9 @@ export const CameraTile: React.FC<Props> = ({
         console.warn('[CameraTile] play error:', err);
       });
     }
-  }, [stream, isMe]);
+  }, [stream]);
 
-  // Detector de voz liviano (AnalyserNode) para iluminar el borde y bajar un poquito la peli (ducking)
+  // Detector de voz liviano (AnalyserNode) para iluminar el borde
   useEffect(() => {
     if (!stream || !stream.getAudioTracks().length) {
       setSpeaking(false);
@@ -71,8 +74,8 @@ export const CameraTile: React.FC<Props> = ({
         let sum = 0;
         for (let i = 2; i < 28; i++) sum += buf[i];
         const avg = sum / 26;
-        const active = avg > 22 && framing.mic !== false;
-        if (active) hold = 3;
+        const active = avg > 36 && framing.mic !== false;
+        if (active) hold = 2;
         else if (hold > 0) hold -= 1;
         const nowSpeaking = hold > 0;
         setSpeaking((prev) => {
@@ -98,31 +101,109 @@ export const CameraTile: React.FC<Props> = ({
   const [peerVolume, setPeerVolume] = useState(1);
   const [peerMuted, setPeerMuted] = useState(false);
   const [showVolPop, setShowVolPop] = useState(false);
+  const audioCtxRef = useRef<AudioContext | null>(null);
   const gainNodeRef = useRef<GainNode | null>(null);
 
-  // Control de audio remoto con Web Audio GainNode para permitir boost de hasta 250%
+  // Control de audio remoto: elemento <audio> con playsInline y Web Audio GainNode para boost de hasta 250%
   useEffect(() => {
     if (isMe) return;
     const el = audioRef.current;
     if (!el) return;
-    if (el.srcObject !== stream) {
-      el.srcObject = stream || null;
+    const aTrack = stream?.getAudioTracks()[0];
+    if (!aTrack) {
+      el.srcObject = null;
+      setAudioBlocked(false);
+      onAudioBlockedChange?.(false);
+      return;
     }
-    if (stream && stream.getAudioTracks().length) {
+
+    const curStream = el.srcObject as MediaStream | null;
+    const curTrack = curStream?.getAudioTracks()[0];
+    if (curTrack?.id !== aTrack.id) {
+      el.srcObject = new MediaStream([aTrack]);
       el.play()
-        .then(() => setAudioBlocked(false))
+        .then(() => {
+          setAudioBlocked(false);
+          onAudioBlockedChange?.(false);
+        })
         .catch((err) => {
           console.warn('[CameraTile] Audio autoplay blocked:', err);
           setAudioBlocked(true);
+          onAudioBlockedChange?.(true);
         });
+    }
+
+    // Configurar Web Audio para reproducir por el altavoz multimedia y permitir boost
+    let srcNode: MediaStreamAudioSourceNode | null = null;
+    let gainNode: GainNode | null = null;
+    try {
+      const AC = window.AudioContext || (window as any).webkitAudioContext;
+      const ctx = audioCtxRef.current || new AC();
+      audioCtxRef.current = ctx;
+
+      srcNode = ctx.createMediaStreamSource(new MediaStream([aTrack]));
+      gainNode = ctx.createGain();
+      gainNode.gain.value = peerMuted ? 0 : peerVolume;
+      gainNodeRef.current = gainNode;
+
+      srcNode.connect(gainNode);
+      gainNode.connect(ctx.destination);
+
+      if (ctx.state === 'running') {
+        // Web Audio activo: silenciamos el tag <audio> para que no suene doble
+        el.muted = true;
+      }
+
+      const unlockAudio = () => {
+        if (ctx.state === 'suspended') {
+          ctx.resume().then(() => {
+            if (el) el.muted = true;
+          }).catch(() => {});
+        }
+        el.play().then(() => {
+          setAudioBlocked(false);
+          onAudioBlockedChange?.(false);
+        }).catch(() => {});
+      };
+
+      window.addEventListener('click', unlockAudio, { passive: true });
+      window.addEventListener('touchstart', unlockAudio, { passive: true });
+
+      return () => {
+        window.removeEventListener('click', unlockAudio);
+        window.removeEventListener('touchstart', unlockAudio);
+        try {
+          srcNode?.disconnect();
+          gainNode?.disconnect();
+        } catch {}
+      };
+    } catch (e) {
+      console.warn('[CameraTile] WebAudio setup error:', e);
     }
   }, [stream, isMe]);
 
   useEffect(() => {
-    if (isMe || !audioRef.current) return;
+    if (isMe) return;
     const targetVol = peerMuted ? 0 : peerVolume;
-    audioRef.current.volume = Math.min(1, targetVol);
+    if (gainNodeRef.current) {
+      gainNodeRef.current.gain.value = targetVol;
+    }
+    if (audioRef.current && (!audioCtxRef.current || audioCtxRef.current.state !== 'running')) {
+      audioRef.current.volume = Math.max(0, Math.min(1, targetVol));
+    }
   }, [peerVolume, peerMuted, isMe]);
+
+  const handleUnlockAudioClick = () => {
+    if (audioCtxRef.current?.state === 'suspended') {
+      audioCtxRef.current.resume().catch(() => {});
+    }
+    if (audioRef.current) {
+      audioRef.current.play().then(() => {
+        setAudioBlocked(false);
+        onAudioBlockedChange?.(false);
+      }).catch(() => {});
+    }
+  };
 
   return (
     <aside className={`cam-slot cam-${side} ${speaking ? 'is-speaking' : ''} ${online ? 'is-online' : 'is-offline'}`}>
@@ -134,7 +215,7 @@ export const CameraTile: React.FC<Props> = ({
           ref={videoRef}
           autoPlay
           playsInline
-          muted={isMe}
+          muted
           className={`cam-video ${isMe ? 'is-mirrored' : ''} ${hasVideo ? '' : 'is-hidden'}`}
           style={{
             transform: `${isMe ? 'scaleX(-1) ' : ''}scale(${zoom.toFixed(2)}) translateY(${y}%)`,
@@ -144,10 +225,8 @@ export const CameraTile: React.FC<Props> = ({
           <button
             type="button"
             className="autoplay-banner"
-            style={{ top: 'auto', bottom: '48px', fontSize: '0.74rem', padding: '6px 12px' }}
-            onClick={() => {
-              audioRef.current?.play().then(() => setAudioBlocked(false)).catch(() => {});
-            }}
+            style={{ top: 'auto', bottom: '48px', fontSize: '0.74rem', padding: '6px 12px', zIndex: 10 }}
+            onClick={handleUnlockAudioClick}
           >
             🔊 Tocar para escuchar
           </button>

@@ -94,6 +94,7 @@ const routes = {
   'POST /api/play-url': async (b) => (needStorage(), storage.playUrl(b.key)),
   'POST /api/library/delete': async (b) => (needStorage(), storage.deleteKeys(b.keys || [])),
   'POST /api/resolve': async (b) => classify(b.url),
+  'POST /api/keepalive': async () => ({ ok: true, peers: room.peers.size, uptime: Math.round(process.uptime()), serverTime: Date.now() }),
 };
 
 const server = http.createServer(async (req, res) => {
@@ -206,7 +207,18 @@ setInterval(() => {
       ws.ping();
     } catch {}
   }
-}, 10_000).unref();
+// Keep-alive: si hay personas en la sala, ping a sí mismo cada 6 minutos para que Render no suspenda el servicio
+const renderUrl = process.env.RENDER_EXTERNAL_URL || 'https://druo.onrender.com';
+setInterval(async () => {
+  if (room.peers.size > 0 && renderUrl.startsWith('http')) {
+    try {
+      const r = await fetch(`${renderUrl}/health`);
+      if (r.ok) console.log(`[keepalive] Ping exitoso a ${renderUrl}/health (${room.peers.size} en sala)`);
+    } catch (e) {
+      console.warn(`[keepalive] Aviso ping:`, e.message);
+    }
+  }
+}, 6 * 60 * 1000).unref();
 
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`Druo escuchando en http://localhost:${PORT}`);

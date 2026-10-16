@@ -61,9 +61,12 @@ export const App: React.FC = () => {
 
   const [meSpeaking, setMeSpeaking] = useState(false);
   const [peerSpeaking, setPeerSpeaking] = useState(false);
-  const [duckingEnabled, setDuckingEnabled] = useState(true);
+  const [duckingEnabled, setDuckingEnabled] = useState(false); // Por defecto desactivado para no silenciar la peli por accidente
   const [waitOnBuffer, setWaitOnBuffer] = useState(true);
   const [peerBuffering, setPeerBuffering] = useState(false);
+
+  const [movieAudioBlocked, setMovieAudioBlocked] = useState(false);
+  const [voiceAudioBlocked, setVoiceAudioBlocked] = useState(false);
 
   const [videoPreset, setVideoPreset] = useState<VideoPresetId>('auto');
   const [audioPreset, setAudioPreset] = useState<AudioPresetId>('voice');
@@ -102,6 +105,33 @@ export const App: React.FC = () => {
       .catch(() => {});
   }, []);
 
+  // Keep-alive: ping al servidor cada 3 minutos para mantener despierto Render mientras usan la sala
+  useEffect(() => {
+    if (!entered) return;
+    const ping = () => {
+      fetch('/api/keepalive', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: myId }),
+      }).catch(() => {});
+    };
+    ping();
+    const interval = setInterval(ping, 3 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, [entered, myId]);
+
+  const unlockAllAudio = () => {
+    try {
+      const AC = window.AudioContext || (window as any).webkitAudioContext;
+      if (AC) {
+        const dummy = new AC();
+        dummy.resume().catch(() => {});
+      }
+    } catch {}
+    setMovieAudioBlocked(false);
+    setVoiceAudioBlocked(false);
+  };
+
   const spawnReaction = (emoji: string) => {
     const id = Date.now() + Math.random();
     setFloatingReacts((prev) => [...prev, { id, emoji }]);
@@ -112,6 +142,9 @@ export const App: React.FC = () => {
 
   // Arrancar cámara, WebSocket y WebRTC al entrar a la sala
   const enterTheater = async () => {
+    // Desbloquear AudioContext síncronamente en el click de entrada
+    unlockAllAudio();
+
     localStorage.setItem('druo.seat', mySeat);
     localStorage.setItem('druo.name', myName);
     setEntered(true);
@@ -340,6 +373,9 @@ export const App: React.FC = () => {
           <span className={`conn-pill ${wsOnline ? 'ok' : 'warn'}`}>
             {wsOnline ? (otherPeer ? '2/2 en sala' : '1/2 esperando') : 'Reconectando…'}
           </span>
+          <span className="conn-pill ok" title="Keep-alive activo para evitar que Render se suspenda mientras ven la peli">
+            ⚡ Sala activa
+          </span>
           {source && <span className="now-playing">🎞️ {source.title}</span>}
         </div>
 
@@ -415,6 +451,13 @@ export const App: React.FC = () => {
         </div>
       </header>
 
+      {/* Banner de audio para celulares si el navegador bloquea sonido */}
+      {(movieAudioBlocked || voiceAudioBlocked) && (
+        <button type="button" className="master-audio-banner" onClick={unlockAllAudio}>
+          🔊 Tocá acá para activar el sonido (Película y Voz)
+        </button>
+      )}
+
       {/* Escenario principal: Cámara Izquierda | Pantalla de Cine | Cámara Derecha */}
       <div className="theater-grid">
         <CameraTile
@@ -426,6 +469,7 @@ export const App: React.FC = () => {
           framing={leftIsMe ? myFraming : peerFraming}
           onChangeFraming={leftIsMe ? updateMyFraming : undefined}
           onSpeakingChange={leftIsMe ? setMeSpeaking : setPeerSpeaking}
+          onAudioBlockedChange={!leftIsMe ? setVoiceAudioBlocked : undefined}
         />
 
         <CinemaScreen
@@ -453,6 +497,7 @@ export const App: React.FC = () => {
           incomingDrawEvent={incomingDrawEvent}
           onCloseDrawing={() => setDrawingActive(false)}
           onClearDrawing={() => setIncomingDrawEvent(null)}
+          onAutoplayBlockedChange={setMovieAudioBlocked}
         />
 
         <CameraTile
@@ -464,6 +509,7 @@ export const App: React.FC = () => {
           framing={!leftIsMe ? myFraming : peerFraming}
           onChangeFraming={!leftIsMe ? updateMyFraming : undefined}
           onSpeakingChange={!leftIsMe ? setMeSpeaking : setPeerSpeaking}
+          onAudioBlockedChange={leftIsMe ? setVoiceAudioBlocked : undefined}
         />
       </div>
 

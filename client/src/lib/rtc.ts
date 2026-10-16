@@ -27,10 +27,17 @@ export interface CallStats {
 }
 
 function mungeOpusSdp(sdp: string, _maxAvgBitrate: number): string {
-  if (!sdp.includes('opus/48000')) return sdp;
-  return sdp.replace(/(a=fmtp:\d+ [^\r\n]+)/g, (match) => {
-    return `${match};stereo=0;sprop-stereo=0;useinbandfec=1;usedtx=1`;
-  });
+  const match = sdp.match(/a=rtpmap:(\d+)\s+opus\/48000/i);
+  if (!match) return sdp;
+  const pt = match[1];
+  const fmtpRegex = new RegExp(`(a=fmtp:${pt}\\s+[^\\r\\n]+)`);
+  if (fmtpRegex.test(sdp)) {
+    return sdp.replace(fmtpRegex, (m) => `${m};stereo=0;sprop-stereo=0;useinbandfec=1;usedtx=1`);
+  }
+  return sdp.replace(
+    new RegExp(`(a=rtpmap:${pt}\\s+opus\/48000[^\\r\\n]*)`),
+    `$1\r\na=fmtp:${pt} stereo=0;sprop-stereo=0;useinbandfec=1;usedtx=1`
+  );
 }
 
 export class PeerCall {

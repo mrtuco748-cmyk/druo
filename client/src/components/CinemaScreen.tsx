@@ -53,6 +53,7 @@ interface Props {
   incomingDrawEvent: DrawEvent | null;
   onCloseDrawing: () => void;
   onClearDrawing: () => void;
+  onAutoplayBlockedChange?: (blocked: boolean) => void;
 }
 
 declare global {
@@ -113,6 +114,7 @@ export const CinemaScreen: React.FC<Props> = ({
   incomingDrawEvent,
   onCloseDrawing,
   onClearDrawing,
+  onAutoplayBlockedChange,
 }) => {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const hlsRef = useRef<Hls | null>(null);
@@ -129,6 +131,35 @@ export const CinemaScreen: React.FC<Props> = ({
   const [trackBlobUrl, setTrackBlobUrl] = useState<string | null>(null);
   const [controlsVisible, setControlsVisible] = useState(true);
   const hideTimer = useRef<any>(null);
+
+  const unlockAudio = () => {
+    const v = videoRef.current;
+    if (v) {
+      v.muted = false;
+      if (v.paused && playback.playing) {
+        v.play().catch(() => {});
+      }
+    }
+    if (ytPlayerRef.current?.unMute) {
+      try {
+        ytPlayerRef.current.unMute();
+        if (playback.playing) ytPlayerRef.current.playVideo?.();
+      } catch {}
+    }
+    setAutoplayBlocked(false);
+    onAutoplayBlockedChange?.(false);
+  };
+
+  useEffect(() => {
+    if (!autoplayBlocked) return;
+    const onGesture = () => unlockAudio();
+    window.addEventListener('click', onGesture, { once: true, passive: true });
+    window.addEventListener('touchstart', onGesture, { once: true, passive: true });
+    return () => {
+      window.removeEventListener('click', onGesture);
+      window.removeEventListener('touchstart', onGesture);
+    };
+  }, [autoplayBlocked, playback.playing]);
 
   const bumpControls = () => {
     setControlsVisible(true);
@@ -212,7 +243,17 @@ export const CinemaScreen: React.FC<Props> = ({
         onLevelsLoaded(lvls);
         if (savedPos > 1) v.currentTime = savedPos;
         if (playback.playing) {
-          v.play().catch(() => setAutoplayBlocked(true));
+          v.play()
+            .then(() => {
+              setAutoplayBlocked(false);
+              onAutoplayBlockedChange?.(false);
+            })
+            .catch(() => {
+              v.muted = true;
+              v.play().catch(() => {});
+              setAutoplayBlocked(true);
+              onAutoplayBlockedChange?.(true);
+            });
         }
       });
     } else {
@@ -223,7 +264,17 @@ export const CinemaScreen: React.FC<Props> = ({
           v.currentTime = savedPos;
         }
         if (playback.playing) {
-          v.play().catch(() => setAutoplayBlocked(true));
+          v.play()
+            .then(() => {
+              setAutoplayBlocked(false);
+              onAutoplayBlockedChange?.(false);
+            })
+            .catch(() => {
+              v.muted = true;
+              v.play().catch(() => {});
+              setAutoplayBlocked(true);
+              onAutoplayBlockedChange?.(true);
+            });
         }
       };
     }
@@ -381,8 +432,16 @@ export const CinemaScreen: React.FC<Props> = ({
       if (shouldPlay && v.paused) {
         suppressEventsUntil.current = Date.now() + 600;
         v.play()
-          .then(() => setAutoplayBlocked(false))
-          .catch(() => setAutoplayBlocked(true));
+          .then(() => {
+            setAutoplayBlocked(false);
+            onAutoplayBlockedChange?.(false);
+          })
+          .catch(() => {
+            v.muted = true;
+            v.play().catch(() => {});
+            setAutoplayBlocked(true);
+            onAutoplayBlockedChange?.(true);
+          });
       } else if (!shouldPlay && !v.paused) {
         suppressEventsUntil.current = Date.now() + 600;
         v.pause();
@@ -509,13 +568,13 @@ export const CinemaScreen: React.FC<Props> = ({
           <button
             type="button"
             className="autoplay-banner"
-            onClick={() => {
-              setAutoplayBlocked(false);
-              videoRef.current?.play().catch(() => {});
-              ytPlayerRef.current?.playVideo?.();
+            style={{ zIndex: 30 }}
+            onClick={(e) => {
+              e.stopPropagation();
+              unlockAudio();
             }}
           >
-            ▶️ Tocá acá para activar el audio y sincronizar la película
+            🔊 Tocá acá para activar el sonido de la película
           </button>
         )}
 
