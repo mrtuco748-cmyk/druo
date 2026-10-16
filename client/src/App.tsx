@@ -84,6 +84,15 @@ export const App: React.FC = () => {
   const [initialDrawings, setInitialDrawings] = useState<DrawStroke[]>([]);
   const drawReceiverRef = useRef<((ev: DrawEvent) => void) | null>(null);
 
+  const [viewMode, setViewMode] = useState<'cinema' | 'call-only' | 'focus-movie' | 'duo'>(() => {
+    return (localStorage.getItem('druo.viewMode') as any) || 'cinema';
+  });
+
+  const handleSelectViewMode = (mode: 'cinema' | 'call-only' | 'focus-movie' | 'duo') => {
+    setViewMode(mode);
+    localStorage.setItem('druo.viewMode', mode);
+  };
+
   const [stats, setStats] = useState<CallStats>({
     connected: false,
     viaRelay: false,
@@ -367,7 +376,7 @@ export const App: React.FC = () => {
   }
 
   return (
-    <div className="theater-shell">
+    <div className={`theater-shell view-${viewMode}`}>
       {/* Barra superior discreta */}
       <header className="theater-topbar">
         <div className="brand-cluster">
@@ -382,6 +391,59 @@ export const App: React.FC = () => {
         </div>
 
         <div className="action-cluster">
+          {/* Botón rápido de Solo Videollamada / Volver al Cine */}
+          {viewMode === 'call-only' ? (
+            <button
+              type="button"
+              className="top-btn accent"
+              onClick={() => handleSelectViewMode('cinema')}
+              title="Volver a la pantalla de cine"
+            >
+              🎬 Volver al Cine
+            </button>
+          ) : (
+            <button
+              type="button"
+              className="top-btn accent"
+              onClick={() => handleSelectViewMode('call-only')}
+              title="Solo videollamada a pantalla completa (sin película)"
+            >
+              💬 Solo Llamada
+            </button>
+          )}
+
+          {/* Selector de Modos de Vista */}
+          <div className="view-pill-group" title="Modos de vista">
+            <button
+              type="button"
+              className={`view-pill-btn ${viewMode === 'cinema' ? 'active' : ''}`}
+              onClick={() => handleSelectViewMode('cinema')}
+            >
+              🎬 Cine
+            </button>
+            <button
+              type="button"
+              className={`view-pill-btn ${viewMode === 'call-only' ? 'active' : ''}`}
+              onClick={() => handleSelectViewMode('call-only')}
+            >
+              💬 Llamada
+            </button>
+            <button
+              type="button"
+              className={`view-pill-btn ${viewMode === 'focus-movie' ? 'active' : ''}`}
+              onClick={() => handleSelectViewMode('focus-movie')}
+            >
+              ⛶ Enfoque
+            </button>
+            <button
+              type="button"
+              className={`view-pill-btn ${viewMode === 'duo' ? 'active' : ''}`}
+              onClick={() => handleSelectViewMode('duo')}
+            >
+              📱 Dúo
+            </button>
+          </div>
+
           <button
             type="button"
             className={`top-btn ${myFraming.mic ? '' : 'is-off'}`}
@@ -462,6 +524,20 @@ export const App: React.FC = () => {
 
       {/* Escenario principal: Cámara Izquierda | Pantalla de Cine | Cámara Derecha */}
       <div className="theater-grid">
+        {viewMode === 'call-only' && (
+          <div className="call-only-banner">
+            <span>💬 Modo Solo Videollamada — Cámaras a pantalla completa</span>
+            <button
+              type="button"
+              className="btn-ghost"
+              style={{ padding: '2px 8px', fontSize: '0.74rem' }}
+              onClick={() => handleSelectViewMode('cinema')}
+            >
+              🎬 Volver al Cine
+            </button>
+          </div>
+        )}
+
         <CameraTile
           side="left"
           label={leftIsMe ? myName : otherPeer?.name || 'Izquierda'}
@@ -571,6 +647,8 @@ export const App: React.FC = () => {
         waitOnBuffer={waitOnBuffer}
         onToggleWaitOnBuffer={setWaitOnBuffer}
         stats={stats}
+        viewMode={viewMode}
+        onSelectViewMode={handleSelectViewMode}
       />
     </div>
   );

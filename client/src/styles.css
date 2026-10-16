@@ -896,44 +896,292 @@ select:focus {
   }
 }
 
-/* ---------------- Celular vertical: pantalla enorme + cámaras a izq y der ---------------- */
-@media (max-width: 720px) and (orientation: portrait) {
-  .theater-grid {
+/* ---------------- Modos de Vista (Cine / Solo Videollamada / Enfoque / Dúo) ---------------- */
+
+.view-pill-group {
+  display: inline-flex;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 999px;
+  padding: 2px;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.view-pill-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-dim);
+  font-size: 0.74rem;
+  padding: 4px 9px;
+  border-radius: 999px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+
+.view-pill-btn:hover {
+  color: var(--text-main);
+}
+
+.view-pill-btn.active {
+  background: rgba(255, 207, 107, 0.22);
+  color: var(--gold);
+  font-weight: 600;
+  box-shadow: 0 0 10px rgba(255, 207, 107, 0.18);
+}
+
+/* Modo 2: Solo Videollamada (Cámaras gigantes cara a cara) */
+.theater-shell.view-call-only .cinema-stage {
+  display: none !important;
+}
+
+.theater-shell.view-call-only .theater-grid {
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr;
+  gap: 16px;
+  padding: 14px 18px;
+  height: 100%;
+}
+
+.theater-shell.view-call-only .cam-slot {
+  height: 100%;
+  max-height: calc(100dvh - 75px);
+  width: 100%;
+}
+
+.theater-shell.view-call-only .cam-frame {
+  border-radius: 24px;
+  border: 2px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 0 18px 55px rgba(0, 0, 0, 0.85);
+}
+
+.call-only-banner {
+  position: absolute;
+  top: 52px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(14, 8, 16, 0.92);
+  border: 1px solid var(--gold);
+  border-radius: 999px;
+  padding: 6px 16px;
+  font-size: 0.8rem;
+  color: var(--gold);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  z-index: 25;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(8px);
+}
+
+/* Modo 3: Enfoque Película (Pantalla completa con cámaras flotantes) */
+.theater-shell.view-focus-movie .theater-grid {
+  position: relative;
+  display: block;
+  padding: 6px 10px;
+  height: 100%;
+}
+
+.theater-shell.view-focus-movie .cinema-stage {
+  width: 100%;
+  height: 100%;
+}
+
+.theater-shell.view-focus-movie .screen-bezel {
+  max-height: calc(100dvh - 56px);
+}
+
+.theater-shell.view-focus-movie .cam-slot {
+  position: absolute;
+  bottom: 22px;
+  width: clamp(110px, 15vw, 175px);
+  height: clamp(80px, 11vw, 125px);
+  z-index: 25;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.theater-shell.view-focus-movie .cam-slot:hover {
+  transform: scale(1.06);
+}
+
+.theater-shell.view-focus-movie .cam-left {
+  left: 20px;
+}
+
+.theater-shell.view-focus-movie .cam-right {
+  right: 20px;
+}
+
+.theater-shell.view-focus-movie .cam-frame {
+  border-radius: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.28);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.88);
+}
+
+/* Modo 4: Dúo (Cámaras ampliadas + Película en PC) */
+.theater-shell.view-duo .theater-grid {
+  grid-template-columns: 1fr clamp(230px, 25vw, 340px);
+  grid-template-rows: 1fr 1fr;
+  grid-template-areas:
+    'screen right'
+    'screen left';
+  gap: 12px;
+  padding: 10px 14px;
+  height: 100%;
+}
+
+.theater-shell.view-duo .cinema-stage {
+  grid-area: screen;
+}
+
+.theater-shell.view-duo .cam-left {
+  grid-area: left;
+  height: 100%;
+}
+
+.theater-shell.view-duo .cam-right {
+  grid-area: right;
+  height: 100%;
+}
+
+/* ---------------- Celular vertical: Vistas adaptadas ---------------- */
+@media (max-width: 768px) and (orientation: portrait) {
+  .theater-topbar {
+    padding: 4px 8px;
+    gap: 6px;
+  }
+  .brand-title {
+    font-size: 1.25rem;
+  }
+  .action-cluster {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    padding-right: 4px;
+    gap: 5px;
+  }
+  .action-cluster::-webkit-scrollbar {
+    display: none;
+  }
+  .top-btn {
+    padding: 5px 8px;
+    font-size: 0.74rem;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  /* Vista Cine Celular */
+  .theater-shell.view-cinema .theater-grid {
     grid-template-columns: 1fr 1fr;
-    grid-template-rows: minmax(0, 1fr) 150px;
+    grid-template-rows: minmax(0, 1fr) clamp(135px, 24vh, 185px);
     grid-template-areas:
       'screen screen'
       'left right';
+    gap: 8px;
+    padding: 6px 8px;
   }
-  .cinema-stage {
+  .theater-shell.view-cinema .cinema-stage {
     grid-area: screen;
   }
-  .cam-left {
+  .theater-shell.view-cinema .cam-left {
     grid-area: left;
-    height: 140px;
+    height: 100%;
   }
-  .cam-right {
+  .theater-shell.view-cinema .cam-right {
     grid-area: right;
-    height: 140px;
+    height: 100%;
   }
+
+  /* Vista Solo Videollamada Celular: 50% arriba el otro / 50% abajo yo */
+  .theater-shell.view-call-only .theater-grid {
+    grid-template-columns: 1fr;
+    grid-template-rows: 1fr 1fr;
+    gap: 8px;
+    padding: 6px;
+    height: 100%;
+  }
+  .theater-shell.view-call-only .cam-slot {
+    height: 100%;
+    width: 100%;
+  }
+
+  /* Vista Enfoque Película Celular */
+  .theater-shell.view-focus-movie .cam-slot {
+    bottom: 64px;
+    width: 105px;
+    height: 78px;
+  }
+  .theater-shell.view-focus-movie .cam-left {
+    left: 8px;
+  }
+  .theater-shell.view-focus-movie .cam-right {
+    right: 8px;
+  }
+
+  /* Vista Dúo Celular: Película 44% arriba, Cámaras 56% abajo ampliadas */
+  .theater-shell.view-duo .theater-grid {
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 44% 56%;
+    grid-template-areas:
+      'screen screen'
+      'left right';
+    gap: 8px;
+    padding: 6px 8px;
+  }
+  .theater-shell.view-duo .cinema-stage {
+    grid-area: screen;
+  }
+  .theater-shell.view-duo .cam-left {
+    grid-area: left;
+    height: 100%;
+  }
+  .theater-shell.view-duo .cam-right {
+    grid-area: right;
+    height: 100%;
+  }
+
   .ctrl-vol,
   .now-playing {
     display: none;
   }
 }
 
-/* Celular horizontal: Cámara Izq | Pantalla Grande | Cámara Der igual que en el cine */
+/* Celular horizontal */
 @media (max-height: 520px) and (orientation: landscape) {
   .theater-topbar {
-    padding: 3px 10px;
+    padding: 3px 8px;
   }
-  .theater-grid {
-    grid-template-columns: clamp(92px, 15vw, 145px) minmax(0, 1fr) clamp(92px, 15vw, 145px);
+  .action-cluster {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  .theater-shell.view-cinema .theater-grid {
+    grid-template-columns: clamp(95px, 15vw, 150px) minmax(0, 1fr) clamp(95px, 15vw, 150px);
     gap: 6px;
     padding: 4px 8px;
   }
-  .cam-slot {
+  .theater-shell.view-cinema .cam-slot {
     height: 82dvh;
+  }
+
+  .theater-shell.view-call-only .theater-grid {
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr;
+    gap: 8px;
+    padding: 6px;
+  }
+  .theater-shell.view-call-only .cam-slot {
+    height: 82dvh;
+  }
+
+  .theater-shell.view-focus-movie .cam-slot {
+    bottom: 42px;
+    width: 95px;
+    height: 70px;
   }
 }
 
