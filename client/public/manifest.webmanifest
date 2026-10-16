@@ -1,0 +1,10 @@
+{
+  "name": "Druo",
+  "short_name": "Druo",
+  "start_url": "/",
+  "display": "fullscreen",
+  "orientation": "landscape",
+  "background_color": "#07050a",
+  "theme_color": "#07050a",
+  "icons": [{ "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml" }]
+}

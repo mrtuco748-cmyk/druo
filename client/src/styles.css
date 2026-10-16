@@ -1,0 +1,873 @@
+:root {
+  --bg-deep: #07050a;
+  --bg-velvet: #130912;
+  --bg-panel: rgba(22, 13, 22, 0.92);
+  --border-soft: rgba(255, 210, 140, 0.16);
+  --gold: #ffcf6b;
+  --crimson: #e8455b;
+  --text-main: #f8f3ee;
+  --text-dim: #b5a7b0;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body,
+#root {
+  width: 100%;
+  height: 100dvh;
+  overflow: hidden;
+  background: radial-gradient(circle at 50% 35%, #1d0c18 0%, #09050b 65%, #040306 100%);
+  color: var(--text-main);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ---------------- Cortina de entrada ---------------- */
+.lobby-curtain {
+  width: 100%;
+  height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background:
+    radial-gradient(ellipse at top, rgba(232, 69, 91, 0.22), transparent 60%),
+    radial-gradient(ellipse at bottom, rgba(255, 207, 107, 0.12), transparent 55%),
+    #07050a;
+}
+
+.lobby-card {
+  width: min(440px, 100%);
+  background: var(--bg-panel);
+  border: 1px solid var(--border-soft);
+  border-radius: 22px;
+  padding: 28px 24px;
+  text-align: center;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.75);
+}
+
+.lobby-logo {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 3.4rem;
+  letter-spacing: 0.18em;
+  color: var(--gold);
+  text-shadow: 0 0 24px rgba(255, 207, 107, 0.35);
+}
+
+.lobby-sub {
+  color: var(--text-dim);
+  font-size: 0.95rem;
+  margin-bottom: 20px;
+}
+
+.lobby-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-bottom: 20px;
+  text-align: left;
+}
+
+.field-block {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.85rem;
+  color: var(--text-dim);
+}
+
+input[type='text'],
+input[type='url'],
+select {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 10px;
+  padding: 10px 12px;
+  color: var(--text-main);
+  font-size: 0.95rem;
+  outline: none;
+}
+
+input[type='text']:focus,
+input[type='url']:focus,
+select:focus {
+  border-color: var(--gold);
+}
+
+.seat-picker {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.seat-btn {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  padding: 12px 10px;
+  color: var(--text-main);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: center;
+  transition: 0.15s ease;
+}
+
+.seat-btn small {
+  color: var(--text-dim);
+  font-size: 0.74rem;
+}
+
+.seat-btn.active {
+  border-color: var(--gold);
+  background: rgba(255, 207, 107, 0.12);
+  box-shadow: 0 0 18px rgba(255, 207, 107, 0.18);
+}
+
+.cta-enter,
+.cta-primary {
+  background: linear-gradient(135deg, #e8455b, #c82d46);
+  color: #fff;
+  font-weight: 600;
+  border: none;
+  border-radius: 12px;
+  padding: 12px 18px;
+  font-size: 0.95rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0 8px 24px rgba(232, 69, 91, 0.35);
+}
+
+.cta-enter {
+  width: 100%;
+  font-size: 1.05rem;
+  padding: 14px;
+}
+
+/* ---------------- Sala de cine ---------------- */
+.theater-shell {
+  width: 100%;
+  height: 100dvh;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  padding: env(safe-area-inset-top, 0) env(safe-area-inset-right, 0) env(safe-area-inset-bottom, 0)
+    env(safe-area-inset-left, 0);
+}
+
+.theater-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 14px;
+  background: rgba(8, 5, 11, 0.78);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  backdrop-filter: blur(10px);
+  z-index: 10;
+}
+
+.brand-cluster,
+.action-cluster {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.brand-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.55rem;
+  letter-spacing: 0.14em;
+  color: var(--gold);
+}
+
+.conn-pill {
+  font-size: 0.75rem;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.conn-pill.ok {
+  color: #7ef7b2;
+  background: rgba(46, 204, 113, 0.14);
+}
+
+.conn-pill.warn {
+  color: #ffcc7a;
+}
+
+.now-playing {
+  font-size: 0.82rem;
+  color: var(--text-dim);
+  max-width: 240px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.top-btn {
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: var(--text-main);
+  padding: 6px 11px;
+  border-radius: 9px;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.top-btn.accent {
+  background: rgba(255, 207, 107, 0.15);
+  border-color: rgba(255, 207, 107, 0.45);
+  color: var(--gold);
+}
+
+.top-btn.is-off {
+  background: rgba(232, 69, 91, 0.18);
+  border-color: rgba(232, 69, 91, 0.45);
+}
+
+.react-bar {
+  display: flex;
+  gap: 3px;
+}
+
+.react-btn {
+  background: transparent;
+  border: none;
+  font-size: 1.05rem;
+  cursor: pointer;
+  padding: 3px 5px;
+  border-radius: 6px;
+}
+
+.react-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* ---------------- Grid 3 columnas: Cam Izq | Pantalla Grande | Cam Der ---------------- */
+.theater-grid {
+  display: grid;
+  grid-template-columns: clamp(120px, 14vw, 225px) minmax(0, 1fr) clamp(120px, 14vw, 225px);
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  height: 100%;
+  min-height: 0;
+}
+
+/* Cámaras laterales con encuadre cercano de cara */
+.cam-slot {
+  height: min(68vh, 430px);
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cam-frame {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 18px;
+  overflow: hidden;
+  background: #0d080f;
+  border: 1.5px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.7);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.cam-slot.is-speaking .cam-frame {
+  border-color: var(--gold);
+  box-shadow: 0 0 22px rgba(255, 207, 107, 0.42);
+}
+
+.cam-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform-origin: center center;
+  transition: transform 0.12s ease-out;
+}
+
+.cam-video.is-hidden {
+  opacity: 0;
+}
+
+.cam-placeholder {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: var(--text-dim);
+  font-size: 0.78rem;
+  text-align: center;
+  padding: 8px;
+}
+
+.cam-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: rgba(255, 207, 107, 0.14);
+  border: 1px solid rgba(255, 207, 107, 0.4);
+  color: var(--gold);
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  font-size: 1.2rem;
+}
+
+.cam-vignette {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.72) 0%, transparent 38%, rgba(0, 0, 0, 0.28) 100%);
+}
+
+.cam-badge-row {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  bottom: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  z-index: 2;
+}
+
+.cam-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.76rem;
+  font-weight: 600;
+  background: rgba(0, 0, 0, 0.55);
+  padding: 3px 8px;
+  border-radius: 999px;
+}
+
+.cam-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #777;
+}
+
+.cam-dot.on {
+  background: #4cd97b;
+  box-shadow: 0 0 8px #4cd97b;
+}
+
+.cam-pill {
+  font-size: 0.7rem;
+  background: rgba(0, 0, 0, 0.65);
+  color: var(--text-main);
+  padding: 3px 7px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+}
+
+.cam-pill.btn {
+  cursor: pointer;
+}
+
+.cam-adjust-pop {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  bottom: 38px;
+  background: rgba(12, 7, 14, 0.94);
+  border: 1px solid var(--border-soft);
+  border-radius: 12px;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  z-index: 4;
+  font-size: 0.72rem;
+}
+
+.cam-adjust-pop label {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* ---------------- Pantalla de cine central bien grande ---------------- */
+.cinema-stage {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.screen-bezel {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  max-height: calc(100dvh - 62px);
+  background: #000;
+  border-radius: 18px;
+  border: 1.5px solid rgba(255, 207, 107, 0.22);
+  box-shadow:
+    0 0 90px rgba(255, 195, 100, 0.14),
+    0 24px 60px rgba(0, 0, 0, 0.85);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cinema-video,
+.yt-wrap,
+.yt-host,
+.yt-wrap iframe {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border: none;
+}
+
+.cinema-video::cue {
+  background: rgba(0, 0, 0, 0.72);
+  color: #fff;
+  font-size: 1.05em;
+}
+
+.screen-empty {
+  max-width: 440px;
+  padding: 24px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.empty-marquee {
+  font-family: 'Bebas Neue', sans-serif;
+  letter-spacing: 0.22em;
+  color: var(--gold);
+  font-size: 1rem;
+}
+
+.screen-empty p {
+  color: var(--text-dim);
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
+
+.cinema-controls {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 12px;
+  background: rgba(10, 6, 12, 0.84);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  backdrop-filter: blur(10px);
+  border-radius: 14px;
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transition: opacity 0.25s ease;
+  z-index: 5;
+}
+
+.cinema-stage.hide-ui .cinema-controls {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.ctrl-btn {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: #fff;
+  border-radius: 8px;
+  padding: 5px 9px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.ctrl-timeline {
+  flex: 1;
+  accent-color: var(--crimson);
+  cursor: pointer;
+}
+
+.ctrl-time {
+  font-size: 0.78rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+
+.ctrl-vol {
+  width: 72px;
+  accent-color: var(--gold);
+}
+
+.autoplay-banner,
+.buffer-pill {
+  position: absolute;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(232, 69, 91, 0.92);
+  color: #fff;
+  border: none;
+  border-radius: 999px;
+  padding: 8px 16px;
+  font-size: 0.84rem;
+  font-weight: 600;
+  cursor: pointer;
+  z-index: 6;
+}
+
+/* ---------------- Modales ---------------- */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.72);
+  backdrop-filter: blur(6px);
+  display: grid;
+  place-items: center;
+  padding: 14px;
+  z-index: 40;
+}
+
+.modal-card {
+  width: min(680px, 100%);
+  max-height: 88dvh;
+  background: #140b14;
+  border: 1px solid var(--border-soft);
+  border-radius: 18px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.icon-close {
+  background: transparent;
+  border: none;
+  color: var(--text-dim);
+  font-size: 1.1rem;
+  cursor: pointer;
+}
+
+.modal-tabs {
+  display: flex;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.modal-tabs button {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: var(--text-dim);
+  padding: 11px 8px;
+  font-size: 0.83rem;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+}
+
+.modal-tabs button.active {
+  color: var(--gold);
+  border-bottom-color: var(--gold);
+  background: rgba(255, 207, 107, 0.06);
+}
+
+.modal-body {
+  padding: 16px 18px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.upload-box,
+.notice-box {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.upload-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.85rem;
+}
+
+.storage-meter {
+  color: var(--gold);
+  font-size: 0.78rem;
+}
+
+.upload-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.upload-row input[type='text'],
+.upload-row select {
+  flex: 1;
+  min-width: 150px;
+}
+
+.hint-text {
+  font-size: 0.78rem;
+  color: var(--text-dim);
+  line-height: 1.45;
+}
+
+.err-text {
+  color: #ff7b8b;
+  font-size: 0.82rem;
+}
+
+.progress-bar {
+  height: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.progress-bar > div {
+  height: 100%;
+  background: var(--gold);
+  transition: width 0.2s ease;
+}
+
+.lib-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.lib-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.lib-badges {
+  display: flex;
+  gap: 6px;
+  margin-top: 4px;
+  flex-wrap: wrap;
+}
+
+.badge {
+  font-size: 0.72rem;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(255, 207, 107, 0.15);
+  color: var(--gold);
+}
+
+.lib-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.btn-ghost {
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: var(--text-main);
+  padding: 7px 11px;
+  border-radius: 9px;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.file-label {
+  cursor: pointer;
+}
+
+.stats-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+  font-size: 0.78rem;
+  color: var(--text-dim);
+  background: rgba(255, 255, 255, 0.04);
+  padding: 9px 12px;
+  border-radius: 10px;
+}
+
+.stats-strip strong {
+  color: var(--gold);
+}
+
+.q-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.q-section h4 {
+  font-size: 0.86rem;
+  color: var(--text-main);
+}
+
+.chip-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(135px, 1fr));
+  gap: 8px;
+}
+
+.q-chip {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 11px;
+  padding: 9px 10px;
+  color: var(--text-main);
+  text-align: left;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.q-chip small {
+  color: var(--text-dim);
+  font-size: 0.71rem;
+}
+
+.q-chip.active {
+  border-color: var(--gold);
+  background: rgba(255, 207, 107, 0.14);
+}
+
+.slider-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  font-size: 0.8rem;
+}
+
+.slider-row label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.toggle-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.check-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.82rem;
+  color: var(--text-dim);
+  cursor: pointer;
+}
+
+/* Reacciones flotantes */
+.floating-reacts {
+  position: fixed;
+  bottom: 60px;
+  right: 26vw;
+  pointer-events: none;
+  z-index: 30;
+}
+
+.float-emoji {
+  display: inline-block;
+  font-size: 2.1rem;
+  animation: riseFade 2.5s ease-out forwards;
+}
+
+@keyframes riseFade {
+  0% {
+    transform: translateY(0) scale(0.8);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-170px) scale(1.35);
+    opacity: 0;
+  }
+}
+
+/* ---------------- Celular vertical: pantalla enorme + cámaras a izq y der ---------------- */
+@media (max-width: 720px) and (orientation: portrait) {
+  .theater-grid {
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: minmax(0, 1fr) 150px;
+    grid-template-areas:
+      'screen screen'
+      'left right';
+  }
+  .cinema-stage {
+    grid-area: screen;
+  }
+  .cam-left {
+    grid-area: left;
+    height: 140px;
+  }
+  .cam-right {
+    grid-area: right;
+    height: 140px;
+  }
+  .ctrl-vol,
+  .now-playing {
+    display: none;
+  }
+}
+
+/* Celular horizontal: Cámara Izq | Pantalla Grande | Cámara Der igual que en el cine */
+@media (max-height: 520px) and (orientation: landscape) {
+  .theater-topbar {
+    padding: 3px 10px;
+  }
+  .theater-grid {
+    grid-template-columns: clamp(92px, 15vw, 145px) minmax(0, 1fr) clamp(92px, 15vw, 145px);
+    gap: 6px;
+    padding: 4px 8px;
+  }
+  .cam-slot {
+    height: 82dvh;
+  }
+}
