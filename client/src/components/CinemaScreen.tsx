@@ -143,6 +143,13 @@ export const CinemaScreen: React.FC<Props> = ({
   const timelineRef = useRef<HTMLDivElement | null>(null);
   const [bufferedPct, setBufferedPct] = useState(0);
   const [prevVol, setPrevVol] = useState(1);
+  const smoothVolRef = useRef(0.85);
+  const lastSpeechAtRef = useRef(0);
+  const someoneSpeakingRef = useRef(someoneSpeaking);
+  someoneSpeakingRef.current = someoneSpeaking;
+  if (someoneSpeaking) {
+    lastSpeechAtRef.current = Date.now();
+  }
 
   const unlockAudio = () => {
     const v = videoRef.current;
@@ -415,22 +422,53 @@ export const CinemaScreen: React.FC<Props> = ({
     return () => URL.revokeObjectURL(url);
   }, [subs?.text, subs?.offset]);
 
-  // Ducking automático: baja el volumen de la peli al 8% cuando cualquiera de los dos habla
+  // Ducking inteligente con ataque ultra-rápido (baja al 6% al detectar una sílaba) y retorno gradual suave (650ms)
+  // Además reserva un 15% de headroom digital para que la voz de la llamada (200%-400%) nunca sature el mezclador con la película.
   useEffect(() => {
-    const eff = someoneSpeaking && duckingEnabled ? volume * 0.08 : volume;
-    if (videoRef.current) videoRef.current.volume = Math.max(0, Math.min(1, eff));
-    if (ytPlayerRef.current?.setVolume) {
-      try {
-        ytPlayerRef.current.setVolume(Math.round(eff * 100));
-      } catch {}
+    const applyVol = (val: number) => {
+      const clamped = Math.max(0, Math.min(1, val));
+      smoothVolRef.current = clamped;
+      if (videoRef.current && Math.abs(videoRef.current.volume - clamped) > 0.005) {
+        videoRef.current.volume = clamped;
+      }
+      if (ytPlayerRef.current?.setVolume) {
+        try {
+          ytPlayerRef.current.setVolume(Math.round(clamped * 100));
+        } catch {}
+      }
+    };
+
+    const ceilingVol = volume * 0.85;
+    const duckedVol = volume * 0.05;
+    const targetVol = someoneSpeaking && duckingEnabled ? duckedVol : ceilingVol;
+
+    // Si alguien empieza a hablar, bajamos rápido para que la primera sílaba no se meta al micrófono ni active el AEC agresivo
+    if (someoneSpeaking && duckingEnabled) {
+      applyVol(targetVol);
+      return;
     }
+
+    // Cuando dejan de hablar, subimos el volumen suavemente para no golpear el micrófono de golpe
+    const timer = setInterval(() => {
+      const cur = smoothVolRef.current;
+      const diff = targetVol - cur;
+      if (Math.abs(diff) < 0.012) {
+        applyVol(targetVol);
+        clearInterval(timer);
+        return;
+      }
+      const step = diff > 0 ? Math.max(0.018, diff * 0.16) : diff * 0.55;
+      applyVol(cur + step);
+    }, 35);
+
+    return () => clearInterval(timer);
   }, [someoneSpeaking, duckingEnabled, volume, resolvedUrl]);
 
-  // Bucle de sincronización continua (corrige deriva con playbackRate o seek)
+  // Bucle de sincronización continua (protege el reloj de audio del AEC mientras hablan)
   useEffect(() => {
     const syncOnce = () => {
       const now = serverNow();
-      const effVol = Math.max(0, Math.min(1, someoneSpeaking && duckingEnabled ? volume * 0.08 : volume));
+      const effVol = smoothVolRef.current;
       if (source?.kind === 'youtube') {
         const p = ytPlayerRef.current;
         if (!p || typeof p.getCurrentTime !== 'function') return;
@@ -459,7 +497,7 @@ export const CinemaScreen: React.FC<Props> = ({
 
       const v = videoRef.current;
       if (!v || !resolvedUrl) return;
-      if (Math.abs(v.volume - effVol) > 0.01) {
+      if (Math.abs(v.volume - effVol) > 0.015) {
         v.volume = effVol;
       }
       setCurrentPos(v.currentTime || 0);
@@ -467,13 +505,16 @@ export const CinemaScreen: React.FC<Props> = ({
 
       const shouldPlay = playback.playing && !(waitOnBuffer && peerBuffering);
       const dec = decideSync(v.currentTime || 0, { ...playback, playing: shouldPlay }, now);
+      const recentlySpoke = someoneSpeakingRef.current || Date.now() - lastSpeechAtRef.current < 2200;
 
       if (dec.action === 'seek') {
         suppressEventsUntil.current = Date.now() + 600;
         v.currentTime = dec.target;
         if (v.playbackRate !== 1) v.playbackRate = 1;
-      } else if (dec.action === 'rate') {
-        if (Math.abs(v.playbackRate - dec.rate) > 0.005) v.playbackRate = dec.rate;
+      } else if (dec.action === 'rate' && !recentlySpoke && Math.abs(dec.drift) > 0.48) {
+        // Solo corregir con playbackRate cuando nadie está hablando y la deriva supera 480ms,
+        // para no alterar el reloj de referencia del cancelador de eco (AEC) de la llamada.
+        if (Math.abs(v.playbackRate - dec.rate) > 0.01) v.playbackRate = dec.rate;
       } else if (v.playbackRate !== 1) {
         v.playbackRate = 1;
       }
@@ -499,9 +540,9 @@ export const CinemaScreen: React.FC<Props> = ({
     };
 
     syncOnce();
-    const t = setInterval(syncOnce, 500);
+    const t = setInterval(syncOnce, 600);
     return () => clearInterval(t);
-  }, [playback, resolvedUrl, source?.kind, waitOnBuffer, peerBuffering, someoneSpeaking, duckingEnabled, volume]);
+  }, [playback, resolvedUrl, source?.kind, waitOnBuffer, peerBuffering]);
 
   // Fullscreen support
   useEffect(() => {

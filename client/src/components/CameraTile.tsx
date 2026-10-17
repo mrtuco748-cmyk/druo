@@ -1,4 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
+import {
+  createRemoteVoiceProcessor,
+  createSyllableVoiceDetector,
+  getSharedAudioContext,
+  RemoteVoiceChain,
+  resumeSharedAudioContext,
+} from '../lib/voiceEngine';
 
 export interface CamFraming {
   zoom: number; // 1.0 .. 3.5 (por defecto 2.1 para encuadrar bien la cara)
@@ -42,8 +49,7 @@ export const CameraTile: React.FC<Props> = ({
 }) => {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const audioCtxRef = useRef<AudioContext | null>(null);
-  const gainNodeRef = useRef<GainNode | null>(null);
+  const voiceChainRef = useRef<RemoteVoiceChain | null>(null);
   const [speaking, setSpeaking] = useState(false);
   const [showAdjust, setShowAdjust] = useState(false);
   const [audioBlocked, setAudioBlocked] = useState(false);
@@ -53,6 +59,11 @@ export const CameraTile: React.FC<Props> = ({
 
   const peerVolume = peerVolumeProp !== undefined ? peerVolumeProp : localPeerVolume;
   const peerMuted = peerMutedProp !== undefined ? peerMutedProp : localPeerMuted;
+
+  const micEnabledRef = useRef(framing.mic !== false);
+  micEnabledRef.current = framing.mic !== false;
+  const onSpeakingChangeRef = useRef(onSpeakingChange);
+  onSpeakingChangeRef.current = onSpeakingChange;
 
   const setPeerVolume = (v: number) => {
     const clamped = Math.max(0, Math.min(4, v));
@@ -86,82 +97,44 @@ export const CameraTile: React.FC<Props> = ({
     }
   }, [stream, framing.on]);
 
-  // Detector de voz sensible (AnalyserNode conectado a silentGain->destination para que Chrome procese siempre el audio)
+  // Detector inteligente de sílabas y voz humana (ignora clics, roces, respiraciones y ruido de la película)
   useEffect(() => {
     if (!stream || !stream.getAudioTracks().length) {
       setSpeaking(false);
-      onSpeakingChange?.(false);
+      onSpeakingChangeRef.current?.(false);
       return;
     }
-    let ctx: AudioContext | null = null;
-    let timer: any = null;
-    const resumeCtx = () => {
-      if (ctx && ctx.state === 'suspended') {
-        ctx.resume().catch(() => {});
-      }
-    };
-    try {
-      const AC = window.AudioContext || (window as any).webkitAudioContext;
-      ctx = new AC();
-      ctx.resume().catch(() => {});
-      const src = ctx.createMediaStreamSource(stream);
-      const analyser = ctx.createAnalyser();
-      analyser.fftSize = 256;
-      analyser.smoothingTimeConstant = 0.4;
-      // En Chromium un MediaStreamSource necesita llegar a destination (aunque sea con gain 0) para que el hilo de audio procese muestras
-      const silentGain = ctx.createGain();
-      silentGain.gain.value = 0;
-      src.connect(analyser);
-      analyser.connect(silentGain);
-      silentGain.connect(ctx.destination);
-
-      const freqBuf = new Uint8Array(analyser.frequencyBinCount);
-      const timeBuf = new Uint8Array(analyser.fftSize);
-      let hold = 0;
-      timer = setInterval(() => {
-        if (ctx?.state === 'suspended') ctx.resume().catch(() => {});
-        analyser.getByteFrequencyData(freqBuf);
-        analyser.getByteTimeDomainData(timeBuf);
-
-        let sum = 0;
-        for (let i = 2; i < 32; i++) sum += freqBuf[i];
-        const avg = sum / 30;
-
-        let sumSq = 0;
-        for (let i = 0; i < timeBuf.length; i++) {
-          const d = timeBuf[i] - 128;
-          sumSq += d * d;
-        }
-        const rms = Math.sqrt(sumSq / timeBuf.length);
-
-        const active = (rms > 2.2 || avg > 12) && framing.mic !== false;
-        if (active) hold = 6; // Mantiene ~900ms el ducking entre palabras para que no salte el volumen
-        else if (hold > 0) hold -= 1;
-        const nowSpeaking = hold > 0;
-        setSpeaking((prev) => {
-          if (prev !== nowSpeaking) onSpeakingChange?.(nowSpeaking);
-          return nowSpeaking;
-        });
-      }, 140);
-
-      window.addEventListener('click', resumeCtx, { passive: true });
-      window.addEventListener('touchstart', resumeCtx, { passive: true });
-    } catch {}
+    const cleanup = createSyllableVoiceDetector({
+      stream,
+      isMicEnabled: () => micEnabledRef.current,
+      onSpeakingChange: (nowSpeaking) => {
+        setSpeaking(nowSpeaking);
+        onSpeakingChangeRef.current?.(nowSpeaking);
+      },
+    });
+    const resume = () => resumeSharedAudioContext();
+    window.addEventListener('click', resume, { passive: true });
+    window.addEventListener('touchstart', resume, { passive: true });
     return () => {
-      clearInterval(timer);
-      window.removeEventListener('click', resumeCtx);
-      window.removeEventListener('touchstart', resumeCtx);
-      try {
-        ctx?.close();
-      } catch {}
+      cleanup();
+      window.removeEventListener('click', resume);
+      window.removeEventListener('touchstart', resume);
     };
-  }, [stream, framing.mic]);
+  }, [stream]);
+
+  // Si se silencia el mic manualmente, apagar indicador de voz al instante
+  useEffect(() => {
+    if (framing.mic === false && speaking) {
+      setSpeaking(false);
+      onSpeakingChangeRef.current?.(false);
+    }
+  }, [framing.mic, speaking]);
 
   const zoom = Math.max(1, Math.min(3.5, typeof framing.zoom === 'number' && !isNaN(framing.zoom) ? framing.zoom : 1.0));
   const y = Math.max(-30, Math.min(30, framing.y || 0));
   const hasVideo = !!stream && stream.getVideoTracks().some((t) => t.enabled) && framing.on !== false;
 
-  // Control de audio remoto: elemento <audio> con playsInline y Web Audio GainNode + Compressor para boost hasta 400%
+  // Cadena de Claridad Vocal Broadcast para el audio remoto (EQ vocal + anti-barro + compresor + boost hasta 400% + limitador)
   useEffect(() => {
     if (isMe) return;
     const el = audioRef.current;
@@ -169,6 +142,8 @@ export const CameraTile: React.FC<Props> = ({
     const aTrack = stream?.getAudioTracks()[0];
     if (!aTrack) {
       el.srcObject = null;
+      voiceChainRef.current?.destroy();
+      voiceChainRef.current = null;
       setAudioBlocked(false);
       onAudioBlockedChange?.(false);
       return;
@@ -178,100 +153,95 @@ export const CameraTile: React.FC<Props> = ({
     const curTrack = curStream?.getAudioTracks()[0];
     if (curTrack?.id !== aTrack.id) {
       el.srcObject = new MediaStream([aTrack]);
-      el.play()
-        .then(() => {
-          setAudioBlocked(false);
-          onAudioBlockedChange?.(false);
-        })
-        .catch((err) => {
-          console.warn('[CameraTile] Audio autoplay blocked:', err);
-          setAudioBlocked(true);
-          onAudioBlockedChange?.(true);
-        });
     }
 
-    // Configurar Web Audio con GainNode (hasta 400%) + DynamicsCompressor para que la voz se escuche siempre fuerte y clara
-    let srcNode: MediaStreamAudioSourceNode | null = null;
-    let gainNode: GainNode | null = null;
-    let compNode: DynamicsCompressorNode | null = null;
-    try {
-      const AC = window.AudioContext || (window as any).webkitAudioContext;
-      const ctx = audioCtxRef.current || new AC();
-      audioCtxRef.current = ctx;
+    voiceChainRef.current?.destroy();
+    const initialGain = peerMuted ? 0 : peerVolume;
+    const chain = createRemoteVoiceProcessor(aTrack, initialGain);
+    voiceChainRef.current = chain;
 
-      srcNode = ctx.createMediaStreamSource(new MediaStream([aTrack]));
-      gainNode = ctx.createGain();
-      gainNode.gain.value = peerMuted ? 0 : peerVolume;
-      gainNodeRef.current = gainNode;
+    const ctx = getSharedAudioContext();
 
-      compNode = ctx.createDynamicsCompressor();
-      compNode.threshold.value = -8;
-      compNode.knee.value = 12;
-      compNode.ratio.value = 4;
-      compNode.attack.value = 0.003;
-      compNode.release.value = 0.15;
+    const syncMuteState = () => {
+      if (ctx && ctx.state === 'running' && chain && el) {
+        // Silenciar el elemento <audio> nativo cuando la cadena WebAudio está activa para evitar doble audio desfasado
+        el.muted = true;
+        el.volume = 0;
+      } else if (el) {
+        el.muted = peerMuted;
+        el.volume = Math.max(0, Math.min(1, initialGain));
+      }
+    };
 
-      srcNode.connect(gainNode);
-      gainNode.connect(compNode);
-      compNode.connect(ctx.destination);
-
-      const syncMuteState = () => {
-        if (ctx.state === 'running' && el) {
-          el.muted = true;
-        }
-      };
-
-      ctx.onstatechange = syncMuteState;
+    if (ctx) {
+      ctx.addEventListener?.('statechange', syncMuteState);
       ctx.resume().then(syncMuteState).catch(() => {});
-      syncMuteState();
+    }
+    syncMuteState();
 
-      const unlockAudio = () => {
-        if (ctx.state === 'suspended') {
-          ctx.resume().then(syncMuteState).catch(() => {});
-        }
-        el.play().then(() => {
+    el.play()
+      .then(() => {
+        syncMuteState();
+        setAudioBlocked(false);
+        onAudioBlockedChange?.(false);
+      })
+      .catch((err) => {
+        console.warn('[CameraTile] Audio autoplay blocked:', err);
+        setAudioBlocked(true);
+        onAudioBlockedChange?.(true);
+      });
+
+    const unlockAudio = () => {
+      resumeSharedAudioContext();
+      syncMuteState();
+      el.play()
+        .then(() => {
           syncMuteState();
           setAudioBlocked(false);
           onAudioBlockedChange?.(false);
-        }).catch(() => {});
-      };
+        })
+        .catch(() => {});
+    };
 
-      window.addEventListener('click', unlockAudio, { passive: true });
-      window.addEventListener('touchstart', unlockAudio, { passive: true });
+    window.addEventListener('click', unlockAudio, { passive: true });
+    window.addEventListener('touchstart', unlockAudio, { passive: true });
 
-      return () => {
-        window.removeEventListener('click', unlockAudio);
-        window.removeEventListener('touchstart', unlockAudio);
-        try {
-          srcNode?.disconnect();
-          gainNode?.disconnect();
-          compNode?.disconnect();
-        } catch {}
-      };
-    } catch (e) {
-      console.warn('[CameraTile] WebAudio setup error:', e);
-    }
+    return () => {
+      window.removeEventListener('click', unlockAudio);
+      window.removeEventListener('touchstart', unlockAudio);
+      ctx?.removeEventListener?.('statechange', syncMuteState);
+      voiceChainRef.current?.destroy();
+      voiceChainRef.current = null;
+    };
   }, [stream, isMe]);
 
   useEffect(() => {
     if (isMe) return;
     const targetVol = peerMuted ? 0 : peerVolume;
-    if (gainNodeRef.current) {
-      gainNodeRef.current.gain.value = targetVol;
+    if (voiceChainRef.current) {
+      voiceChainRef.current.setGain(targetVol);
     }
-    if (audioRef.current && (!audioCtxRef.current || audioCtxRef.current.state !== 'running')) {
-      audioRef.current.volume = Math.max(0, Math.min(1, targetVol));
+    const ctx = getSharedAudioContext();
+    if (audioRef.current) {
+      if (ctx && ctx.state === 'running' && voiceChainRef.current) {
+        audioRef.current.muted = true;
+        audioRef.current.volume = 0;
+      } else {
+        audioRef.current.muted = peerMuted;
+        audioRef.current.volume = Math.max(0, Math.min(1, targetVol));
+      }
     }
   }, [peerVolume, peerMuted, isMe]);
 
   const handleUnlockAudioClick = () => {
-    if (audioCtxRef.current?.state === 'suspended') {
-      audioCtxRef.current.resume().then(() => {
-        if (audioRef.current) audioRef.current.muted = true;
-      }).catch(() => {});
-    }
+    resumeSharedAudioContext();
+    const ctx = getSharedAudioContext();
     if (audioRef.current) {
       audioRef.current.play().then(() => {
+        if (ctx && ctx.state === 'running' && voiceChainRef.current && audioRef.current) {
+          audioRef.current.muted = true;
+          audioRef.current.volume = 0;
+        }
         setAudioBlocked(false);
         onAudioBlockedChange?.(false);
       }).catch(() => {});

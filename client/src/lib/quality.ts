@@ -25,10 +25,10 @@ export const VIDEO_LADDER: VideoPresetSpec[] = [
 ];
 
 export const AUDIO_PRESETS: Record<AudioPresetId, { id: AudioPresetId; label: string; hint: string; maxBitrate: number }> = {
-  save:  { id: 'save',  label: 'Ahorro extremo', hint: '14 kbps · aguanta cortes', maxBitrate: 14_000 },
-  voice: { id: 'voice', label: 'Voz (recomendado)', hint: '24 kbps · nítido y liviano', maxBitrate: 24_000 },
-  clear: { id: 'clear', label: 'Claro',          hint: '40 kbps · más cuerpo',      maxBitrate: 40_000 },
-  hi:    { id: 'hi',    label: 'Alta',           hint: '64 kbps · máxima calidad',  maxBitrate: 64_000 },
+  save:  { id: 'save',  label: 'Ahorro',            hint: '24 kbps · aguanta cortes', maxBitrate: 24_000 },
+  voice: { id: 'voice', label: 'Voz HD (recomendado)', hint: '48 kbps · voz cristalina', maxBitrate: 48_000 },
+  clear: { id: 'clear', label: 'Claro Studio',      hint: '64 kbps · más cuerpo',     maxBitrate: 64_000 },
+  hi:    { id: 'hi',    label: 'Ultra',             hint: '96 kbps · máxima calidad', maxBitrate: 96_000 },
 };
 
 export const MOVIE_CAPS: { id: number; label: string; hint: string }[] = [

@@ -31,6 +31,7 @@ import { AudioPresetId, VideoPresetId } from './lib/quality';
 import { CallStats, PeerCall } from './lib/rtc';
 import { Signaling } from './lib/signaling';
 import { PlaybackState } from './lib/sync';
+import { resumeSharedAudioContext } from './lib/voiceEngine';
 
 const isMobileDevice = () =>
   /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent) || window.innerWidth < 820;
@@ -186,13 +187,7 @@ export const App: React.FC = () => {
   }, [entered, myId]);
 
   const unlockAllAudio = () => {
-    try {
-      const AC = window.AudioContext || (window as any).webkitAudioContext;
-      if (AC) {
-        const dummy = new AC();
-        dummy.resume().catch(() => {});
-      }
-    } catch {}
+    resumeSharedAudioContext();
     setMovieAudioBlocked(false);
     setVoiceAudioBlocked(false);
   };
@@ -225,9 +220,12 @@ export const App: React.FC = () => {
     try {
       stream = await navigator.mediaDevices.getUserMedia({
         audio: {
-          echoCancellation: true,
-          noiseSuppression: true,
-          autoGainControl: true,
+          echoCancellation: { ideal: true },
+          noiseSuppression: { ideal: true },
+          autoGainControl: { ideal: true },
+          channelCount: { ideal: 1 },
+          sampleRate: { ideal: 48000 },
+          sampleSize: { ideal: 16 },
         },
         video: {
           facingMode: 'user',
