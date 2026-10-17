@@ -16,6 +16,7 @@ interface Props {
   framing: CamFraming;
   onChangeFraming?: (next: CamFraming) => void;
   onSpeakingChange?: (speaking: boolean) => void;
+  externalSpeaking?: boolean;
   onAudioBlockedChange?: (blocked: boolean) => void;
   peerVolume?: number;
   onChangePeerVolume?: (vol: number) => void;
@@ -32,6 +33,7 @@ export const CameraTile: React.FC<Props> = ({
   framing,
   onChangeFraming,
   onSpeakingChange,
+  externalSpeaking = false,
   onAudioBlockedChange,
   peerVolume: peerVolumeProp,
   onChangePeerVolume,
@@ -84,7 +86,7 @@ export const CameraTile: React.FC<Props> = ({
     }
   }, [stream, framing.on]);
 
-  // Detector de voz sensible (AnalyserNode) para iluminar el borde y activar el auto-ducking de la peli
+  // Detector de voz sensible (AnalyserNode conectado a silentGain->destination para que Chrome procese siempre el audio)
   useEffect(() => {
     if (!stream || !stream.getAudioTracks().length) {
       setSpeaking(false);
@@ -93,6 +95,11 @@ export const CameraTile: React.FC<Props> = ({
     }
     let ctx: AudioContext | null = null;
     let timer: any = null;
+    const resumeCtx = () => {
+      if (ctx && ctx.state === 'suspended') {
+        ctx.resume().catch(() => {});
+      }
+    };
     try {
       const AC = window.AudioContext || (window as any).webkitAudioContext;
       ctx = new AC();
@@ -100,28 +107,50 @@ export const CameraTile: React.FC<Props> = ({
       const src = ctx.createMediaStreamSource(stream);
       const analyser = ctx.createAnalyser();
       analyser.fftSize = 256;
-      analyser.smoothingTimeConstant = 0.5;
+      analyser.smoothingTimeConstant = 0.4;
+      // En Chromium un MediaStreamSource necesita llegar a destination (aunque sea con gain 0) para que el hilo de audio procese muestras
+      const silentGain = ctx.createGain();
+      silentGain.gain.value = 0;
       src.connect(analyser);
-      const buf = new Uint8Array(analyser.frequencyBinCount);
+      analyser.connect(silentGain);
+      silentGain.connect(ctx.destination);
+
+      const freqBuf = new Uint8Array(analyser.frequencyBinCount);
+      const timeBuf = new Uint8Array(analyser.fftSize);
       let hold = 0;
       timer = setInterval(() => {
         if (ctx?.state === 'suspended') ctx.resume().catch(() => {});
-        analyser.getByteFrequencyData(buf);
+        analyser.getByteFrequencyData(freqBuf);
+        analyser.getByteTimeDomainData(timeBuf);
+
         let sum = 0;
-        for (let i = 2; i < 32; i++) sum += buf[i];
+        for (let i = 2; i < 32; i++) sum += freqBuf[i];
         const avg = sum / 30;
-        const active = avg > 20 && framing.mic !== false;
-        if (active) hold = 5; // Mantiene ~800ms el ducking entre palabras para que no salte el volumen
+
+        let sumSq = 0;
+        for (let i = 0; i < timeBuf.length; i++) {
+          const d = timeBuf[i] - 128;
+          sumSq += d * d;
+        }
+        const rms = Math.sqrt(sumSq / timeBuf.length);
+
+        const active = (rms > 2.2 || avg > 12) && framing.mic !== false;
+        if (active) hold = 6; // Mantiene ~900ms el ducking entre palabras para que no salte el volumen
         else if (hold > 0) hold -= 1;
         const nowSpeaking = hold > 0;
         setSpeaking((prev) => {
           if (prev !== nowSpeaking) onSpeakingChange?.(nowSpeaking);
           return nowSpeaking;
         });
-      }, 150);
+      }, 140);
+
+      window.addEventListener('click', resumeCtx, { passive: true });
+      window.addEventListener('touchstart', resumeCtx, { passive: true });
     } catch {}
     return () => {
       clearInterval(timer);
+      window.removeEventListener('click', resumeCtx);
+      window.removeEventListener('touchstart', resumeCtx);
       try {
         ctx?.close();
       } catch {}
@@ -251,7 +280,7 @@ export const CameraTile: React.FC<Props> = ({
 
   return (
     <aside
-      className={`cam-slot cam-${side} ${isMe ? 'is-local is-me' : 'is-remote'} ${speaking ? 'is-speaking' : ''} ${online ? 'is-online' : 'is-offline'}`}
+      className={`cam-slot cam-${side} ${isMe ? 'is-local is-me' : 'is-remote'} ${speaking || externalSpeaking ? 'is-speaking' : ''} ${online ? 'is-online' : 'is-offline'}`}
     >
       {!isMe && (
         <audio ref={audioRef} autoPlay playsInline />

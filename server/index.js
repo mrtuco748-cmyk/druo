@@ -192,6 +192,7 @@ wss.on('connection', (ws) => {
         room.cams[me.id] = { zoom: Number(m.zoom) || 1, y: Number(m.y) || 0, on: m.on !== false, mic: m.mic !== false };
         return toOther(me.id, { t: 'cam', id: me.id, ...room.cams[me.id] });
       case 'buffering':
+      case 'speaking':
       case 'cap':
       case 'react':
         return toOther(me.id, { ...m, from: me.id });

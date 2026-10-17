@@ -63,6 +63,7 @@ export const App: React.FC = () => {
 
   const [meSpeaking, setMeSpeaking] = useState(false);
   const [peerSpeaking, setPeerSpeaking] = useState(false);
+  const [peerSpeakingNet, setPeerSpeakingNet] = useState(false);
   const [duckingEnabled, setDuckingEnabled] = useState(true); // Activado por defecto para que baje la peli cuando hablan
   const [peerVolume, setPeerVolume] = useState<number>(() => {
     const saved = Number(localStorage.getItem('druo.peerVolume'));
@@ -71,6 +72,11 @@ export const App: React.FC = () => {
   const [peerMuted, setPeerMuted] = useState(false);
   const [waitOnBuffer, setWaitOnBuffer] = useState(true);
   const [peerBuffering, setPeerBuffering] = useState(false);
+
+  const handleMeSpeakingChange = (sp: boolean) => {
+    setMeSpeaking(sp);
+    sigRef.current?.send({ t: 'speaking', value: sp });
+  };
 
   const handleChangePeerVolume = (v: number) => {
     const clamped = Math.max(0, Math.min(4.0, v));
@@ -256,6 +262,8 @@ export const App: React.FC = () => {
           });
         } else if (m.t === 'buffering') {
           setPeerBuffering(!!m.value);
+        } else if (m.t === 'speaking') {
+          setPeerSpeakingNet(!!m.value);
         } else if (m.t === 'react' && m.emoji) {
           spawnReaction(m.emoji);
         } else if (m.t === 'draw') {
@@ -280,7 +288,10 @@ export const App: React.FC = () => {
   useEffect(() => {
     const other = peers.find((p) => p.id !== myId);
     rtcRef.current?.setRemotePeer(other ? other.id : null, other?.session);
-    if (!other) setPeerBuffering(false);
+    if (!other) {
+      setPeerBuffering(false);
+      setPeerSpeakingNet(false);
+    }
   }, [peers, myId]);
 
   const updateMyFraming = (next: CamFraming) => {
@@ -499,7 +510,8 @@ export const App: React.FC = () => {
           stream={leftIsMe ? localStream : remoteStream}
           framing={leftIsMe ? myFraming : peerFraming}
           onChangeFraming={leftIsMe ? updateMyFraming : undefined}
-          onSpeakingChange={leftIsMe ? setMeSpeaking : setPeerSpeaking}
+          onSpeakingChange={leftIsMe ? handleMeSpeakingChange : setPeerSpeaking}
+          externalSpeaking={!leftIsMe ? peerSpeakingNet : false}
           onAudioBlockedChange={!leftIsMe ? setVoiceAudioBlocked : undefined}
           peerVolume={peerVolume}
           onChangePeerVolume={handleChangePeerVolume}
@@ -512,7 +524,7 @@ export const App: React.FC = () => {
           playback={playback}
           subs={subs}
           serverNow={() => sigRef.current?.clock.now() || Date.now()}
-          someoneSpeaking={meSpeaking || peerSpeaking}
+          someoneSpeaking={meSpeaking || peerSpeaking || peerSpeakingNet}
           duckingEnabled={duckingEnabled}
           waitOnBuffer={waitOnBuffer}
           peerBuffering={peerBuffering}
@@ -549,7 +561,8 @@ export const App: React.FC = () => {
           stream={!leftIsMe ? localStream : remoteStream}
           framing={!leftIsMe ? myFraming : peerFraming}
           onChangeFraming={!leftIsMe ? updateMyFraming : undefined}
-          onSpeakingChange={!leftIsMe ? setMeSpeaking : setPeerSpeaking}
+          onSpeakingChange={!leftIsMe ? handleMeSpeakingChange : setPeerSpeaking}
+          externalSpeaking={leftIsMe ? peerSpeakingNet : false}
           onAudioBlockedChange={leftIsMe ? setVoiceAudioBlocked : undefined}
           peerVolume={peerVolume}
           onChangePeerVolume={handleChangePeerVolume}

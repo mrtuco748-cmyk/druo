@@ -415,9 +415,9 @@ export const CinemaScreen: React.FC<Props> = ({
     return () => URL.revokeObjectURL(url);
   }, [subs?.text, subs?.offset]);
 
-  // Ducking automático: baja el volumen de la peli al 20% cuando cualquiera de los dos habla
+  // Ducking automático: baja el volumen de la peli al 8% cuando cualquiera de los dos habla
   useEffect(() => {
-    const eff = someoneSpeaking && duckingEnabled ? volume * 0.2 : volume;
+    const eff = someoneSpeaking && duckingEnabled ? volume * 0.08 : volume;
     if (videoRef.current) videoRef.current.volume = Math.max(0, Math.min(1, eff));
     if (ytPlayerRef.current?.setVolume) {
       try {
@@ -430,9 +430,13 @@ export const CinemaScreen: React.FC<Props> = ({
   useEffect(() => {
     const syncOnce = () => {
       const now = serverNow();
+      const effVol = Math.max(0, Math.min(1, someoneSpeaking && duckingEnabled ? volume * 0.08 : volume));
       if (source?.kind === 'youtube') {
         const p = ytPlayerRef.current;
         if (!p || typeof p.getCurrentTime !== 'function') return;
+        try {
+          p.setVolume?.(Math.round(effVol * 100));
+        } catch {}
         const pos = Number(p.getCurrentTime()) || 0;
         setCurrentPos(pos);
         setDuration(Number(p.getDuration?.()) || duration);
@@ -455,6 +459,9 @@ export const CinemaScreen: React.FC<Props> = ({
 
       const v = videoRef.current;
       if (!v || !resolvedUrl) return;
+      if (Math.abs(v.volume - effVol) > 0.01) {
+        v.volume = effVol;
+      }
       setCurrentPos(v.currentTime || 0);
       if (v.duration && Number.isFinite(v.duration)) setDuration(v.duration);
 
@@ -494,7 +501,7 @@ export const CinemaScreen: React.FC<Props> = ({
     syncOnce();
     const t = setInterval(syncOnce, 500);
     return () => clearInterval(t);
-  }, [playback, resolvedUrl, source?.kind, waitOnBuffer, peerBuffering]);
+  }, [playback, resolvedUrl, source?.kind, waitOnBuffer, peerBuffering, someoneSpeaking, duckingEnabled, volume]);
 
   // Fullscreen support
   useEffect(() => {
