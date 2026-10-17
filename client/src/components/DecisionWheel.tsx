@@ -51,14 +51,14 @@ const PRESETS: { id: string; icon: React.ReactNode; options: string[] }[] = [
 ];
 
 const SLICE_COLORS = [
-  '#ffc2d4',
-  '#ffe5a3',
-  '#b8f2d8',
-  '#bfe3ff',
-  '#decaff',
-  '#ffd4b8',
-  '#f7c6ff',
-  '#c4f5f0',
+  '#6e2847',
+  '#5e3a24',
+  '#224d3e',
+  '#263f5c',
+  '#452a63',
+  '#632c3b',
+  '#542859',
+  '#214d4b',
 ];
 
 interface Props {
@@ -183,13 +183,13 @@ export const DecisionWheel: React.FC<Props> = ({ state, onUpdateState, onBackToH
                       <path
                         d={d}
                         fill={SLICE_COLORS[i % SLICE_COLORS.length]}
-                        stroke="#ffffff"
+                        stroke="#381929"
                         strokeWidth="2.5"
                       />
                       <text
                         x="56"
                         y="0"
-                        fill="#4a3b52"
+                        fill="#fde8f1"
                         fontSize="8.5"
                         fontWeight="800"
                         textAnchor="middle"
@@ -201,7 +201,7 @@ export const DecisionWheel: React.FC<Props> = ({ state, onUpdateState, onBackToH
                     </g>
                   );
                 })}
-                <circle cx="0" cy="0" r="18" fill="#fff0f6" stroke="#ff9ebb" strokeWidth="3" />
+                <circle cx="0" cy="0" r="18" fill="#2b1220" stroke="#ff85a2" strokeWidth="3" />
               </svg>
             </div>
 

@@ -99,12 +99,12 @@ const KAWAII_PALETTE = [
 ];
 
 const BG_COLORS: Record<StudioBg, string> = {
-  cream: '#fffaf4',
-  white: '#ffffff',
-  pink: '#fff0f6',
-  grid: '#f4f9ff',
-  dots: '#f8f4ff',
-  night: '#231b2e',
+  cream: '#22131e',
+  pink: '#2e1726',
+  night: '#150d1a',
+  grid: '#1d1424',
+  dots: '#241524',
+  white: '#fff5f8',
 };
 
 function hexToRgba(hex: string): [number, number, number, number] {
@@ -288,11 +288,11 @@ export const DrawingStudio: React.FC<Props> = ({
 
   const drawWorldBackground = (ctx: CanvasRenderingContext2D, mode: StudioBg) => {
     ctx.save();
-    ctx.fillStyle = BG_COLORS[mode] || '#fffaf4';
+    ctx.fillStyle = BG_COLORS[mode] || '#22131e';
     ctx.fillRect(0, 0, WORLD_W, WORLD_H);
 
     if (mode === 'grid') {
-      ctx.strokeStyle = 'rgba(130, 170, 225, 0.25)';
+      ctx.strokeStyle = 'rgba(255, 145, 185, 0.14)';
       ctx.lineWidth = 1;
       const step = 32;
       ctx.beginPath();
@@ -306,7 +306,7 @@ export const DrawingStudio: React.FC<Props> = ({
       }
       ctx.stroke();
     } else if (mode === 'dots') {
-      ctx.fillStyle = 'rgba(175, 145, 225, 0.35)';
+      ctx.fillStyle = 'rgba(255, 158, 195, 0.22)';
       const step = 28;
       for (let x = step; x < WORLD_W; x += step) {
         for (let y = step; y < WORLD_H; y += step) {
@@ -510,8 +510,8 @@ export const DrawingStudio: React.FC<Props> = ({
     ctx.save();
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-    // Fondo exterior pastel kawaii (mesa de trabajo)
-    ctx.fillStyle = '#f6edf8';
+    // Fondo exterior rosa oscuro nocturno (mesa de trabajo)
+    ctx.fillStyle = '#160b14';
     ctx.fillRect(0, 0, vw, vh);
 
     // Calcular caja base centrada de la hoja
@@ -528,8 +528,8 @@ export const DrawingStudio: React.FC<Props> = ({
 
     // Sombra suave de la hoja
     ctx.save();
-    ctx.shadowColor = 'rgba(130, 85, 145, 0.18)';
-    ctx.shadowBlur = 22;
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.55)';
+    ctx.shadowBlur = 24;
     ctx.shadowOffsetY = 6;
     ctx.fillStyle = BG_COLORS[bgRef.current];
     ctx.beginPath();

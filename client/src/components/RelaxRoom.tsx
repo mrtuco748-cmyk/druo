@@ -198,11 +198,11 @@ export const RelaxRoom: React.FC<Props> = ({
   };
 
   const ambiences: { id: AmbienceId; icon: React.ReactNode; color: string }[] = [
-    { id: 'off', icon: <IconMicOff size={24} />, color: '#f3d9fa' },
-    { id: 'rain', icon: <IconRain size={24} />, color: '#d0ebff' },
-    { id: 'fire', icon: <IconFire size={24} />, color: '#ffd8a8' },
-    { id: 'waves', icon: <IconWaves size={24} />, color: '#c3fae8' },
-    { id: 'lofi', icon: <IconMusic size={24} />, color: '#ffdeeb' },
+    { id: 'off', icon: <IconMicOff size={24} />, color: '#361c38' },
+    { id: 'rain', icon: <IconRain size={24} />, color: '#1d2d42' },
+    { id: 'fire', icon: <IconFire size={24} />, color: '#3d251e' },
+    { id: 'waves', icon: <IconWaves size={24} />, color: '#18362e' },
+    { id: 'lofi', icon: <IconMusic size={24} />, color: '#3d1b2e' },
   ];
 
   return (
