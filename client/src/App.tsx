@@ -6,6 +6,23 @@ import { ActivityId, CuteHub } from './components/CuteHub';
 import { DecisionWheel, DEFAULT_WHEEL_STATE, WheelState } from './components/DecisionWheel';
 import { DrawEvent, DrawStroke } from './components/DrawingCanvas';
 import { DrawingStudio, StudioBg, StudioEvent, StudioStroke } from './components/DrawingStudio';
+import {
+  IconBrush,
+  IconChevronLeft,
+  IconChevronRight,
+  IconCinema,
+  IconCoffee,
+  IconGamepad,
+  IconHeart,
+  IconHome,
+  IconMicOff,
+  IconMicOn,
+  IconSliders,
+  IconSparkle,
+  IconStar,
+  IconVolume,
+  IconWheel,
+} from './components/KawaiiIcons';
 import { OptionsMenu } from './components/OptionsMenu';
 import { QualityDrawer } from './components/QualityDrawer';
 import { DEFAULT_RELAX_STATE, RelaxRoom, RelaxState } from './components/RelaxRoom';
@@ -391,20 +408,21 @@ export const App: React.FC = () => {
 
   if (!entered) {
     return (
-      <div className="lobby-curtain">
-        <div className="lobby-card">
-          <div className="lobby-cute-badge">✨ Espacio privado para dos 💕</div>
+      <div className="lobby-curtain kawaii-lobby">
+        <div className="lobby-card kawaii-lobby-card">
+          <div className="kawaii-lobby-heart">
+            <IconHeart size={36} />
+          </div>
           <div className="lobby-logo">DRUO</div>
-          <p className="lobby-sub">Cine, pizarra de dibujo pro, juegos, ruleta y rincón cute en tiempo real</p>
 
           <div className="lobby-fields">
             <label className="field-block">
-              <span>Tu nombre cute 🌸</span>
               <input
                 type="text"
                 value={myName}
                 onChange={(e) => setMyName(e.target.value)}
                 maxLength={24}
+                placeholder="Nombre"
               />
             </label>
 
@@ -413,23 +431,23 @@ export const App: React.FC = () => {
                 type="button"
                 className={`seat-btn ${mySeat === 'left' ? 'active' : ''}`}
                 onClick={() => setMySeat('left')}
+                aria-label="Left"
               >
-                <span>👈 Izquierda</span>
-                <small>Tu cámara a la izq (PC)</small>
+                <IconChevronLeft size={24} />
               </button>
               <button
                 type="button"
                 className={`seat-btn ${mySeat === 'right' ? 'active' : ''}`}
                 onClick={() => setMySeat('right')}
+                aria-label="Right"
               >
-                <span>Derecha 👉</span>
-                <small>Su cámara a la der (Celu)</small>
+                <IconChevronRight size={24} />
               </button>
             </div>
           </div>
 
-          <button type="button" className="cta-enter" onClick={enterTheater}>
-            💖 Entrar a nuestro espacio
+          <button type="button" className="cta-enter kawaii-enter-btn" onClick={enterTheater} aria-label="Enter">
+            <IconHeart size={24} />
           </button>
         </div>
       </div>
@@ -438,94 +456,98 @@ export const App: React.FC = () => {
 
   return (
     <div className={`theater-shell view-${viewMode}`}>
-      {/* Barra superior cute con acceso directo al Menú Principal y secciones */}
-      <header className="theater-topbar">
+      {/* Barra superior Pastel Kawaii minimalista (Solo Iconos SVG, Sin Textos, Sin Emojis) */}
+      <header className="theater-topbar kawaii-topbar">
         <div className="brand-cluster">
-          <button
-            type="button"
-            className={`hub-home-pill ${activeActivity === 'hub' ? 'active' : ''}`}
-            onClick={() => handleSelectActivity('hub')}
-            title="Ir al Menú Principal Cute (sincronizado para ambos)"
-          >
-            <span>🌸</span>
-            <strong>DRUO</strong>
-            <span className="hub-home-sub">{activeActivity === 'hub' ? 'Menú Cute' : '🏠 Inicio'}</span>
-          </button>
-
-          <div className="topbar-activity-tabs">
+          <div className="topbar-activity-tabs kawaii-nav-pills">
             {(
               [
-                { id: 'hub', icon: '🏠', label: 'Menú' },
-                { id: 'cinema', icon: '🎬', label: 'Cine' },
-                { id: 'draw', icon: '🎨', label: 'Dibujo' },
-                { id: 'games', icon: '🎲', label: 'Juegos' },
-                { id: 'wheel', icon: '🎡', label: 'Ruleta' },
-                { id: 'relax', icon: '☕', label: 'Relax' },
-              ] as { id: ActivityId; icon: string; label: string }[]
+                { id: 'hub', render: () => <IconHome size={19} /> },
+                { id: 'cinema', render: () => <IconCinema size={19} /> },
+                { id: 'draw', render: () => <IconBrush size={19} /> },
+                { id: 'games', render: () => <IconGamepad size={19} /> },
+                { id: 'wheel', render: () => <IconWheel size={19} /> },
+                { id: 'relax', render: () => <IconCoffee size={19} /> },
+              ] as { id: ActivityId; render: () => React.ReactNode }[]
             ).map((tab) => (
               <button
                 key={tab.id}
                 type="button"
                 className={`topbar-act-btn ${activeActivity === tab.id ? 'active' : ''}`}
                 onClick={() => handleSelectActivity(tab.id)}
-                title={`Ir a ${tab.label}`}
+                aria-label={tab.id}
               >
-                <span>{tab.icon}</span>
-                <span className="topbar-act-label">{tab.label}</span>
+                {tab.render()}
               </button>
             ))}
           </div>
 
-          <span className={`conn-pill ${wsOnline ? 'ok' : 'warn'}`}>
-            {wsOnline ? (otherPeer ? '💑 2/2 juntos' : '⏳ 1/2 esperando') : 'Reconectando…'}
-          </span>
-          {source && activeActivity === 'cinema' && (
-            <span className="now-playing">🎞️ {source.title}</span>
-          )}
+          <span
+            className={`kawaii-status-dot ${wsOnline ? (otherPeer ? 'both' : 'wait') : 'off'}`}
+          />
         </div>
 
         <div className="action-cluster">
-          {/* Reacciones rápidas */}
-          <div className="react-bar">
-            {['❤️', '😂', '🥰', '✨'].map((em) => (
-              <button
-                key={em}
-                type="button"
-                className="react-btn"
-                onClick={() => {
-                  spawnReaction(em);
-                  sigRef.current?.send({ t: 'react', emoji: em });
-                }}
-              >
-                {em}
-              </button>
-            ))}
+          {/* Reacciones rápidas (Solo Iconos SVG) */}
+          <div className="react-bar kawaii-react-bar">
+            <button
+              type="button"
+              className="react-btn"
+              onClick={() => {
+                spawnReaction('♥');
+                sigRef.current?.send({ t: 'react', emoji: '♥' });
+              }}
+              aria-label="Heart"
+            >
+              <IconHeart size={18} />
+            </button>
+            <button
+              type="button"
+              className="react-btn"
+              onClick={() => {
+                spawnReaction('✦');
+                sigRef.current?.send({ t: 'react', emoji: '✦' });
+              }}
+              aria-label="Sparkle"
+            >
+              <IconSparkle size={18} />
+            </button>
+            <button
+              type="button"
+              className="react-btn"
+              onClick={() => {
+                spawnReaction('★');
+                sigRef.current?.send({ t: 'react', emoji: '★' });
+              }}
+              aria-label="Star"
+            >
+              <IconStar size={18} />
+            </button>
           </div>
 
-          {/* Botón rápido de mic */}
+          {/* Botón rápido de mic (Solo Icono SVG) */}
           <button
             type="button"
             className={`top-btn quick-mic-btn ${myFraming.mic ? '' : 'is-off'}`}
             onClick={toggleMic}
-            title={myFraming.mic ? 'Silenciar micrófono' : 'Activar micrófono'}
+            aria-label="Microphone"
           >
-            {myFraming.mic ? '🎙️' : '🔇'}
+            {myFraming.mic ? <IconMicOn size={19} /> : <IconMicOff size={19} />}
           </button>
 
-          {/* Único botón de Menú desplegable */}
+          {/* Único botón de Menú desplegable (Solo Icono SVG) */}
           <button
             type="button"
             className={`top-btn menu-toggle-btn ${showMenu ? 'accent' : ''}`}
             onClick={() => setShowMenu((v) => !v)}
-            title="Abrir menú de opciones, modos, volumen 400% y películas"
+            aria-label="Menu"
           >
-            <span className="menu-btn-icon">☰</span>
-            <span className="menu-btn-label">Ajustes</span>
+            <IconSliders size={19} />
           </button>
         </div>
       </header>
 
-      {/* Menú desplegable unificado */}
+      {/* Menú desplegable unificado (Solo Iconos) */}
       <OptionsMenu
         open={showMenu}
         onClose={() => setShowMenu(false)}
@@ -555,8 +577,8 @@ export const App: React.FC = () => {
 
       {/* Banner de audio para celulares si el navegador bloquea sonido */}
       {(movieAudioBlocked || voiceAudioBlocked) && (
-        <button type="button" className="master-audio-banner" onClick={unlockAllAudio}>
-          🔊 Tocá acá para activar el sonido (Película y Voz)
+        <button type="button" className="master-audio-banner" onClick={unlockAllAudio} aria-label="Unlock Audio">
+          <IconVolume size={22} />
         </button>
       )}
 
@@ -566,9 +588,9 @@ export const App: React.FC = () => {
           type="button"
           className="call-return-btn"
           onClick={() => handleSelectViewMode('cinema')}
-          title="Volver a la actividad central"
+          aria-label="Return"
         >
-          🌸 Volver al Centro
+          <IconHome size={20} />
         </button>
       )}
 
@@ -643,6 +665,7 @@ export const App: React.FC = () => {
 
         {activeActivity === 'draw' && (
           <DrawingStudio
+            myId={myId}
             myName={myName}
             peerName={otherPeer?.name}
             initialStrokes={studioStrokes}

@@ -1,4 +1,15 @@
 import React, { useEffect, useRef, useState } from 'react';
+import {
+  IconFire,
+  IconHome,
+  IconMicOff,
+  IconMusic,
+  IconPause,
+  IconPlay,
+  IconRain,
+  IconVolume,
+  IconWaves,
+} from './KawaiiIcons';
 
 export type AmbienceId = 'off' | 'rain' | 'fire' | 'waves' | 'lofi';
 
@@ -11,25 +22,10 @@ export interface RelaxState {
 
 export const DEFAULT_RELAX_STATE: RelaxState = {
   ambience: 'rain',
-  moodTitle: '🌙 Charlando tranquilos antes de dormir',
+  moodTitle: 'Cozy',
   timerEndsAt: null,
   timerDurationSec: 25 * 60,
 };
-
-const AMBIENCES: { id: AmbienceId; emoji: string; label: string; desc: string }[] = [
-  { id: 'off', emoji: '🔇', label: 'En silencio', desc: 'Solo nuestras voces' },
-  { id: 'rain', emoji: '🌧️', label: 'Lluvia suave', desc: 'Gotas cálidas en la ventana' },
-  { id: 'fire', emoji: '🔥', label: 'Fogata tibia', desc: 'Leña crepitando de fondo' },
-  { id: 'waves', emoji: '🌊', label: 'Brisa del mar', desc: 'Olas tranquilas de noche' },
-  { id: 'lofi', emoji: '🎹', label: 'Acordes Cozy', desc: 'Armonía suave relajante' },
-];
-
-const MOOD_PRESETS = [
-  '🌙 Charlando tranquilos antes de dormir',
-  '📚 Estudiando / Trabajando juntos (Study with Me)',
-  '☕ Tomando algo rico y poniéndonos al día',
-  '💤 Siesta / Descansando acompañados',
-];
 
 interface Props {
   state: RelaxState;
@@ -44,7 +40,6 @@ export const RelaxRoom: React.FC<Props> = ({
   onUpdateState,
   onBackToHub,
 }) => {
-  // Todos los hooks al inicio
   const [localVol, setLocalVol] = useState(0.35);
   const [secondsLeft, setSecondsLeft] = useState<number>(0);
   const audioCtxRef = useRef<AudioContext | null>(null);
@@ -55,7 +50,6 @@ export const RelaxRoom: React.FC<Props> = ({
     ...state,
   };
 
-  // Reloj regresivo sincronizado
   useEffect(() => {
     if (!s.timerEndsAt) {
       setSecondsLeft(s.timerDurationSec || 1500);
@@ -70,7 +64,6 @@ export const RelaxRoom: React.FC<Props> = ({
     return () => clearInterval(id);
   }, [s.timerEndsAt, s.timerDurationSec]);
 
-  // Generador Web Audio procedural de ambientes relajantes (0 dependencias externas)
   useEffect(() => {
     if (s.ambience === 'off') {
       try {
@@ -96,15 +89,21 @@ export const RelaxRoom: React.FC<Props> = ({
         const bufferSize = ctx.sampleRate * 3;
         const noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
         const output = noiseBuffer.getChannelData(0);
-        let b0 = 0, b1 = 0, b2 = 0, b3 = 0, b4 = 0, b5 = 0, b6 = 0;
+        let b0 = 0,
+          b1 = 0,
+          b2 = 0,
+          b3 = 0,
+          b4 = 0,
+          b5 = 0,
+          b6 = 0;
         for (let i = 0; i < bufferSize; i++) {
           const white = Math.random() * 2 - 1;
           b0 = 0.99886 * b0 + white * 0.0555179;
           b1 = 0.99332 * b1 + white * 0.0750759;
-          b2 = 0.96900 * b2 + white * 0.1538520;
-          b3 = 0.86650 * b3 + white * 0.3104856;
-          b4 = 0.55000 * b4 + white * 0.5329522;
-          b5 = -0.7616 * b5 - white * 0.0168980;
+          b2 = 0.969 * b2 + white * 0.153852;
+          b3 = 0.8665 * b3 + white * 0.3104856;
+          b4 = 0.55 * b4 + white * 0.5329522;
+          b5 = -0.7616 * b5 - white * 0.016898;
           output[i] = (b0 + b1 + b2 + b3 + b4 + b5 + b6 + white * 0.5362) * 0.04;
           b6 = white * 0.115926;
         }
@@ -130,10 +129,10 @@ export const RelaxRoom: React.FC<Props> = ({
         }
       } else if (s.ambience === 'lofi') {
         const chords = [
-          [261.63, 329.63, 392.0, 493.88], // Cmaj7
-          [220.0, 261.63, 329.63, 392.0],  // Am7
-          [174.61, 220.0, 261.63, 349.23], // Fmaj7
-          [196.0, 246.94, 293.66, 349.23], // G7
+          [261.63, 329.63, 392.0, 493.88],
+          [220.0, 261.63, 329.63, 392.0],
+          [174.61, 220.0, 261.63, 349.23],
+          [196.0, 246.94, 293.66, 349.23],
         ];
         let idx = 0;
         const playChord = () => {
@@ -167,7 +166,6 @@ export const RelaxRoom: React.FC<Props> = ({
     };
   }, [s.ambience]);
 
-  // Auto-ducking también en el sonido ambiente cuando hablan
   useEffect(() => {
     if (masterGainRef.current && audioCtxRef.current) {
       const eff = someoneSpeaking ? localVol * 0.25 : localVol;
@@ -181,7 +179,16 @@ export const RelaxRoom: React.FC<Props> = ({
     return `${String(m).padStart(2, '0')}:${r}`;
   };
 
-  const startTimer = (mins: number) => {
+  const toggleTimer = () => {
+    if (s.timerEndsAt) {
+      onUpdateState({ ...s, timerEndsAt: null });
+    } else {
+      const dur = s.timerDurationSec || 1500;
+      onUpdateState({ ...s, timerEndsAt: Date.now() + dur * 1000 });
+    }
+  };
+
+  const setMins = (mins: number) => {
     const dur = mins * 60;
     onUpdateState({
       ...s,
@@ -190,97 +197,70 @@ export const RelaxRoom: React.FC<Props> = ({
     });
   };
 
-  const stopTimer = () => {
-    onUpdateState({
-      ...s,
-      timerEndsAt: null,
-    });
-  };
+  const ambiences: { id: AmbienceId; icon: React.ReactNode; color: string }[] = [
+    { id: 'off', icon: <IconMicOff size={24} />, color: '#f3d9fa' },
+    { id: 'rain', icon: <IconRain size={24} />, color: '#d0ebff' },
+    { id: 'fire', icon: <IconFire size={24} />, color: '#ffd8a8' },
+    { id: 'waves', icon: <IconWaves size={24} />, color: '#c3fae8' },
+    { id: 'lofi', icon: <IconMusic size={24} />, color: '#ffdeeb' },
+  ];
 
   return (
     <main className="cinema-stage relax-stage">
-      <div className="screen-bezel cute-activity-bezel relax-bezel">
-        <div className="activity-header-bar">
-          <button type="button" className="studio-home-btn" onClick={onBackToHub}>
-            🏠 Menú
+      <div className="screen-bezel cute-activity-bezel kawaii-pastel-surface">
+        <div className="kawaii-top-nav">
+          <button type="button" className="kawaii-icon-circle" onClick={onBackToHub} aria-label="Home">
+            <IconHome size={20} />
           </button>
-          <span className="studio-badge-title">☕ Rincón Relax & Study With Me</span>
         </div>
 
-        <div className="relax-content-grid">
-          {/* Estado compartido y Reloj Pomodoro */}
-          <div className="relax-card">
-            <span className="cute-pill-tag">✨ Nuestro Momento</span>
-            <h2 className="relax-mood-heading">{s.moodTitle}</h2>
-
-            <div className="relax-mood-chips">
-              {MOOD_PRESETS.map((m) => (
+        <div className="kawaii-relax-center">
+          {/* Reloj Minimalista */}
+          <div className="kawaii-timer-circle">
+            <div className="kawaii-timer-digits">{fmtTimer(secondsLeft)}</div>
+            <div className="kawaii-timer-Quick">
+              {[15, 25, 45].map((m) => (
                 <button
                   key={m}
                   type="button"
-                  className={`relax-mood-chip ${s.moodTitle === m ? 'active' : ''}`}
-                  onClick={() => onUpdateState({ ...s, moodTitle: m })}
+                  className={`kawaii-num-pill ${s.timerDurationSec === m * 60 ? 'active' : ''}`}
+                  onClick={() => setMins(m)}
                 >
                   {m}
                 </button>
               ))}
-            </div>
-
-            <div className="relax-timer-display">{fmtTimer(secondsLeft)}</div>
-
-            <div className="relax-timer-btns">
-              <button type="button" className="wheel-preset-btn" onClick={() => startTimer(15)}>
-                ⏱️ 15 min
+              <button type="button" className="kawaii-action-circle small" onClick={toggleTimer}>
+                {s.timerEndsAt ? <IconPause size={18} /> : <IconPlay size={18} />}
               </button>
-              <button type="button" className="wheel-preset-btn" onClick={() => startTimer(25)}>
-                🍅 25 min (Pomodoro)
-              </button>
-              <button type="button" className="wheel-preset-btn" onClick={() => startTimer(45)}>
-                📚 45 min
-              </button>
-              {s.timerEndsAt && (
-                <button type="button" className="wheel-preset-btn danger" onClick={stopTimer}>
-                  ⏹️ Pausar reloj
-                </button>
-              )}
             </div>
           </div>
 
-          {/* Sonidos Ambientales Sincronizados */}
-          <div className="relax-card">
-            <h4>🎧 Sonido Ambiental Compartido</h4>
-            <p className="relax-hint">
-              Se baja solito cuando cualquiera de los dos habla para que se escuchen perfecto 💕
-            </p>
+          {/* Botones Circulares de Sonido Ambiental (Solo Iconos SVG) */}
+          <div className="kawaii-ambience-row">
+            {ambiences.map((a) => (
+              <button
+                key={a.id}
+                type="button"
+                className={`kawaii-amb-circle ${s.ambience === a.id ? 'active' : ''}`}
+                style={{ '--amb-bg': a.color } as React.CSSProperties}
+                onClick={() => onUpdateState({ ...s, ambience: a.id })}
+              >
+                {a.icon}
+              </button>
+            ))}
+          </div>
 
-            <div className="ambience-grid">
-              {AMBIENCES.map((a) => (
-                <button
-                  key={a.id}
-                  type="button"
-                  className={`ambience-btn ${s.ambience === a.id ? 'active' : ''}`}
-                  onClick={() => onUpdateState({ ...s, ambience: a.id })}
-                >
-                  <span className="amb-emoji">{a.emoji}</span>
-                  <div>
-                    <strong>{a.label}</strong>
-                    <small>{a.desc}</small>
-                  </div>
-                </button>
-              ))}
-            </div>
-
-            <label className="relax-vol-slider">
-              <span>🔉 Volumen del ambiente en tu dispositivo: {Math.round(localVol * 100)}%</span>
-              <input
-                type="range"
-                min={0}
-                max={1}
-                step={0.05}
-                value={localVol}
-                onChange={(e) => setLocalVol(Number(e.target.value))}
-              />
-            </label>
+          {/* Slider de Volumen Ambiental con Icono */}
+          <div className="kawaii-icon-slider narrow">
+            <IconVolume size={18} />
+            <input
+              type="range"
+              min={0}
+              max={1}
+              step={0.05}
+              value={localVol}
+              onChange={(e) => setLocalVol(Number(e.target.value))}
+            />
           </div>
         </div>
       </div>

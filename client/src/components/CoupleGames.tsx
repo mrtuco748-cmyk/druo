@@ -1,14 +1,22 @@
 import React from 'react';
+import {
+  IconCards,
+  IconChevronRight,
+  IconFire,
+  IconGrid,
+  IconHeart,
+  IconHome,
+  IconRefresh,
+  IconSparkle,
+  IconStar,
+} from './KawaiiIcons';
 
 export interface GamesState {
   tab: 'likely' | 'cards' | 'ttt';
-  // ¿Quién es más probable?
   likelyIdx: number;
   votes: { left?: 'left' | 'right'; right?: 'left' | 'right' };
-  // Cartas de conexión
   cardCategory: 'sweet' | 'deep' | 'spicy';
   cardIdx: number;
-  // Tatetí
   board: ('left' | 'right' | null)[];
   turn: 'left' | 'right';
   scores: { left: number; right: number };
@@ -26,45 +34,42 @@ export const DEFAULT_GAMES_STATE: GamesState = {
 };
 
 const LIKELY_QUESTIONS = [
-  '¿Quién es más probable que se quede dormido a los 15 minutos de empezar la película? 😴🍿',
-  '¿Quién es más probable que robe comida del plato del otro diciendo "solo quiero probar"? 🍟👀',
-  '¿Quién es más probable que pida mimos primero después de un día largo? 🥺🫂',
-  '¿Quién es más probable que tarde 40 minutos eligiendo qué ver y termine poniendo lo de siempre? 🎬😂',
-  '¿Quién es más probable que se ría en un momento serio? 🤭✨',
-  '¿Quién es más probable que mande 10 reels seguidos a las 2 de la mañana? 📱🌙',
-  '¿Quién es más probable que llore con el final de una película tierna? 😭💖',
-  '¿Quién es más probable que se pierda incluso usando Google Maps? 🗺️🧭',
-  '¿Quién es más probable que adopte un perrito o gatito sin avisar? 🐶🐱',
-  '¿Quién es más probable que diga "5 minutitos más" cuando suena la alarma? ⏰🛌',
-  '¿Quién es más probable que planee un viaje sorpresa de fin de semana? ✈️🏖️',
-  '¿Quién es más probable que se coma el último pedazo de postre? 🍰🍓',
+  '¿Quién es más probable que se quede dormido a los 15 minutos de empezar la película?',
+  '¿Quién es más probable que robe comida del plato del otro diciendo "solo quiero probar"?',
+  '¿Quién es más probable que pida mimos primero después de un día largo?',
+  '¿Quién es más probable que tarde 40 minutos eligiendo qué ver y termine poniendo lo de siempre?',
+  '¿Quién es más probable que se ría en un momento serio?',
+  '¿Quién es más probable que mande 10 videos seguidos a las 2 de la mañana?',
+  '¿Quién es más probable que se emocione con el final de una película tierna?',
+  '¿Quién es más probable que se pierda incluso usando el mapa?',
+  '¿Quién es más probable que adopte una mascota sin avisar?',
+  '¿Quién es más probable que diga "5 minutitos más" cuando suena la alarma?',
+  '¿Quién es más probable que planee una salida sorpresa de fin de semana?',
+  '¿Quién es más probable que se coma el último pedazo de postre?',
 ];
 
 const CARDS_DECK: Record<'sweet' | 'deep' | 'spicy', string[]> = {
   sweet: [
-    '🌸 ¿Cuál fue el primer pensamiento que tuviste la primera vez que hablamos o nos vimos?',
-    '💖 ¿Qué pequeño gesto mío te hace sonreír automáticamente aunque tengas un mal día?',
-    '🍓 Si mañana amaneciéramos en cualquier lugar del mundo juntos, ¿a dónde te gustaría que estemos?',
-    '✨ ¿Cuál es tu recuerdo favorito de nosotros dos hasta ahora?',
-    '🥰 ¿Qué canción o película te hace acordar a mí cada vez que la escuchás o ves?',
-    '🌷 ¿Qué es lo que más extrañás cuando no estamos cerquita?',
-    '💌 Describí en 3 palabras lo que sentís cuando estamos juntos.',
+    '¿Cuál fue el primer pensamiento que tuviste la primera vez que hablamos o nos vimos?',
+    '¿Qué pequeño gesto mío te hace sonreír automáticamente en el día a día?',
+    'Si pudiéramos teletransportarnos ahora mismo a cualquier lugar juntos, ¿adónde iríamos?',
+    '¿Cuál es tu recuerdo favorito de nosotros dos hasta ahora?',
+    '¿Qué canción o película te hace acordar a mí siempre?',
+    '¿Cómo describirías nuestra conexión en tres palabras?',
   ],
   deep: [
-    '🌙 ¿Qué sueño o meta te encantaría que cumplamos juntos en los próximos 3 años?',
-    '🏡 ¿Cómo te imaginás un domingo perfecto viviendo juntos de la mañana a la noche?',
-    '💫 ¿Qué aprendiste sobre el amor desde que estamos juntos?',
-    '🌊 ¿Cuándo fue el momento exacto en que sentiste una conexión especial conmigo?',
-    '🌟 ¿Qué aventura loca deberíamos agregar sí o sí a nuestra lista de deseos?',
-    '🕰️ Si pudieras congelar un momento nuestro para revivirlo siempre, ¿cuál elegirías?',
+    '¿Qué es algo que aprendiste sobre vos mismo/a desde que estamos juntos?',
+    '¿Cuál es un sueño o meta que te encantaría que cumplamos juntos en el futuro?',
+    '¿En qué momento sentiste más paz estando conmigo?',
+    '¿Qué valorás más de la forma en que nos cuidamos?',
+    'Si pudieras congelar un momento nuestro para revivirlo siempre, ¿cuál elegirías?',
   ],
   spicy: [
-    '🔥 ¿Qué prenda mía te encanta cómo me queda cuando nos vemos?',
-    '💋 ¿Cuál es tu lugar favorito para que te dé un beso?',
-    '🍷 Si tuviéramos toda una noche en una cabaña frente al mar sin celulares, ¿cómo empezaría?',
-    '😏 ¿Qué fue lo más atrevido que pensaste la última vez que nos vimos?',
-    '✨ ¿Qué detalle o caricia mía te vuelve loco/a al instante?',
-    '🌶️ Confesá algo que tengas muchas ganas de hacer la próxima vez que estemos solos.',
+    '¿Qué parte mía te vuelve más loco/a cuando nos vemos?',
+    '¿Cuál sería tu cita nocturna ideal sin interrupciones?',
+    '¿Qué fue lo más atrevido que pensaste la última vez que estuvimos juntos?',
+    'Confesá algo que te den muchas ganas de hacer la próxima vez que nos veamos.',
+    '¿Cuál es tu lugar o momento favorito para darnos besos?',
   ],
 };
 
@@ -114,8 +119,8 @@ export const CoupleGames: React.FC<Props> = ({
     scores: state?.scores || { left: 0, right: 0 },
   };
 
-  const leftName = mySeat === 'left' ? myName : peerName || 'Izquierda';
-  const rightName = mySeat === 'right' ? myName : peerName || 'Derecha';
+  const leftName = mySeat === 'left' ? myName : peerName || '1';
+  const rightName = mySeat === 'right' ? myName : peerName || '2';
   const otherSeat: 'left' | 'right' = mySeat === 'left' ? 'right' : 'left';
 
   const myVote = s.votes[mySeat];
@@ -180,177 +185,144 @@ export const CoupleGames: React.FC<Props> = ({
 
   return (
     <main className="cinema-stage games-stage">
-      <div className="screen-bezel cute-activity-bezel">
-        {/* Barra Superior */}
-        <div className="activity-header-bar">
-          <button type="button" className="studio-home-btn" onClick={onBackToHub}>
-            🏠 Menú
+      <div className="screen-bezel cute-activity-bezel kawaii-pastel-surface">
+        {/* Barra Superior de Iconos (Sin Textos, Sin Emojis) */}
+        <div className="kawaii-top-nav">
+          <button type="button" className="kawaii-icon-circle" onClick={onBackToHub} aria-label="Home">
+            <IconHome size={20} />
           </button>
-          <div className="activity-tabs">
+
+          <div className="kawaii-pill-tabs">
             <button
               type="button"
-              className={`act-tab-btn ${s.tab === 'likely' ? 'active' : ''}`}
+              className={`kawaii-tab-icon ${s.tab === 'likely' ? 'active' : ''}`}
               onClick={() => onUpdateState({ ...s, tab: 'likely' })}
+              aria-label="Votes"
             >
-              💕 ¿Quién es más probable?
+              <IconHeart size={20} />
             </button>
             <button
               type="button"
-              className={`act-tab-btn ${s.tab === 'cards' ? 'active' : ''}`}
+              className={`kawaii-tab-icon ${s.tab === 'cards' ? 'active' : ''}`}
               onClick={() => onUpdateState({ ...s, tab: 'cards' })}
+              aria-label="Cards"
             >
-              💌 Cartas de Pareja
+              <IconCards size={20} />
             </button>
             <button
               type="button"
-              className={`act-tab-btn ${s.tab === 'ttt' ? 'active' : ''}`}
+              className={`kawaii-tab-icon ${s.tab === 'ttt' ? 'active' : ''}`}
               onClick={() => onUpdateState({ ...s, tab: 'ttt' })}
+              aria-label="Tic Tac Toe"
             >
-              💖 Tatetí en Vivo
+              <IconGrid size={20} />
             </button>
           </div>
         </div>
 
-        {/* Contenido del juego */}
+        {/* Contenido limpio */}
         <div className="activity-content-center">
           {s.tab === 'likely' && (
-            <div className="game-card-box">
-              <span className="cute-pill-tag">Pregunta #{(s.likelyIdx % LIKELY_QUESTIONS.length) + 1}</span>
-              <h2 className="game-big-question">{question}</h2>
+            <div className="kawaii-card-panel">
+              <h2 className="kawaii-question-text">{question}</h2>
 
               <div className="likely-buttons-row">
                 <button
                   type="button"
-                  className={`likely-vote-btn ${myVote === 'left' ? 'selected' : ''}`}
+                  className={`kawaii-vote-card ${myVote === 'left' ? 'selected' : ''} ${
+                    bothVoted && s.votes.left === 'left' && s.votes.right === 'left' ? 'matched' : ''
+                  }`}
                   onClick={() => handleVote('left')}
                 >
-                  <span className="lv-emoji">👈💖</span>
+                  <IconHeart size={26} />
                   <strong>{leftName}</strong>
                 </button>
                 <button
                   type="button"
-                  className={`likely-vote-btn ${myVote === 'right' ? 'selected' : ''}`}
+                  className={`kawaii-vote-card ${myVote === 'right' ? 'selected' : ''} ${
+                    bothVoted && s.votes.left === 'right' && s.votes.right === 'right' ? 'matched' : ''
+                  }`}
                   onClick={() => handleVote('right')}
                 >
-                  <span className="lv-emoji">💖👉</span>
+                  <IconStar size={26} />
                   <strong>{rightName}</strong>
                 </button>
               </div>
 
-              <div className="likely-status-area">
-                {!bothVoted ? (
-                  <p className="likely-waiting-text">
-                    {myVote
-                      ? `✅ Ya votaste · Esperando el voto secreto de ${peerName || 'tu pareja'}…`
-                      : otherVote
-                      ? `👀 ¡${peerName || 'Tu pareja'} ya votó en secreto! Elegí tu respuesta arriba.`
-                      : '✨ Ambos eligen en secreto y se revela al mismo tiempo'}
-                  </p>
-                ) : (
-                  <div className="likely-reveal-banner">
-                    <div className="reveal-match-title">
-                      {s.votes.left === s.votes.right
-                        ? '🎉 ¡COINCIDIERON LOS DOS! 💖'
-                        : '😂 ¡VOTARON DISTINTO!'}
-                    </div>
-                    <div className="reveal-details">
-                      <span>
-                        <strong>{leftName}</strong> votó a:{' '}
-                        <em>{s.votes.left === 'left' ? leftName : rightName}</em>
-                      </span>
-                      <span>•</span>
-                      <span>
-                        <strong>{rightName}</strong> votó a:{' '}
-                        <em>{s.votes.right === 'left' ? leftName : rightName}</em>
-                      </span>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              <button type="button" className="cute-primary-btn" onClick={handleNextLikely}>
-                Siguiente pregunta ➜
+              <button type="button" className="kawaii-action-circle" onClick={handleNextLikely}>
+                <IconChevronRight size={24} />
               </button>
             </div>
           )}
 
           {s.tab === 'cards' && (
-            <div className="game-card-box">
-              <div className="deck-selector-row">
+            <div className="kawaii-card-panel">
+              <div className="kawaii-pill-tabs">
                 <button
                   type="button"
-                  className={`deck-chip ${s.cardCategory === 'sweet' ? 'active' : ''}`}
+                  className={`kawaii-tab-icon ${s.cardCategory === 'sweet' ? 'active' : ''}`}
                   onClick={() => handleNextCard('sweet')}
                 >
-                  🌸 Tiernas
+                  <IconHeart size={18} />
                 </button>
                 <button
                   type="button"
-                  className={`deck-chip ${s.cardCategory === 'deep' ? 'active' : ''}`}
+                  className={`kawaii-tab-icon ${s.cardCategory === 'deep' ? 'active' : ''}`}
                   onClick={() => handleNextCard('deep')}
                 >
-                  🌙 Profundas
+                  <IconSparkle size={18} />
                 </button>
                 <button
                   type="button"
-                  className={`deck-chip ${s.cardCategory === 'spicy' ? 'active' : ''}`}
+                  className={`kawaii-tab-icon ${s.cardCategory === 'spicy' ? 'active' : ''}`}
                   onClick={() => handleNextCard('spicy')}
                 >
-                  🔥 Picantes
+                  <IconFire size={18} />
                 </button>
               </div>
 
-              <div className={`connection-card cat-${s.cardCategory}`}>
-                <p className="connection-card-text">{currentCard}</p>
+              <div className="kawaii-reading-card">
+                <p className="kawaii-question-text">{currentCard}</p>
               </div>
 
-              <button type="button" className="cute-primary-btn" onClick={() => handleNextCard()}>
-                ✨ Sacar otra carta juntos
+              <button type="button" className="kawaii-action-circle" onClick={() => handleNextCard()}>
+                <IconChevronRight size={24} />
               </button>
             </div>
           )}
 
           {s.tab === 'ttt' && (
-            <div className="game-card-box ttt-box">
-              <div className="ttt-scoreboard">
-                <span className={`ttt-score-pill ${s.turn === 'left' && !winner ? 'active-turn' : ''}`}>
-                  💖 {leftName}: <strong>{s.scores.left}</strong>
+            <div className="kawaii-card-panel">
+              <div className="kawaii-ttt-scores">
+                <span className={`kawaii-score-badge ${s.turn === 'left' && !winner ? 'active' : ''}`}>
+                  <IconHeart size={18} />
+                  <strong>{s.scores.left}</strong>
                 </span>
-                <span className="ttt-vs">VS</span>
-                <span className={`ttt-score-pill ${s.turn === 'right' && !winner ? 'active-turn' : ''}`}>
-                  ⭐ {rightName}: <strong>{s.scores.right}</strong>
+                <span className={`kawaii-score-badge ${s.turn === 'right' && !winner ? 'active' : ''}`}>
+                  <IconStar size={18} />
+                  <strong>{s.scores.right}</strong>
                 </span>
               </div>
 
-              <div className="ttt-status-text">
-                {winner === 'draw' ? (
-                  <strong>🤝 ¡Empate! Qué parejos están</strong>
-                ) : winner ? (
-                  <strong>
-                    🎉 ¡Ganó {winner === 'left' ? `${leftName} 💖` : `${rightName} ⭐`}!
-                  </strong>
-                ) : s.turn === mySeat ? (
-                  <span>✨ ¡Es tu turno! Tocá un casillero ({mySeat === 'left' ? '💖' : '⭐'})</span>
-                ) : (
-                  <span>⏳ Turno de {peerName || 'tu pareja'}…</span>
-                )}
-              </div>
-
-              <div className="ttt-grid">
+              <div className="kawaii-ttt-grid">
                 {s.board.map((cell, i) => (
                   <button
                     key={i}
                     type="button"
-                    className={`ttt-cell ${cell ? 'filled' : ''}`}
+                    className={`kawaii-ttt-cell ${cell ? `is-${cell}` : ''}`}
                     onClick={() => handleCellClick(i)}
                   >
-                    {cell === 'left' ? '💖' : cell === 'right' ? '⭐' : ''}
+                    {cell === 'left' ? (
+                      <IconHeart size={30} />
+                    ) : cell === 'right' ? (
+                      <IconStar size={30} />
+                    ) : null}
                   </button>
                 ))}
               </div>
 
-              <button type="button" className="cute-primary-btn" onClick={handleResetTtt}>
-                🔄 Nueva partida
+              <button type="button" className="kawaii-action-circle" onClick={handleResetTtt}>
+                <IconRefresh size={20} />
               </button>
             </div>
           )}

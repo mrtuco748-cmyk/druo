@@ -1,4 +1,27 @@
 import React, { useEffect, useRef, useState } from 'react';
+import {
+  IconAirbrush,
+  IconBrush,
+  IconBucket,
+  IconChevronLeft,
+  IconChevronRight,
+  IconCircle,
+  IconClose,
+  IconDownload,
+  IconEraser,
+  IconEyedropper,
+  IconHand,
+  IconHeart,
+  IconHome,
+  IconLine,
+  IconMarker,
+  IconPen,
+  IconRect,
+  IconResetView,
+  IconSparkle,
+  IconStar,
+  IconTrash,
+} from './KawaiiIcons';
 
 export type StudioTool =
   | 'pen'
@@ -6,13 +29,13 @@ export type StudioTool =
   | 'neon'
   | 'airbrush'
   | 'eraser'
+  | 'bucket'
+  | 'pan'
   | 'line'
   | 'rect'
   | 'circle'
   | 'heart'
   | 'star'
-  | 'stamp'
-  | 'text'
   | 'eyedropper';
 
 export type StudioBg = 'cream' | 'white' | 'pink' | 'night' | 'grid' | 'dots';
@@ -30,8 +53,6 @@ export interface StudioStroke {
   size: number;
   opacity: number;
   points: StudioPoint[];
-  text?: string;
-  stamp?: string;
   filled?: boolean;
 }
 
@@ -43,12 +64,12 @@ export interface StudioEvent {
   id?: string;
   bg?: StudioBg;
   cursor?: { x: number; y: number; color: string; tool: string } | null;
-  pictionary?: { active: boolean; drawer: string; word?: string; endsAt?: number } | null;
   from?: string;
   name?: string;
 }
 
 interface Props {
+  myId?: string;
   myName: string;
   peerName?: string;
   initialStrokes: StudioStroke[];
@@ -59,54 +80,140 @@ interface Props {
   onBackToHub: () => void;
 }
 
-const PALETTE = [
-  '#2b2333', // Carbón suave
-  '#ffffff', // Blanco puro
-  '#ff6b9d', // Rosa chicle cute
-  '#e8455b', // Rojo cereza
-  '#ff9770', // Durazno coral
-  '#ffd166', // Amarillo sol
-  '#ffcf6b', // Dorado cálido
-  '#63e6be', // Menta pastel
-  '#38d9a9', // Esmeralda
-  '#74c0fc', // Cielo pastel
-  '#4dabf7', // Azul océano
-  '#a98bff', // Lavanda cute
-  '#da77f2', // Orquídea
-  '#f783ac', // Rosa bebé
-  '#ffccd5', // Piel / Rubor suave
-  '#8d6e63', // Cacao / Marrón
+const WORLD_W = 1400;
+const WORLD_H = 900;
+
+const KAWAII_PALETTE = [
+  '#4a3b52', // Deep plum charcoal
+  '#ff85a2', // Pastel Sakura Pink
+  '#ff5c8a', // Berry Rose
+  '#ffb385', // Pastel Peach
+  '#ffe082', // Pastel Lemon Butter
+  '#8ce99a', // Pastel Mint
+  '#74e3c4', // Pastel Aqua
+  '#91c9ff', // Pastel Baby Blue
+  '#b89eff', // Pastel Lavender
+  '#f3a6ff', // Pastel Orchid
+  '#ffadad', // Soft Coral
+  '#ffffff', // Pure White
 ];
 
-const STAMPS = ['💖', '✨', '🌸', '🐱', '🍓', '👑', '🎀', '🥺', '🔥', '🌈', '🍕', '🎬'];
-
-const PICTIONARY_WORDS = [
-  'Gatito con sombrero 🐱🎩',
-  'Cena romántica con velas 🕯️🍝',
-  'Pingüinos dándose la mano 🐧💕',
-  'Viaje a la playa juntos 🏖️☀️',
-  'Perro manejando un auto 🐶🚗',
-  'Castillo flotando en las nubes 🏰☁️',
-  'Maratón de películas con pochoclos 🍿🎬',
-  'Oso panda comiendo helado 🐼🍦',
-  'Astronauta enamorado en la luna 🚀🌙',
-  'Desayuno en la cama con flores 🥐🌷',
-  'Dragón tirando corazones 🐉💖',
-  'Día de lluvia con paraguas ☔🌧️',
-  'Rana cantando con micrófono 🐸🎤',
-  'Picnic bajo las estrellas 🧺✨',
-];
-
-const BG_CONFIG: Record<StudioBg, { label: string; fill: string; isDark: boolean }> = {
-  cream: { label: '📜 Crema', fill: '#fdf8f2', isDark: false },
-  white: { label: '📄 Blanco', fill: '#ffffff', isDark: false },
-  pink: { label: '🌸 Rosa Cute', fill: '#fff0f6', isDark: false },
-  night: { label: '🌙 Noche', fill: '#151021', isDark: true },
-  grid: { label: '📐 Cuadrícula', fill: '#fbfbfe', isDark: false },
-  dots: { label: '⠿ Puntos', fill: '#fcfaf7', isDark: false },
+const BG_COLORS: Record<StudioBg, string> = {
+  cream: '#fffaf4',
+  white: '#ffffff',
+  pink: '#fff0f6',
+  grid: '#f4f9ff',
+  dots: '#f8f4ff',
+  night: '#231b2e',
 };
 
+function hexToRgba(hex: string): [number, number, number, number] {
+  const clean = hex.replace('#', '');
+  const num = parseInt(
+    clean.length === 3
+      ? clean
+          .split('')
+          .map((c) => c + c)
+          .join('')
+      : clean,
+    16
+  );
+  return [(num >> 16) & 255, (num >> 8) & 255, num & 255, 255];
+}
+
+function floodFillCanvas(
+  ctx: CanvasRenderingContext2D,
+  normX: number,
+  normY: number,
+  fillHex: string
+) {
+  const w = ctx.canvas.width;
+  const h = ctx.canvas.height;
+  const startX = Math.max(0, Math.min(w - 1, Math.floor(normX * w)));
+  const startY = Math.max(0, Math.min(h - 1, Math.floor(normY * h)));
+
+  const imgData = ctx.getImageData(0, 0, w, h);
+  const data = imgData.data;
+  const [fr, fg, fb, fa] = hexToRgba(fillHex);
+
+  const startIdx = (startY * w + startX) * 4;
+  const sr = data[startIdx];
+  const sg = data[startIdx + 1];
+  const sb = data[startIdx + 2];
+  const sa = data[startIdx + 3];
+
+  const tol = 38;
+  if (
+    Math.abs(sr - fr) <= 4 &&
+    Math.abs(sg - fg) <= 4 &&
+    Math.abs(sb - fb) <= 4 &&
+    Math.abs(sa - fa) <= 4
+  ) {
+    return;
+  }
+
+  const visited = new Uint8Array(w * h);
+  const stack = new Int32Array(w * h);
+  let ptr = 0;
+  stack[ptr++] = startY * w + startX;
+  visited[startY * w + startX] = 1;
+
+  const matches = (pIdx: number) => {
+    const i = pIdx * 4;
+    return (
+      Math.abs(data[i] - sr) <= tol &&
+      Math.abs(data[i + 1] - sg) <= tol &&
+      Math.abs(data[i + 2] - sb) <= tol &&
+      Math.abs(data[i + 3] - sa) <= tol
+    );
+  };
+
+  while (ptr > 0) {
+    const cur = stack[--ptr];
+    const x = cur % w;
+    const y = (cur / w) | 0;
+
+    let lx = x;
+    while (lx > 0 && !visited[y * w + (lx - 1)] && matches(y * w + (lx - 1))) {
+      lx--;
+      visited[y * w + lx] = 1;
+    }
+
+    let rx = x;
+    while (rx < w - 1 && !visited[y * w + (rx + 1)] && matches(y * w + (rx + 1))) {
+      rx++;
+      visited[y * w + rx] = 1;
+    }
+
+    for (let px = lx; px <= rx; px++) {
+      const idx = (y * w + px) * 4;
+      data[idx] = fr;
+      data[idx + 1] = fg;
+      data[idx + 2] = fb;
+      data[idx + 3] = fa;
+
+      if (y > 0) {
+        const up = (y - 1) * w + px;
+        if (!visited[up] && matches(up)) {
+          visited[up] = 1;
+          stack[ptr++] = up;
+        }
+      }
+      if (y < h - 1) {
+        const dn = (y + 1) * w + px;
+        if (!visited[dn] && matches(dn)) {
+          visited[dn] = 1;
+          stack[ptr++] = dn;
+        }
+      }
+    }
+  }
+
+  ctx.putImageData(imgData, 0, 0);
+}
+
 export const DrawingStudio: React.FC<Props> = ({
+  myId,
   myName,
   peerName,
   initialStrokes,
@@ -116,84 +223,95 @@ export const DrawingStudio: React.FC<Props> = ({
   onSyncLocalState,
   onBackToHub,
 }) => {
-  // Todos los hooks al inicio absoluto del componente
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const strokesRef = useRef<StudioStroke[]>(initialStrokes || []);
-  const redoStackRef = useRef<StudioStroke[]>([]);
-  const localStrokeRef = useRef<StudioStroke | null>(null);
-  const remoteStrokeRef = useRef<StudioStroke | null>(null);
-  const lastEmitRef = useRef<number>(0);
-  const lastCursorEmitRef = useRef<number>(0);
-
+  // 1. TODOS LOS HOOKS DECLARADOS AL PRINCIPIO (evita TDZ ReferenceError)
+  const authorKey = myId || myName;
   const [tool, setTool] = useState<StudioTool>('pen');
-  const [color, setColor] = useState<string>('#ff6b9d');
+  const [color, setColor] = useState<string>('#ff85a2');
   const [size, setSize] = useState<number>(8);
-  const [opacity, setOpacity] = useState<number>(1);
   const [filledShape, setFilledShape] = useState<boolean>(false);
-  const [selectedStamp, setSelectedStamp] = useState<string>('💖');
   const [bg, setBg] = useState<StudioBg>(initialBg || 'cream');
-  const [strokeCount, setStrokeCount] = useState<number>((initialStrokes || []).length);
-  const [redoCount, setRedoCount] = useState<number>(0);
+  const [menuOpen, setMenuOpen] = useState<boolean>(false);
+
+  // Pan y Zoom INDEPENDIENTE para cada usuario
+  const [pan, setPan] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState<number>(1);
+  const panRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+  const zoomRef = useRef<number>(1);
+
+  // Contadores de trazos propios para habilitar/deshabilitar < y >
+  const [myUndoCount, setMyUndoCount] = useState<number>(0);
+  const [myRedoCount, setMyRedoCount] = useState<number>(0);
   const [remoteCursor, setRemoteCursor] = useState<{
     x: number;
     y: number;
     color: string;
-    tool: string;
     name: string;
   } | null>(null);
-  const [textPrompt, setTextPrompt] = useState<{ x: number; y: number; value: string } | null>(null);
-  const [pictionary, setPictionary] = useState<{
-    active: boolean;
-    drawer: string;
-    word?: string;
-    endsAt?: number;
-  } | null>(null);
-  const [pictSecondsLeft, setPictSecondsLeft] = useState<number>(0);
 
-  // Temporizador para Pictionary
-  useEffect(() => {
-    if (!pictionary?.active || !pictionary.endsAt) {
-      setPictSecondsLeft(0);
-      return;
-    }
-    const tick = () => {
-      const rem = Math.max(0, Math.ceil((pictionary.endsAt! - Date.now()) / 1000));
-      setPictSecondsLeft(rem);
-    };
-    tick();
-    const id = setInterval(tick, 500);
-    return () => clearInterval(id);
-  }, [pictionary]);
+  const viewCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const worldCanvasRef = useRef<HTMLCanvasElement | null>(null);
 
-  const drawBackground = (ctx: CanvasRenderingContext2D, w: number, h: number, currentBg: StudioBg) => {
-    const cfg = BG_CONFIG[currentBg] || BG_CONFIG.cream;
+  const strokesRef = useRef<StudioStroke[]>(initialStrokes || []);
+  const myRedoRef = useRef<StudioStroke[]>([]);
+  const bgRef = useRef<StudioBg>(initialBg || 'cream');
+
+  const currentStrokeRef = useRef<StudioStroke | null>(null);
+  const remoteLiveStrokeRef = useRef<StudioStroke | null>(null);
+
+  const isPanningRef = useRef<boolean>(false);
+  const panStartRef = useRef<{ clientX: number; clientY: number; panX: number; panY: number }>({
+    clientX: 0,
+    clientY: 0,
+    panX: 0,
+    panY: 0,
+  });
+  const activePointersRef = useRef<Map<number, { x: number; y: number }>>(new Map());
+  const pinchDistRef = useRef<number | null>(null);
+  const spacePressedRef = useRef<boolean>(false);
+
+  const lastTapRef = useRef<{ time: number; clientX: number; clientY: number }>({
+    time: 0,
+    clientX: 0,
+    clientY: 0,
+  });
+  const lastTapStrokeRef = useRef<{ id: string; time: number } | null>(null);
+  const lastLiveEmitRef = useRef<number>(0);
+
+  const updateCounters = () => {
+    const mine = strokesRef.current.filter(
+      (s) => s.author === authorKey || s.author === myName
+    ).length;
+    setMyUndoCount(mine);
+    setMyRedoCount(myRedoRef.current.length);
+    onSyncLocalState([...strokesRef.current], bgRef.current);
+  };
+
+  const drawWorldBackground = (ctx: CanvasRenderingContext2D, mode: StudioBg) => {
     ctx.save();
-    ctx.fillStyle = cfg.fill;
-    ctx.fillRect(0, 0, w, h);
+    ctx.fillStyle = BG_COLORS[mode] || '#fffaf4';
+    ctx.fillRect(0, 0, WORLD_W, WORLD_H);
 
-    if (currentBg === 'grid') {
-      ctx.strokeStyle = 'rgba(140, 120, 180, 0.14)';
+    if (mode === 'grid') {
+      ctx.strokeStyle = 'rgba(130, 170, 225, 0.25)';
       ctx.lineWidth = 1;
-      const step = Math.max(20, Math.round(w / 48));
-      for (let x = step; x < w; x += step) {
-        ctx.beginPath();
+      const step = 32;
+      ctx.beginPath();
+      for (let x = step; x < WORLD_W; x += step) {
         ctx.moveTo(x, 0);
-        ctx.lineTo(x, h);
-        ctx.stroke();
+        ctx.lineTo(x, WORLD_H);
       }
-      for (let y = step; y < h; y += step) {
-        ctx.beginPath();
+      for (let y = step; y < WORLD_H; y += step) {
         ctx.moveTo(0, y);
-        ctx.lineTo(w, y);
-        ctx.stroke();
+        ctx.lineTo(WORLD_W, y);
       }
-    } else if (currentBg === 'dots') {
-      ctx.fillStyle = 'rgba(140, 120, 180, 0.25)';
-      const step = Math.max(22, Math.round(w / 44));
-      for (let x = step; x < w; x += step) {
-        for (let y = step; y < h; y += step) {
+      ctx.stroke();
+    } else if (mode === 'dots') {
+      ctx.fillStyle = 'rgba(175, 145, 225, 0.35)';
+      const step = 28;
+      for (let x = step; x < WORLD_W; x += step) {
+        for (let y = step; y < WORLD_H; y += step) {
           ctx.beginPath();
-          ctx.arc(x, y, 1.4, 0, Math.PI * 2);
+          ctx.arc(x, y, 1.6, 0, Math.PI * 2);
           ctx.fill();
         }
       }
@@ -201,92 +319,44 @@ export const DrawingStudio: React.FC<Props> = ({
     ctx.restore();
   };
 
-  const drawHeartPath = (ctx: CanvasRenderingContext2D, cx: number, cy: number, rx: number, ry: number) => {
-    const w = Math.max(4, Math.abs(rx) * 2);
-    const h = Math.max(4, Math.abs(ry) * 2);
-    const x = cx - w / 2;
-    const y = cy - h / 2;
-    const topCurveHeight = h * 0.3;
-    ctx.beginPath();
-    ctx.moveTo(x + w / 2, y + topCurveHeight);
-    ctx.bezierCurveTo(x + w / 2, y, x, y, x, y + topCurveHeight);
-    ctx.bezierCurveTo(x, y + (h + topCurveHeight) / 2, x + w / 2, y + (h + topCurveHeight) / 1.4, x + w / 2, y + h);
-    ctx.bezierCurveTo(x + w / 2, y + (h + topCurveHeight) / 1.4, x + w, y + (h + topCurveHeight) / 2, x + w, y + topCurveHeight);
-    ctx.bezierCurveTo(x + w, y, x + w / 2, y, x + w / 2, y + topCurveHeight);
-    ctx.closePath();
-  };
-
-  const drawStarPath = (ctx: CanvasRenderingContext2D, cx: number, cy: number, rOuter: number) => {
-    const spikes = 5;
-    const outer = Math.max(4, rOuter);
-    const inner = outer * 0.45;
-    let rot = (Math.PI / 2) * 3;
-    const step = Math.PI / spikes;
-    ctx.beginPath();
-    ctx.moveTo(cx, cy - outer);
-    for (let i = 0; i < spikes; i++) {
-      ctx.lineTo(cx + Math.cos(rot) * outer, cy + Math.sin(rot) * outer);
-      rot += step;
-      ctx.lineTo(cx + Math.cos(rot) * inner, cy + Math.sin(rot) * inner);
-      rot += step;
-    }
-    ctx.lineTo(cx, cy - outer);
-    ctx.closePath();
-  };
-
-  const drawSingleStroke = (
+  const renderStrokeOnCtx = (
     ctx: CanvasRenderingContext2D,
     s: StudioStroke,
     w: number,
-    h: number,
-    currentBg: StudioBg
+    h: number
   ) => {
-    if (!s || !s.points || s.points.length === 0) return;
-    const scaleFactor = w / 1200;
-    const scaledSize = Math.max(1.5, s.size * scaleFactor);
+    if (!s.points || s.points.length === 0) return;
+
+    if (s.tool === 'bucket') {
+      const p0 = s.points[0];
+      floodFillCanvas(ctx, p0.x, p0.y, s.color);
+      return;
+    }
 
     ctx.save();
+    const scale = w / 1000;
+    const strokePx = Math.max(1.5, s.size * scale);
+    const strokeColor = s.tool === 'eraser' ? BG_COLORS[bgRef.current] : s.color;
+
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
-    ctx.lineWidth = scaledSize;
-
-    const bgColor = (BG_CONFIG[currentBg] || BG_CONFIG.cream).fill;
-    const strokeColor = s.tool === 'eraser' ? bgColor : s.color;
+    ctx.lineWidth = strokePx;
     ctx.strokeStyle = strokeColor;
     ctx.fillStyle = strokeColor;
-    ctx.globalAlpha = s.tool === 'eraser' ? 1 : s.tool === 'marker' ? s.opacity * 0.38 : s.opacity;
+    ctx.globalAlpha = s.tool === 'marker' ? 0.42 : s.tool === 'airbrush' ? 0.28 : 1;
 
     if (s.tool === 'neon') {
       ctx.shadowColor = s.color;
-      ctx.shadowBlur = scaledSize * 2.2;
+      ctx.shadowBlur = strokePx * 2.2;
     } else if (s.tool === 'airbrush') {
       ctx.shadowColor = s.color;
-      ctx.shadowBlur = scaledSize * 1.4;
-      ctx.globalAlpha = s.opacity * 0.65;
+      ctx.shadowBlur = strokePx * 1.8;
     }
 
     const p0 = s.points[0];
+    const pLast = s.points[s.points.length - 1];
     const x0 = p0.x * w;
     const y0 = p0.y * h;
-
-    if (s.tool === 'stamp' && s.stamp) {
-      ctx.font = `${Math.max(18, scaledSize * 3.2)}px sans-serif`;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(s.stamp, x0, y0);
-      ctx.restore();
-      return;
-    }
-
-    if (s.tool === 'text' && s.text) {
-      ctx.font = `600 ${Math.max(14, scaledSize * 2.2)}px 'Inter', sans-serif`;
-      ctx.textBaseline = 'top';
-      ctx.fillText(s.text, x0, y0);
-      ctx.restore();
-      return;
-    }
-
-    const pLast = s.points[s.points.length - 1];
     const x1 = pLast.x * w;
     const y1 = pLast.y * h;
 
@@ -305,11 +375,7 @@ export const DrawingStudio: React.FC<Props> = ({
       const rw = Math.abs(x1 - x0);
       const rh = Math.abs(y1 - y0);
       ctx.beginPath();
-      if ((ctx as any).roundRect) {
-        (ctx as any).roundRect(rx, ry, rw, rh, Math.min(12, rw / 4, rh / 4));
-      } else {
-        ctx.rect(rx, ry, rw, rh);
-      }
+      ctx.roundRect(rx, ry, rw, rh, 6);
       if (s.filled) ctx.fill();
       ctx.stroke();
       ctx.restore();
@@ -319,10 +385,10 @@ export const DrawingStudio: React.FC<Props> = ({
     if (s.tool === 'circle') {
       const cx = (x0 + x1) / 2;
       const cy = (y0 + y1) / 2;
-      const rx = Math.abs(x1 - x0) / 2;
-      const ry = Math.abs(y1 - y0) / 2;
+      const rx = Math.max(2, Math.abs(x1 - x0) / 2);
+      const ry = Math.max(2, Math.abs(y1 - y0) / 2);
       ctx.beginPath();
-      ctx.ellipse(cx, cy, Math.max(1, rx), Math.max(1, ry), 0, 0, Math.PI * 2);
+      ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2);
       if (s.filled) ctx.fill();
       ctx.stroke();
       ctx.restore();
@@ -331,10 +397,31 @@ export const DrawingStudio: React.FC<Props> = ({
 
     if (s.tool === 'heart') {
       const cx = (x0 + x1) / 2;
-      const cy = (y0 + y1) / 2;
-      const rx = Math.abs(x1 - x0) / 2;
-      const ry = Math.abs(y1 - y0) / 2;
-      drawHeartPath(ctx, cx, cy, rx, ry);
+      const topY = Math.min(y0, y1);
+      const rw = Math.max(8, Math.abs(x1 - x0));
+      const rh = Math.max(8, Math.abs(y1 - y0));
+      ctx.beginPath();
+      const dY = rh * 0.3;
+      ctx.moveTo(cx, topY + dY);
+      ctx.bezierCurveTo(cx, topY, cx - rw / 2, topY, cx - rw / 2, topY + dY);
+      ctx.bezierCurveTo(
+        cx - rw / 2,
+        topY + (rh + dY) / 2,
+        cx,
+        topY + (rh + dY) / 1.45,
+        cx,
+        topY + rh
+      );
+      ctx.bezierCurveTo(
+        cx,
+        topY + (rh + dY) / 1.45,
+        cx + rw / 2,
+        topY + (rh + dY) / 2,
+        cx + rw / 2,
+        topY + dY
+      );
+      ctx.bezierCurveTo(cx + rw / 2, topY, cx, topY, cx, topY + dY);
+      ctx.closePath();
       if (s.filled) ctx.fill();
       ctx.stroke();
       ctx.restore();
@@ -344,666 +431,839 @@ export const DrawingStudio: React.FC<Props> = ({
     if (s.tool === 'star') {
       const cx = (x0 + x1) / 2;
       const cy = (y0 + y1) / 2;
-      const r = Math.hypot(x1 - x0, y1 - y0) / 2;
-      drawStarPath(ctx, cx, cy, r);
+      const outerR = Math.max(6, Math.hypot(x1 - x0, y1 - y0) / 2);
+      const innerR = outerR * 0.45;
+      ctx.beginPath();
+      for (let i = 0; i < 10; i++) {
+        const r = i % 2 === 0 ? outerR : innerR;
+        const angle = (i * Math.PI) / 5 - Math.PI / 2;
+        const px = cx + Math.cos(angle) * r;
+        const py = cy + Math.sin(angle) * r;
+        if (i === 0) ctx.moveTo(px, py);
+        else ctx.lineTo(px, py);
+      }
+      ctx.closePath();
       if (s.filled) ctx.fill();
       ctx.stroke();
       ctx.restore();
       return;
     }
 
-    // Trazo libre suavizado con curvas cuadráticas de Bézier (calidad Procreate)
+    // Trazo libre suavizado con curvas de Bézier
     ctx.beginPath();
     if (s.points.length === 1) {
-      ctx.arc(x0, y0, scaledSize / 2, 0, Math.PI * 2);
+      ctx.arc(x0, y0, strokePx / 2, 0, Math.PI * 2);
       ctx.fill();
-    } else if (s.points.length === 2) {
-      ctx.moveTo(x0, y0);
-      ctx.lineTo(x1, y1);
-      ctx.stroke();
     } else {
       ctx.moveTo(x0, y0);
       for (let i = 1; i < s.points.length - 1; i++) {
-        const cx = s.points[i].x * w;
-        const cy = s.points[i].y * h;
-        const nx = s.points[i + 1].x * w;
-        const ny = s.points[i + 1].y * h;
-        const midX = (cx + nx) / 2;
-        const midY = (cy + ny) / 2;
-        ctx.quadraticCurveTo(cx, cy, midX, midY);
+        const curr = s.points[i];
+        const next = s.points[i + 1];
+        const midX = ((curr.x + next.x) / 2) * w;
+        const midY = ((curr.y + next.y) / 2) * h;
+        ctx.quadraticCurveTo(curr.x * w, curr.y * h, midX, midY);
       }
       ctx.lineTo(x1, y1);
       ctx.stroke();
+
+      if (s.tool === 'neon') {
+        ctx.shadowBlur = 0;
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = Math.max(1, strokePx * 0.36);
+        ctx.stroke();
+      }
     }
     ctx.restore();
   };
 
-  const renderCanvas = (overrideBg?: StudioBg) => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-    const w = canvas.width;
-    const h = canvas.height;
-    const activeBg = overrideBg || bg;
+  // Reconstruir el lienzo de mundo completo (incluyendo baldes de pintura en orden)
+  const rebuildWorldCanvas = () => {
+    let wc = worldCanvasRef.current;
+    if (!wc) {
+      wc = document.createElement('canvas');
+      wc.width = WORLD_W;
+      wc.height = WORLD_H;
+      worldCanvasRef.current = wc;
+    }
+    const wctx = wc.getContext('2d', { willReadFrequently: true });
+    if (!wctx) return;
 
-    drawBackground(ctx, w, h, activeBg);
+    drawWorldBackground(wctx, bgRef.current);
     for (const s of strokesRef.current) {
-      drawSingleStroke(ctx, s, w, h, activeBg);
+      renderStrokeOnCtx(wctx, s, WORLD_W, WORLD_H);
     }
-    if (remoteStrokeRef.current) {
-      drawSingleStroke(ctx, remoteStrokeRef.current, w, h, activeBg);
-    }
-    if (localStrokeRef.current) {
-      drawSingleStroke(ctx, localStrokeRef.current, w, h, activeBg);
-    }
+    renderViewport();
   };
 
-  // Sincronizar con props iniciales cuando entran a la sala
-  useEffect(() => {
-    strokesRef.current = initialStrokes || [];
-    setStrokeCount(strokesRef.current.length);
-    setBg(initialBg || 'cream');
-    renderCanvas(initialBg || 'cream');
-  }, [initialStrokes, initialBg]);
+  // Dibujar el lienzo visible aplicando el pan y zoom local de este usuario
+  const renderViewport = () => {
+    const vc = viewCanvasRef.current;
+    const wc = worldCanvasRef.current;
+    if (!vc || !wc) return;
+    const ctx = vc.getContext('2d');
+    if (!ctx) return;
 
-  // Ajustar resolución interna del canvas al tamaño de la ventana
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const updateSize = () => {
-      const rect = canvas.getBoundingClientRect();
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
-      const nextW = Math.max(1, Math.round(rect.width * dpr));
-      const nextH = Math.max(1, Math.round(rect.height * dpr));
-      if (canvas.width !== nextW || canvas.height !== nextH) {
-        canvas.width = nextW;
-        canvas.height = nextH;
+    const dpr = window.devicePixelRatio || 1;
+    const vw = vc.width / dpr;
+    const vh = vc.height / dpr;
+
+    ctx.save();
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    // Fondo exterior pastel kawaii (mesa de trabajo)
+    ctx.fillStyle = '#f6edf8';
+    ctx.fillRect(0, 0, vw, vh);
+
+    // Calcular caja base centrada de la hoja
+    const scaleFit = Math.min((vw - 24) / WORLD_W, (vh - 24) / WORLD_H);
+    const sheetW = WORLD_W * scaleFit;
+    const sheetH = WORLD_H * scaleFit;
+    const baseX = (vw - sheetW) / 2;
+    const baseY = (vh - sheetH) / 2;
+
+    // Aplicar Pan y Zoom independientes de este usuario alrededor del centro
+    ctx.translate(vw / 2 + panRef.current.x, vh / 2 + panRef.current.y);
+    ctx.scale(zoomRef.current, zoomRef.current);
+    ctx.translate(-vw / 2, -vh / 2);
+
+    // Sombra suave de la hoja
+    ctx.save();
+    ctx.shadowColor = 'rgba(130, 85, 145, 0.18)';
+    ctx.shadowBlur = 22;
+    ctx.shadowOffsetY = 6;
+    ctx.fillStyle = BG_COLORS[bgRef.current];
+    ctx.beginPath();
+    ctx.roundRect(baseX, baseY, sheetW, sheetH, 14);
+    ctx.fill();
+    ctx.restore();
+
+    // Recortar a los bordes redondeados de la hoja y volcar el worldCanvas
+    ctx.save();
+    ctx.beginPath();
+    ctx.roundRect(baseX, baseY, sheetW, sheetH, 14);
+    ctx.clip();
+    ctx.drawImage(wc, baseX, baseY, sheetW, sheetH);
+
+    // Si hay trazos en vivo (mío o de mi pareja), dibujarlos encima en coordenadas de la hoja
+    if (remoteLiveStrokeRef.current || currentStrokeRef.current) {
+      ctx.translate(baseX, baseY);
+      if (remoteLiveStrokeRef.current) {
+        renderStrokeOnCtx(ctx, remoteLiveStrokeRef.current, sheetW, sheetH);
       }
-      renderCanvas();
+      if (currentStrokeRef.current) {
+        renderStrokeOnCtx(ctx, currentStrokeRef.current, sheetW, sheetH);
+      }
+    }
+    ctx.restore();
+
+    // Borde pastel de la hoja
+    ctx.strokeStyle = 'rgba(255, 158, 187, 0.55)';
+    ctx.lineWidth = 2 / zoomRef.current;
+    ctx.beginPath();
+    ctx.roundRect(baseX, baseY, sheetW, sheetH, 14);
+    ctx.stroke();
+
+    ctx.restore();
+  };
+
+  // Convertir coordenadas de pantalla (clientX, clientY) a coordenadas normalizadas [0..1] de la hoja
+  const clientToWorldNorm = (clientX: number, clientY: number): StudioPoint => {
+    const vc = viewCanvasRef.current;
+    if (!vc) return { x: 0.5, y: 0.5 };
+    const rect = vc.getBoundingClientRect();
+    const vw = rect.width;
+    const vh = rect.height;
+
+    const sx = clientX - rect.left;
+    const sy = clientY - rect.top;
+
+    // Invertir Pan y Zoom
+    const ux = (sx - vw / 2 - panRef.current.x) / zoomRef.current + vw / 2;
+    const uy = (sy - vh / 2 - panRef.current.y) / zoomRef.current + vh / 2;
+
+    const scaleFit = Math.min((vw - 24) / WORLD_W, (vh - 24) / WORLD_H);
+    const sheetW = WORLD_W * scaleFit;
+    const sheetH = WORLD_H * scaleFit;
+    const baseX = (vw - sheetW) / 2;
+    const baseY = (vh - sheetH) / 2;
+
+    const nx = (ux - baseX) / sheetW;
+    const ny = (uy - baseY) / sheetH;
+
+    return {
+      x: Math.max(0, Math.min(1, Number(nx.toFixed(4)))),
+      y: Math.max(0, Math.min(1, Number(ny.toFixed(4)))),
     };
+  };
+
+  // Convertir coordenadas normalizadas [0..1] de la hoja a porcentaje de pantalla para el cursor remoto
+  const worldNormToScreenPct = (wx: number, wy: number) => {
+    const vc = viewCanvasRef.current;
+    if (!vc) return { left: '50%', top: '50%' };
+    const rect = vc.getBoundingClientRect();
+    const vw = rect.width || 1;
+    const vh = rect.height || 1;
+
+    const scaleFit = Math.min((vw - 24) / WORLD_W, (vh - 24) / WORLD_H);
+    const sheetW = WORLD_W * scaleFit;
+    const sheetH = WORLD_H * scaleFit;
+    const baseX = (vw - sheetW) / 2;
+    const baseY = (vh - sheetH) / 2;
+
+    const ux = baseX + wx * sheetW;
+    const uy = baseY + wy * sheetH;
+
+    const sx = (ux - vw / 2) * zoomRef.current + vw / 2 + panRef.current.x;
+    const sy = (uy - vh / 2) * zoomRef.current + vh / 2 + panRef.current.y;
+
+    return {
+      left: `${(sx / vw) * 100}%`,
+      top: `${(sy / vh) * 100}%`,
+    };
+  };
+
+  // Inicializar tamaño del canvas y reconstruir hoja
+  useEffect(() => {
+    const vc = viewCanvasRef.current;
+    if (!vc) return;
+    const updateSize = () => {
+      const rect = vc.getBoundingClientRect();
+      const dpr = window.devicePixelRatio || 1;
+      vc.width = Math.max(320, Math.floor(rect.width * dpr));
+      vc.height = Math.max(220, Math.floor(rect.height * dpr));
+      renderViewport();
+    };
+    rebuildWorldCanvas();
     updateSize();
     const ro = new ResizeObserver(updateSize);
-    ro.observe(canvas);
+    ro.observe(vc);
     return () => ro.disconnect();
-  }, [bg]);
+  }, []);
 
-  // Receptor de eventos en tiempo real del otro participante
+  // Tecla Espacio para mover el lienzo + Ctrl+Z / Ctrl+Y para tus propios trazos
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.code === 'Space') spacePressedRef.current = true;
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
+        e.preventDefault();
+        if (e.shiftKey) handleRedoMine();
+        else handleUndoMine();
+      } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y') {
+        e.preventDefault();
+        handleRedoMine();
+      }
+    };
+    const onKeyUp = (e: KeyboardEvent) => {
+      if (e.code === 'Space') spacePressedRef.current = false;
+    };
+    window.addEventListener('keydown', onKeyDown);
+    window.addEventListener('keyup', onKeyUp);
+    return () => {
+      window.removeEventListener('keydown', onKeyDown);
+      window.removeEventListener('keyup', onKeyUp);
+    };
+  });
+
+  // Receptor en tiempo real de eventos de la pareja
   useEffect(() => {
     onRegisterStudioReceiver((ev: StudioEvent) => {
-      if (ev.action === 'cursor') {
+      if (ev.action === 'live') {
+        remoteLiveStrokeRef.current = ev.stroke || null;
+        renderViewport();
+      } else if (ev.action === 'commit' && ev.stroke) {
+        remoteLiveStrokeRef.current = null;
+        if (!strokesRef.current.some((s) => s.id === ev.stroke!.id)) {
+          strokesRef.current.push(ev.stroke);
+          const wctx = worldCanvasRef.current?.getContext('2d', { willReadFrequently: true });
+          if (wctx) renderStrokeOnCtx(wctx, ev.stroke, WORLD_W, WORLD_H);
+        }
+        updateCounters();
+        renderViewport();
+      } else if (ev.action === 'remove' && ev.id) {
+        strokesRef.current = strokesRef.current.filter((s) => s.id !== ev.id);
+        updateCounters();
+        rebuildWorldCanvas();
+      } else if (ev.action === 'replace' && Array.isArray(ev.strokes)) {
+        strokesRef.current = ev.strokes;
+        updateCounters();
+        rebuildWorldCanvas();
+      } else if (ev.action === 'bg' && ev.bg) {
+        bgRef.current = ev.bg;
+        setBg(ev.bg);
+        updateCounters();
+        rebuildWorldCanvas();
+      } else if (ev.action === 'clear') {
+        strokesRef.current = [];
+        myRedoRef.current = [];
+        remoteLiveStrokeRef.current = null;
+        updateCounters();
+        rebuildWorldCanvas();
+      } else if (ev.action === 'cursor') {
         if (ev.cursor) {
-          setRemoteCursor({ ...ev.cursor, name: ev.name || peerName || 'Pareja' });
+          setRemoteCursor({
+            x: ev.cursor.x,
+            y: ev.cursor.y,
+            color: ev.cursor.color,
+            name: ev.name || peerName || '',
+          });
         } else {
           setRemoteCursor(null);
         }
-        return;
-      }
-      if (ev.action === 'live' && ev.stroke) {
-        remoteStrokeRef.current = ev.stroke;
-        renderCanvas();
-        return;
-      }
-      if (ev.action === 'commit' && ev.stroke) {
-        remoteStrokeRef.current = null;
-        strokesRef.current = [...strokesRef.current, ev.stroke];
-        setStrokeCount(strokesRef.current.length);
-        onSyncLocalState(strokesRef.current, bg);
-        renderCanvas();
-        return;
-      }
-      if (ev.action === 'remove' && ev.id) {
-        strokesRef.current = strokesRef.current.filter((s) => s.id !== ev.id);
-        setStrokeCount(strokesRef.current.length);
-        onSyncLocalState(strokesRef.current, bg);
-        renderCanvas();
-        return;
-      }
-      if (ev.action === 'replace' && Array.isArray(ev.strokes)) {
-        strokesRef.current = ev.strokes;
-        setStrokeCount(strokesRef.current.length);
-        onSyncLocalState(strokesRef.current, bg);
-        renderCanvas();
-        return;
-      }
-      if (ev.action === 'bg' && ev.bg) {
-        setBg(ev.bg);
-        onSyncLocalState(strokesRef.current, ev.bg);
-        renderCanvas(ev.bg);
-        return;
-      }
-      if (ev.action === 'clear') {
-        remoteStrokeRef.current = null;
-        localStrokeRef.current = null;
-        strokesRef.current = [];
-        redoStackRef.current = [];
-        setStrokeCount(0);
-        setRedoCount(0);
-        onSyncLocalState([], bg);
-        renderCanvas();
-        return;
-      }
-      if (ev.action === 'pictionary') {
-        setPictionary(ev.pictionary || null);
       }
     });
-  }, [bg, peerName]);
+  }, [onRegisterStudioReceiver, peerName]);
 
-  // Atajos de teclado profesionales (Ctrl+Z, Ctrl+Y)
-  useEffect(() => {
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (textPrompt) return;
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
-        e.preventDefault();
-        if (e.shiftKey) handleRedo();
-        else handleUndo();
-      } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y') {
-        e.preventDefault();
-        handleRedo();
+  const commitStroke = (stroke: StudioStroke) => {
+    strokesRef.current.push(stroke);
+    myRedoRef.current = [];
+    const wctx = worldCanvasRef.current?.getContext('2d', { willReadFrequently: true });
+    if (wctx) renderStrokeOnCtx(wctx, stroke, WORLD_W, WORLD_H);
+    updateCounters();
+    renderViewport();
+    onEmitStudio({ t: 'studio', action: 'commit', stroke });
+  };
+
+  // Balde de pintura (se activa con doble toque/doble clic o con la herramienta balde)
+  const triggerBucketFill = (clientX: number, clientY: number) => {
+    // Si el primer toque del doble-toque acaba de dejar un puntito hace < 350ms, lo limpiamos
+    if (
+      lastTapStrokeRef.current &&
+      Date.now() - lastTapStrokeRef.current.time < 350
+    ) {
+      const strayId = lastTapStrokeRef.current.id;
+      const idx = strokesRef.current.findIndex((s) => s.id === strayId);
+      if (idx !== -1 && strokesRef.current[idx].points.length <= 3) {
+        strokesRef.current.splice(idx, 1);
+        onEmitStudio({ t: 'studio', action: 'remove', id: strayId });
+        rebuildWorldCanvas();
       }
-    };
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
-  });
+      lastTapStrokeRef.current = null;
+    }
 
-  const getNormPos = (e: React.PointerEvent<HTMLCanvasElement>): StudioPoint => {
-    const rect = canvasRef.current!.getBoundingClientRect();
-    return {
-      x: Math.max(0, Math.min(1, (e.clientX - rect.left) / (rect.width || 1))),
-      y: Math.max(0, Math.min(1, (e.clientY - rect.top) / (rect.height || 1))),
+    const pt = clientToWorldNorm(clientX, clientY);
+    const fillStroke: StudioStroke = {
+      id: `fill-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      author: authorKey,
+      tool: 'bucket',
+      color,
+      size: 1,
+      opacity: 1,
+      points: [pt],
     };
+    commitStroke(fillStroke);
   };
 
-  const sampleCanvasColor = (pt: StudioPoint) => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-    const px = Math.floor(pt.x * canvas.width);
-    const py = Math.floor(pt.y * canvas.height);
-    const data = ctx.getImageData(px, py, 1, 1).data;
-    const hex = `#${[data[0], data[1], data[2]].map((c) => c.toString(16).padStart(2, '0')).join('')}`;
-    setColor(hex);
-    setTool('pen');
+  // Deshacer SOLO MI último trazo (<)
+  const handleUndoMine = () => {
+    for (let i = strokesRef.current.length - 1; i >= 0; i--) {
+      const s = strokesRef.current[i];
+      if (s.author === authorKey || s.author === myName) {
+        const [removed] = strokesRef.current.splice(i, 1);
+        myRedoRef.current.push(removed);
+        updateCounters();
+        rebuildWorldCanvas();
+        onEmitStudio({ t: 'studio', action: 'remove', id: removed.id });
+        return;
+      }
+    }
   };
 
-  const commitStroke = (s: StudioStroke) => {
-    strokesRef.current = [...strokesRef.current, s];
-    redoStackRef.current = [];
-    setStrokeCount(strokesRef.current.length);
-    setRedoCount(0);
-    onSyncLocalState(strokesRef.current, bg);
-    renderCanvas();
-    onEmitStudio({ t: 'studio', action: 'commit', stroke: s });
+  // Rehacer SOLO MI trazo deshecho (>)
+  const handleRedoMine = () => {
+    const restored = myRedoRef.current.pop();
+    if (!restored) return;
+    strokesRef.current.push(restored);
+    const wctx = worldCanvasRef.current?.getContext('2d', { willReadFrequently: true });
+    if (wctx) renderStrokeOnCtx(wctx, restored, WORLD_W, WORLD_H);
+    updateCounters();
+    renderViewport();
+    onEmitStudio({ t: 'studio', action: 'commit', stroke: restored });
+  };
+
+  const handleResetView = () => {
+    panRef.current = { x: 0, y: 0 };
+    zoomRef.current = 1;
+    setPan({ x: 0, y: 0 });
+    setZoom(1);
+    renderViewport();
   };
 
   const handlePointerDown = (e: React.PointerEvent<HTMLCanvasElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-    const pt = getNormPos(e);
+    if (menuOpen) setMenuOpen(false);
+    e.currentTarget.setPointerCapture(e.pointerId);
+    activePointersRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+    // Si hay 2 dedos en pantalla -> modo Pan/Pinch automático del lienzo local
+    if (activePointersRef.current.size === 2) {
+      currentStrokeRef.current = null;
+      const pts = Array.from(activePointersRef.current.values());
+      const midX = (pts[0].x + pts[1].x) / 2;
+      const midY = (pts[0].y + pts[1].y) / 2;
+      isPanningRef.current = true;
+      panStartRef.current = {
+        clientX: midX,
+        clientY: midY,
+        panX: panRef.current.x,
+        panY: panRef.current.y,
+      };
+      pinchDistRef.current = Math.hypot(pts[1].x - pts[0].x, pts[1].y - pts[0].y);
+      renderViewport();
+      return;
+    }
+
+    // Detectar Doble Toque (Double-Tap) para rellenar con Balde de Pintura
+    const now = Date.now();
+    const dt = now - lastTapRef.current.time;
+    const dist = Math.hypot(
+      e.clientX - lastTapRef.current.clientX,
+      e.clientY - lastTapRef.current.clientY
+    );
+    lastTapRef.current = { time: now, clientX: e.clientX, clientY: e.clientY };
+
+    if (dt < 290 && dist < 28 && tool !== 'pan') {
+      currentStrokeRef.current = null;
+      triggerBucketFill(e.clientX, e.clientY);
+      return;
+    }
+
+    // Si está en herramienta Mano (pan), o clic medio/derecho, o barra espaciadora -> mover lienzo local
+    if (tool === 'pan' || e.button === 1 || e.button === 2 || spacePressedRef.current) {
+      isPanningRef.current = true;
+      panStartRef.current = {
+        clientX: e.clientX,
+        clientY: e.clientY,
+        panX: panRef.current.x,
+        panY: panRef.current.y,
+      };
+      return;
+    }
+
+    // Si eligió explícitamente el Balde en el menú -> rellenar con 1 toque
+    if (tool === 'bucket') {
+      triggerBucketFill(e.clientX, e.clientY);
+      return;
+    }
+
+    const pt = clientToWorldNorm(e.clientX, e.clientY);
 
     if (tool === 'eyedropper') {
-      sampleCanvasColor(pt);
+      const wctx = worldCanvasRef.current?.getContext('2d', { willReadFrequently: true });
+      if (wctx) {
+        const px = wctx.getImageData(
+          Math.floor(pt.x * WORLD_W),
+          Math.floor(pt.y * WORLD_H),
+          1,
+          1
+        ).data;
+        const hex = `#${[px[0], px[1], px[2]]
+          .map((v) => v.toString(16).padStart(2, '0'))
+          .join('')}`;
+        setColor(hex);
+        setTool('pen');
+      }
       return;
     }
 
-    if (tool === 'stamp') {
-      commitStroke({
-        id: `st-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-        author: myName,
-        tool: 'stamp',
-        color,
-        size,
-        opacity: 1,
-        points: [pt],
-        stamp: selectedStamp,
-      });
-      return;
-    }
-
-    if (tool === 'text') {
-      setTextPrompt({ x: pt.x, y: pt.y, value: '' });
-      return;
-    }
-
-    e.currentTarget.setPointerCapture(e.pointerId);
     const stroke: StudioStroke = {
       id: `st-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-      author: myName,
+      author: authorKey,
       tool,
       color,
       size,
-      opacity,
+      opacity: 1,
       points: [pt],
       filled: filledShape,
     };
-    localStrokeRef.current = stroke;
-    renderCanvas();
+    currentStrokeRef.current = stroke;
+    renderViewport();
     onEmitStudio({ t: 'studio', action: 'live', stroke });
   };
 
   const handlePointerMove = (e: React.PointerEvent<HTMLCanvasElement>) => {
-    const pt = getNormPos(e);
-    const now = Date.now();
+    if (activePointersRef.current.has(e.pointerId)) {
+      activePointersRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    }
 
-    if (now - lastCursorEmitRef.current > 45) {
-      lastCursorEmitRef.current = now;
+    // Pinch-to-zoom + Pan de 2 dedos
+    if (activePointersRef.current.size === 2) {
+      const pts = Array.from(activePointersRef.current.values());
+      const midX = (pts[0].x + pts[1].x) / 2;
+      const midY = (pts[0].y + pts[1].y) / 2;
+      const d = Math.hypot(pts[1].x - pts[0].x, pts[1].y - pts[0].y);
+
+      if (pinchDistRef.current && pinchDistRef.current > 10) {
+        const ratio = d / pinchDistRef.current;
+        const nextZoom = Math.max(0.5, Math.min(3.2, zoomRef.current * ratio));
+        zoomRef.current = nextZoom;
+        setZoom(nextZoom);
+        pinchDistRef.current = d;
+      }
+
+      const nextPan = {
+        x: panStartRef.current.panX + (midX - panStartRef.current.clientX),
+        y: panStartRef.current.panY + (midY - panStartRef.current.clientY),
+      };
+      panRef.current = nextPan;
+      setPan(nextPan);
+      renderViewport();
+      return;
+    }
+
+    // Pan de 1 dedo / mouse con herramienta Mano
+    if (isPanningRef.current) {
+      const nextPan = {
+        x: panStartRef.current.panX + (e.clientX - panStartRef.current.clientX),
+        y: panStartRef.current.panY + (e.clientY - panStartRef.current.clientY),
+      };
+      panRef.current = nextPan;
+      setPan(nextPan);
+      renderViewport();
+      return;
+    }
+
+    const pt = clientToWorldNorm(e.clientX, e.clientY);
+    const now = performance.now();
+
+    if (now - lastLiveEmitRef.current > 45) {
       onEmitStudio({
         t: 'studio',
         action: 'cursor',
         cursor: { x: pt.x, y: pt.y, color, tool },
+        name: myName,
       });
     }
 
-    if (!localStrokeRef.current) return;
-    e.preventDefault();
-    e.stopPropagation();
+    const cur = currentStrokeRef.current;
+    if (!cur) return;
 
-    const s = localStrokeRef.current;
-    if (s.tool === 'line' || s.tool === 'rect' || s.tool === 'circle' || s.tool === 'heart' || s.tool === 'star') {
-      s.points = [s.points[0], pt];
+    if (
+      cur.tool === 'line' ||
+      cur.tool === 'rect' ||
+      cur.tool === 'circle' ||
+      cur.tool === 'heart' ||
+      cur.tool === 'star'
+    ) {
+      cur.points = [cur.points[0], pt];
     } else {
-      const last = s.points[s.points.length - 1];
-      if (Math.hypot(pt.x - last.x, pt.y - last.y) < 0.0018) return;
-      s.points.push(pt);
+      cur.points.push(pt);
     }
 
-    renderCanvas();
-    if (now - lastEmitRef.current > 32) {
-      lastEmitRef.current = now;
-      onEmitStudio({ t: 'studio', action: 'live', stroke: s });
+    renderViewport();
+    if (now - lastLiveEmitRef.current > 28) {
+      lastLiveEmitRef.current = now;
+      onEmitStudio({ t: 'studio', action: 'live', stroke: cur });
     }
   };
 
   const handlePointerUp = (e: React.PointerEvent<HTMLCanvasElement>) => {
-    if (!localStrokeRef.current) return;
+    activePointersRef.current.delete(e.pointerId);
+    if (activePointersRef.current.size < 2) {
+      pinchDistRef.current = null;
+    }
+    if (isPanningRef.current && activePointersRef.current.size === 0) {
+      isPanningRef.current = false;
+      return;
+    }
+
+    const cur = currentStrokeRef.current;
+    if (!cur) return;
+    currentStrokeRef.current = null;
+
+    if (cur.points.length <= 3) {
+      lastTapStrokeRef.current = { id: cur.id, time: Date.now() };
+    }
+    commitStroke(cur);
+  };
+
+  const handleWheel = (e: React.WheelEvent<HTMLCanvasElement>) => {
     e.preventDefault();
-    e.stopPropagation();
-    const done = localStrokeRef.current;
-    localStrokeRef.current = null;
-    commitStroke(done);
-  };
-
-  const handleUndo = () => {
-    if (strokesRef.current.length === 0) return;
-    const popped = strokesRef.current[strokesRef.current.length - 1];
-    strokesRef.current = strokesRef.current.slice(0, -1);
-    redoStackRef.current = [...redoStackRef.current, popped];
-    setStrokeCount(strokesRef.current.length);
-    setRedoCount(redoStackRef.current.length);
-    onSyncLocalState(strokesRef.current, bg);
-    renderCanvas();
-    onEmitStudio({ t: 'studio', action: 'remove', id: popped.id });
-  };
-
-  const handleRedo = () => {
-    if (redoStackRef.current.length === 0) return;
-    const restored = redoStackRef.current[redoStackRef.current.length - 1];
-    redoStackRef.current = redoStackRef.current.slice(0, -1);
-    strokesRef.current = [...strokesRef.current, restored];
-    setStrokeCount(strokesRef.current.length);
-    setRedoCount(redoStackRef.current.length);
-    onSyncLocalState(strokesRef.current, bg);
-    renderCanvas();
-    onEmitStudio({ t: 'studio', action: 'commit', stroke: restored });
+    const factor = e.deltaY < 0 ? 1.1 : 0.9;
+    const nextZoom = Math.max(0.5, Math.min(3.2, Number((zoomRef.current * factor).toFixed(2))));
+    zoomRef.current = nextZoom;
+    setZoom(nextZoom);
+    renderViewport();
   };
 
   const handleChangeBg = (nextBg: StudioBg) => {
+    bgRef.current = nextBg;
     setBg(nextBg);
-    onSyncLocalState(strokesRef.current, nextBg);
-    renderCanvas(nextBg);
+    updateCounters();
+    rebuildWorldCanvas();
     onEmitStudio({ t: 'studio', action: 'bg', bg: nextBg });
   };
 
   const handleClearAll = () => {
     strokesRef.current = [];
-    redoStackRef.current = [];
-    localStrokeRef.current = null;
-    remoteStrokeRef.current = null;
-    setStrokeCount(0);
-    setRedoCount(0);
-    onSyncLocalState([], bg);
-    renderCanvas();
+    myRedoRef.current = [];
+    updateCounters();
+    rebuildWorldCanvas();
     onEmitStudio({ t: 'studio', action: 'clear' });
+    setMenuOpen(false);
   };
 
   const handleDownloadPng = () => {
-    const offscreen = document.createElement('canvas');
-    offscreen.width = 1920;
-    offscreen.height = 1080;
-    const ctx = offscreen.getContext('2d');
-    if (!ctx) return;
-    drawBackground(ctx, 1920, 1080, bg);
-    for (const s of strokesRef.current) {
-      drawSingleStroke(ctx, s, 1920, 1080, bg);
-    }
-    const url = offscreen.toDataURL('image/png');
+    const wc = worldCanvasRef.current;
+    if (!wc) return;
     const a = document.createElement('a');
-    a.href = url;
-    a.download = `druo-dibujo-${new Date().toISOString().slice(0, 10)}.png`;
+    a.href = wc.toDataURL('image/png');
+    a.download = `druo-art-${Date.now()}.png`;
     a.click();
+    setMenuOpen(false);
   };
 
-  const handleStartPictionary = () => {
-    const word = PICTIONARY_WORDS[Math.floor(Math.random() * PICTIONARY_WORDS.length)];
-    const state = {
-      active: true,
-      drawer: myName,
-      word,
-      endsAt: Date.now() + 75_000,
-    };
-    setPictionary(state);
-    onEmitStudio({
-      t: 'studio',
-      action: 'pictionary',
-      pictionary: { active: true, drawer: myName, endsAt: state.endsAt },
-    });
+  const renderActiveToolIcon = (t: StudioTool, sz = 22) => {
+    switch (t) {
+      case 'pen':
+        return <IconPen size={sz} />;
+      case 'marker':
+        return <IconMarker size={sz} />;
+      case 'neon':
+        return <IconSparkle size={sz} />;
+      case 'airbrush':
+        return <IconAirbrush size={sz} />;
+      case 'bucket':
+        return <IconBucket size={sz} />;
+      case 'eraser':
+        return <IconEraser size={sz} />;
+      case 'pan':
+        return <IconHand size={sz} />;
+      case 'line':
+        return <IconLine size={sz} />;
+      case 'rect':
+        return <IconRect size={sz} />;
+      case 'circle':
+        return <IconCircle size={sz} />;
+      case 'heart':
+        return <IconHeart size={sz} />;
+      case 'star':
+        return <IconStar size={sz} />;
+      case 'eyedropper':
+        return <IconEyedropper size={sz} />;
+      default:
+        return <IconBrush size={sz} />;
+    }
   };
 
-  const handleStopPictionary = () => {
-    setPictionary(null);
-    onEmitStudio({ t: 'studio', action: 'pictionary', pictionary: null });
-  };
+  const isViewMoved = pan.x !== 0 || pan.y !== 0 || zoom !== 1;
+  const cursorPos = remoteCursor
+    ? worldNormToScreenPct(remoteCursor.x, remoteCursor.y)
+    : null;
 
   return (
     <main className="cinema-stage studio-stage">
-      <div className="screen-bezel studio-bezel">
-        {/* Barra Superior de Herramientas del Estudio */}
-        <div className="studio-topbar">
-          <div className="studio-left-group">
-            <button type="button" className="studio-home-btn" onClick={onBackToHub} title="Volver al Menú Principal">
-              🏠 Menú
-            </button>
-            <span className="studio-badge-title">🎨 Estudio de Arte en Vivo</span>
-          </div>
-
-          {/* Pinceles y Herramientas Principales */}
-          <div className="studio-tools-strip">
-            {(
-              [
-                { id: 'pen', icon: '🖊️', label: 'Pluma' },
-                { id: 'marker', icon: '🖌️', label: 'Acuarela' },
-                { id: 'neon', icon: '✨', label: 'Neón' },
-                { id: 'airbrush', icon: '💨', label: 'Suave' },
-                { id: 'eraser', icon: '🧽', label: 'Goma' },
-                { id: 'line', icon: '╱', label: 'Línea' },
-                { id: 'rect', icon: '▭', label: 'Caja' },
-                { id: 'circle', icon: '◯', label: 'Círculo' },
-                { id: 'heart', icon: '💖', label: 'Corazón' },
-                { id: 'star', icon: '⭐', label: 'Estrella' },
-                { id: 'text', icon: '🔤', label: 'Texto' },
-                { id: 'stamp', icon: '🎀', label: 'Stickers' },
-                { id: 'eyedropper', icon: '💉', label: 'Gotero' },
-              ] as { id: StudioTool; icon: string; label: string }[]
-            ).map((t) => (
-              <button
-                key={t.id}
-                type="button"
-                className={`studio-tool-btn ${tool === t.id ? 'active' : ''}`}
-                onClick={() => setTool(t.id)}
-                title={t.label}
-              >
-                <span className="st-icon">{t.icon}</span>
-                <span className="st-lbl">{t.label}</span>
-              </button>
-            ))}
-          </div>
-
-          {/* Acciones de Historial y Exportar */}
-          <div className="studio-actions-group">
-            <button
-              type="button"
-              className="studio-act-btn"
-              onClick={handleUndo}
-              disabled={strokeCount === 0}
-              title="Deshacer (Ctrl+Z)"
-            >
-              ↩️
-            </button>
-            <button
-              type="button"
-              className="studio-act-btn"
-              onClick={handleRedo}
-              disabled={redoCount === 0}
-              title="Rehacer (Ctrl+Y)"
-            >
-              ↪️
-            </button>
-            <button
-              type="button"
-              className="studio-act-btn accent"
-              onClick={handleStartPictionary}
-              title="Jugar Pictionary (te da una palabra secreta para dibujar)"
-            >
-              🎲 Pictionary
-            </button>
-            <button
-              type="button"
-              className="studio-act-btn"
-              onClick={handleDownloadPng}
-              title="Guardar dibujo en alta calidad (PNG)"
-            >
-              📸 Guardar
-            </button>
-            <button
-              type="button"
-              className="studio-act-btn danger"
-              onClick={handleClearAll}
-              title="Limpiar todo el lienzo"
-            >
-              🗑️
-            </button>
-          </div>
-        </div>
-
-        {/* Banner de Pictionary si está activo */}
-        {pictionary?.active && (
-          <div className="studio-pictionary-banner">
-            {pictionary.word ? (
-              <span>
-                🤫 <strong>¡Te toca dibujar!</strong> Palabra secreta:{' '}
-                <strong className="pict-secret-word">{pictionary.word}</strong>
-              </span>
-            ) : (
-              <span>
-                🕵️ <strong>¡{pictionary.drawer} está dibujando una palabra secreta!</strong> ¡Adiviná por voz!
-              </span>
-            )}
-            <span className="pict-timer">⏱️ {pictSecondsLeft}s</span>
-            <button type="button" className="pict-close-btn" onClick={handleStopPictionary}>
-              ✕ Terminar
-            </button>
-          </div>
-        )}
-
-        {/* Área del Lienzo Principal */}
+      <div className="screen-bezel studio-bezel kawaii-clean-studio">
         <div className="studio-canvas-container">
           <canvas
-            ref={canvasRef}
+            ref={viewCanvasRef}
             className={`studio-canvas tool-${tool}`}
             onPointerDown={handlePointerDown}
             onPointerMove={handlePointerMove}
             onPointerUp={handlePointerUp}
             onPointerCancel={handlePointerUp}
+            onWheel={handleWheel}
+            onContextMenu={(e) => e.preventDefault()}
             onPointerLeave={() =>
               onEmitStudio({ t: 'studio', action: 'cursor', cursor: null })
             }
           />
 
           {/* Cursor en vivo del otro participante */}
-          {remoteCursor && (
+          {remoteCursor && cursorPos && (
             <div
               className="studio-remote-cursor"
               style={{
-                left: `${remoteCursor.x * 100}%`,
-                top: `${remoteCursor.y * 100}%`,
-                borderColor: remoteCursor.color,
+                left: cursorPos.left,
+                top: cursorPos.top,
               }}
             >
               <span className="rc-dot" style={{ background: remoteCursor.color }} />
-              <span className="rc-tag" style={{ background: remoteCursor.color }}>
-                ✏️ {remoteCursor.name}
-              </span>
             </div>
           )}
 
-          {/* Input flotante para herramienta de Texto */}
-          {textPrompt && (
-            <div
-              className="studio-text-popover"
-              style={{
-                left: `${Math.min(75, Math.max(10, textPrompt.x * 100))}%`,
-                top: `${Math.min(75, Math.max(10, textPrompt.y * 100))}%`,
-              }}
-            >
-              <input
-                type="text"
-                autoFocus
-                placeholder="Escribí algo lindo y apretá Enter…"
-                value={textPrompt.value}
-                onChange={(e) => setTextPrompt({ ...textPrompt, value: e.target.value })}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && textPrompt.value.trim()) {
-                    commitStroke({
-                      id: `st-${Date.now()}`,
-                      author: myName,
-                      tool: 'text',
-                      color,
-                      size,
-                      opacity: 1,
-                      points: [{ x: textPrompt.x, y: textPrompt.y }],
-                      text: textPrompt.value.trim(),
-                    });
-                    setTextPrompt(null);
-                  } else if (e.key === 'Escape') {
-                    setTextPrompt(null);
-                  }
-                }}
-              />
-              <button
-                type="button"
-                className="studio-text-ok"
-                onClick={() => {
-                  if (textPrompt.value.trim()) {
-                    commitStroke({
-                      id: `st-${Date.now()}`,
-                      author: myName,
-                      tool: 'text',
-                      color,
-                      size,
-                      opacity: 1,
-                      points: [{ x: textPrompt.x, y: textPrompt.y }],
-                      text: textPrompt.value.trim(),
-                    });
-                  }
-                  setTextPrompt(null);
-                }}
-              >
-                Pegar ✨
-              </button>
-              <button type="button" className="studio-text-cancel" onClick={() => setTextPrompt(null)}>
-                ✕
-              </button>
-            </div>
-          )}
-        </div>
-
-        {/* Barra Inferior: Paleta de Colores, Grosor, Opacidad, Stickers y Fondo */}
-        <div className="studio-bottombar">
-          {/* Paleta de colores + selector libre */}
-          <div className="studio-palette-wrap">
-            <label className="studio-color-wheel" title="Elegir cualquier color personalizado">
-              <input
-                type="color"
-                value={color}
-                onChange={(e) => {
-                  setColor(e.target.value);
-                  if (tool === 'eraser') setTool('pen');
-                }}
-              />
-              <span className="wheel-ring" style={{ background: color }} />
-            </label>
-            <div className="studio-swatches">
-              {PALETTE.map((c) => (
-                <button
-                  key={c}
-                  type="button"
-                  className={`studio-swatch ${color === c && tool !== 'eraser' ? 'selected' : ''}`}
-                  style={{ background: c }}
-                  onClick={() => {
-                    setColor(c);
-                    if (tool === 'eraser') setTool('pen');
-                  }}
-                />
-              ))}
-            </div>
-          </div>
-
-          {/* Selector de Stickers si la herramienta stamp está activa */}
-          {tool === 'stamp' && (
-            <div className="studio-stamps-bar">
-              {STAMPS.map((st) => (
-                <button
-                  key={st}
-                  type="button"
-                  className={`studio-stamp-chip ${selectedStamp === st ? 'active' : ''}`}
-                  onClick={() => setSelectedStamp(st)}
-                >
-                  {st}
-                </button>
-              ))}
-            </div>
-          )}
-
-          {/* Opción de Relleno si es una figura geométrica */}
-          {(tool === 'rect' || tool === 'circle' || tool === 'heart' || tool === 'star') && (
+          {/* Esquina Superior Izquierda: Botón Circular Volver al Inicio + Botón Mano para Mover Lienzo */}
+          <div className="kawaii-floating-top-left">
             <button
               type="button"
-              className={`studio-fill-toggle ${filledShape ? 'active' : ''}`}
-              onClick={() => setFilledShape((f) => !f)}
+              className="kawaii-icon-circle"
+              onClick={onBackToHub}
+              aria-label="Home"
             >
-              {filledShape ? '🎨 Figura Rellena' : '📐 Solo Contorno'}
+              <IconHome size={20} />
             </button>
-          )}
 
-          {/* Sliders de Grosor y Opacidad */}
-          <div className="studio-sliders-wrap">
-            <label className="studio-slider-lbl" title="Grosor del pincel">
-              <span>Grosor: {size}px</span>
-              <input
-                type="range"
-                min={2}
-                max={54}
-                step={1}
-                value={size}
-                onChange={(e) => setSize(Number(e.target.value))}
-              />
-            </label>
-            <label className="studio-slider-lbl" title="Opacidad del trazo">
-              <span>Opacidad: {Math.round(opacity * 100)}%</span>
-              <input
-                type="range"
-                min={0.15}
-                max={1}
-                step={0.05}
-                value={opacity}
-                onChange={(e) => setOpacity(Number(e.target.value))}
-              />
-            </label>
+            <button
+              type="button"
+              className={`kawaii-icon-circle ${tool === 'pan' ? 'active' : ''}`}
+              onClick={() => setTool((prev) => (prev === 'pan' ? 'pen' : 'pan'))}
+              aria-label="Move Canvas"
+            >
+              <IconHand size={20} />
+            </button>
+
+            {isViewMoved && (
+              <button
+                type="button"
+                className="kawaii-icon-circle soft"
+                onClick={handleResetView}
+                aria-label="Reset View"
+              >
+                <IconResetView size={18} />
+              </button>
+            )}
           </div>
 
-          {/* Selector de Fondo de Hoja */}
-          <div className="studio-bg-picker">
-            {(Object.keys(BG_CONFIG) as StudioBg[]).map((k) => (
+          {/* Esquina Superior Derecha: Botones < > para Deshacer y Rehacer TUS PROPIOS trazos */}
+          <div className="kawaii-floating-top-right">
+            <div className="kawaii-undo-pill">
               <button
-                key={k}
                 type="button"
-                className={`studio-bg-chip ${bg === k ? 'active' : ''}`}
-                onClick={() => handleChangeBg(k)}
+                className="kawaii-chevron-btn"
+                onClick={handleUndoMine}
+                disabled={myUndoCount === 0}
+                aria-label="Undo my stroke"
               >
-                {BG_CONFIG[k].label}
+                <IconChevronLeft size={22} />
               </button>
-            ))}
+              <button
+                type="button"
+                className="kawaii-chevron-btn"
+                onClick={handleRedoMine}
+                disabled={myRedoCount === 0}
+                aria-label="Redo my stroke"
+              >
+                <IconChevronRight size={22} />
+              </button>
+            </div>
+          </div>
+
+          {/* Único Botón Circular Flotante de Herramientas (Solo Iconos, Cero Emojis, Cero Texto) */}
+          <div className="kawaii-fab-wrapper">
+            {menuOpen && (
+              <div className="kawaii-fab-popover">
+                {/* 1. Herramientas (Solo Iconos SVG) */}
+                <div className="kawaii-tools-grid">
+                  {(
+                    [
+                      'pen',
+                      'marker',
+                      'neon',
+                      'airbrush',
+                      'bucket',
+                      'eraser',
+                      'pan',
+                      'line',
+                      'rect',
+                      'circle',
+                      'heart',
+                      'eyedropper',
+                    ] as StudioTool[]
+                  ).map((tId) => (
+                    <button
+                      key={tId}
+                      type="button"
+                      className={`kawaii-tool-icon-btn ${tool === tId ? 'active' : ''}`}
+                      onClick={() => {
+                        setTool(tId);
+                      }}
+                    >
+                      {renderActiveToolIcon(tId, 19)}
+                    </button>
+                  ))}
+                </div>
+
+                {/* 2. Colores Pastel Kawaii */}
+                <div className="kawaii-swatches-row">
+                  <label className="kawaii-custom-color">
+                    <input
+                      type="color"
+                      value={color}
+                      onChange={(e) => {
+                        setColor(e.target.value);
+                        if (tool === 'eraser' || tool === 'pan') setTool('pen');
+                      }}
+                    />
+                    <span className="kawaii-color-ring" style={{ background: color }} />
+                  </label>
+                  {KAWAII_PALETTE.map((c) => (
+                    <button
+                      key={c}
+                      type="button"
+                      className={`kawaii-swatch-dot ${color === c && tool !== 'eraser' ? 'active' : ''}`}
+                      style={{ background: c }}
+                      onClick={() => {
+                        setColor(c);
+                        if (tool === 'eraser' || tool === 'pan') setTool('pen');
+                      }}
+                    />
+                  ))}
+                </div>
+
+                {/* 3. Grosor del Trazo (Solo Iconos Círculo Chico -> Grande) */}
+                <div className="kawaii-slider-row">
+                  <span className="dot-min" />
+                  <input
+                    type="range"
+                    min={2}
+                    max={48}
+                    step={1}
+                    value={size}
+                    onChange={(e) => setSize(Number(e.target.value))}
+                  />
+                  <span className="dot-max" />
+                </div>
+
+                {/* 4. Fondos de Hoja + Relleno de Figura + Descargar + Limpiar (Solo Iconos) */}
+                <div className="kawaii-bottom-actions">
+                  <div className="kawaii-bg-dots">
+                    {(['cream', 'white', 'pink', 'grid', 'dots', 'night'] as StudioBg[]).map(
+                      (bKey) => (
+                        <button
+                          key={bKey}
+                          type="button"
+                          className={`kawaii-bg-dot ${bg === bKey ? 'active' : ''}`}
+                          style={{ background: BG_COLORS[bKey] }}
+                          onClick={() => handleChangeBg(bKey)}
+                        />
+                      )
+                    )}
+                  </div>
+
+                  <div className="kawaii-util-btns">
+                    <button
+                      type="button"
+                      className={`kawaii-tool-icon-btn ${filledShape ? 'active' : ''}`}
+                      onClick={() => setFilledShape((f) => !f)}
+                    >
+                      <IconCircle size={18} />
+                    </button>
+                    <button
+                      type="button"
+                      className="kawaii-tool-icon-btn"
+                      onClick={handleDownloadPng}
+                    >
+                      <IconDownload size={18} />
+                    </button>
+                    <button
+                      type="button"
+                      className="kawaii-tool-icon-btn danger"
+                      onClick={handleClearAll}
+                    >
+                      <IconTrash size={18} />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <button
+              type="button"
+              className={`kawaii-main-fab ${menuOpen ? 'open' : ''}`}
+              style={{ '--fab-color': color } as React.CSSProperties}
+              onClick={() => setMenuOpen((o) => !o)}
+              aria-label="Tools"
+            >
+              {menuOpen ? <IconClose size={24} /> : renderActiveToolIcon(tool, 24)}
+            </button>
           </div>
         </div>
       </div>

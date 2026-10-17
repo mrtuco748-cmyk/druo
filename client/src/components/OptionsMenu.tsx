@@ -1,5 +1,23 @@
 import React from 'react';
 import { CamFraming } from './CameraTile';
+import {
+  IconCamOff,
+  IconCamOn,
+  IconCinema,
+  IconClose,
+  IconDucking,
+  IconFullscreen,
+  IconMicOff,
+  IconMicOn,
+  IconPen,
+  IconResetView,
+  IconSliders,
+  IconViewCall,
+  IconViewCinema,
+  IconViewDuo,
+  IconViewFocus,
+  IconVolume,
+} from './KawaiiIcons';
 
 interface Props {
   open: boolean;
@@ -52,231 +70,191 @@ export const OptionsMenu: React.FC<Props> = ({
 
   return (
     <div className="topbar-menu-backdrop" onClick={onClose}>
-      <div className="topbar-dropdown-menu" onClick={(e) => e.stopPropagation()}>
-        {/* Encabezado del menú */}
-        <div className="dropdown-header">
-          <span className="dropdown-title">⚙️ Panel de Opciones</span>
-          <button type="button" className="dropdown-close-btn" onClick={onClose} title="Cerrar menú">
-            ✕
+      <div className="kawaii-options-popover" onClick={(e) => e.stopPropagation()}>
+        {/* Botón cerrar circular */}
+        <div className="kawaii-opt-top">
+          <button type="button" className="kawaii-opt-close" onClick={onClose} aria-label="Close">
+            <IconClose size={18} />
           </button>
         </div>
 
-        {/* 1. Selector de Modos de Vista */}
-        <div className="dropdown-section">
-          <div className="dropdown-section-label">🎭 Modo de Vista</div>
-          <div className="dropdown-modes-grid">
-            <button
-              type="button"
-              className={`dropdown-mode-card ${viewMode === 'cinema' ? 'active' : ''}`}
-              onClick={() => {
-                onSelectViewMode('cinema');
-                onClose();
-              }}
-            >
-              <span className="mode-emoji">🎬</span>
-              <div className="mode-text">
-                <strong>Modo Cine</strong>
-                <small>Película central + cámaras</small>
-              </div>
-            </button>
-
-            <button
-              type="button"
-              className={`dropdown-mode-card ${viewMode === 'call-only' ? 'active' : ''}`}
-              onClick={() => {
-                onSelectViewMode('call-only');
-                onClose();
-              }}
-            >
-              <span className="mode-emoji">💬</span>
-              <div className="mode-text">
-                <strong>Solo Llamada</strong>
-                <small>Pantalla completa cara a cara</small>
-              </div>
-            </button>
-
-            <button
-              type="button"
-              className={`dropdown-mode-card ${viewMode === 'focus-movie' ? 'active' : ''}`}
-              onClick={() => {
-                onSelectViewMode('focus-movie');
-                onClose();
-              }}
-            >
-              <span className="mode-emoji">⛶</span>
-              <div className="mode-text">
-                <strong>Enfoque</strong>
-                <small>Cine gigante + PIP flotante</small>
-              </div>
-            </button>
-
-            <button
-              type="button"
-              className={`dropdown-mode-card ${viewMode === 'duo' ? 'active' : ''}`}
-              onClick={() => {
-                onSelectViewMode('duo');
-                onClose();
-              }}
-            >
-              <span className="mode-emoji">👥</span>
-              <div className="mode-text">
-                <strong>Modo Dúo</strong>
-                <small>Cámaras ampliadas</small>
-              </div>
-            </button>
-          </div>
-        </div>
-
-        {/* 2. Películas y Contenido */}
-        <div className="dropdown-section">
-          <div className="dropdown-section-label">🍿 Película & Pantalla</div>
+        {/* 1. Modos de Vista (Solo Iconos SVG) */}
+        <div className="kawaii-opt-row">
           <button
             type="button"
-            className="dropdown-action-row accent"
+            className={`kawaii-opt-icon-btn ${viewMode === 'cinema' ? 'active' : ''}`}
+            onClick={() => {
+              onSelectViewMode('cinema');
+              onClose();
+            }}
+            aria-label="Cinema View"
+          >
+            <IconViewCinema size={22} />
+          </button>
+          <button
+            type="button"
+            className={`kawaii-opt-icon-btn ${viewMode === 'call-only' ? 'active' : ''}`}
+            onClick={() => {
+              onSelectViewMode('call-only');
+              onClose();
+            }}
+            aria-label="Call View"
+          >
+            <IconViewCall size={22} />
+          </button>
+          <button
+            type="button"
+            className={`kawaii-opt-icon-btn ${viewMode === 'focus-movie' ? 'active' : ''}`}
+            onClick={() => {
+              onSelectViewMode('focus-movie');
+              onClose();
+            }}
+            aria-label="Focus View"
+          >
+            <IconViewFocus size={22} />
+          </button>
+          <button
+            type="button"
+            className={`kawaii-opt-icon-btn ${viewMode === 'duo' ? 'active' : ''}`}
+            onClick={() => {
+              onSelectViewMode('duo');
+              onClose();
+            }}
+            aria-label="Duo View"
+          >
+            <IconViewDuo size={22} />
+          </button>
+        </div>
+
+        {/* 2. Dispositivos, Películas, Auto-Ducking y Pantalla Completa (Solo Iconos SVG) */}
+        <div className="kawaii-opt-row">
+          <button
+            type="button"
+            className="kawaii-opt-icon-btn pink"
             onClick={() => {
               onOpenSources();
               onClose();
             }}
+            aria-label="Select Movie"
           >
-            <span>🎬 Elegir Película / Link Cuevana</span>
-            <span className="row-chevron">›</span>
+            <IconCinema size={22} />
           </button>
 
-          {/* Dibujo sobre pantalla */}
-          <div className="dropdown-draw-box">
-            <div className="draw-toggle-row">
-              <span>✏️ Dibujar sobre la pantalla:</span>
-              <button
-                type="button"
-                className={`draw-switch-btn ${drawingActive ? 'on' : 'off'}`}
-                onClick={onToggleDrawing}
-              >
-                {drawingActive ? 'Activado' : 'Desactivado'}
-              </button>
-            </div>
-            {drawingActive && (
-              <div className="draw-palette-row">
-                <span className="palette-label">Color:</span>
-                <div className="palette-dots">
-                  {['#ffcf6b', '#e8455b', '#4cd97b', '#4aa3df', '#ffffff'].map((c) => (
-                    <button
-                      key={c}
-                      type="button"
-                      className={`palette-dot ${drawingColor === c ? 'selected' : ''}`}
-                      style={{ background: c }}
-                      onClick={() => onSelectDrawingColor(c)}
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* 3. Audio de Voz, Dispositivos y Encuadre */}
-        <div className="dropdown-section">
-          <div className="dropdown-section-label">🎙️ Voz, Cámara y Micrófono</div>
-          <div className="dropdown-device-buttons">
-            <button
-              type="button"
-              className={`device-btn ${myFraming.mic ? 'active' : 'is-off'}`}
-              onClick={onToggleMic}
-            >
-              {myFraming.mic ? '🎙️ Mic: Activo' : '🔇 Mic: Silenciado'}
-            </button>
-            <button
-              type="button"
-              className={`device-btn ${myFraming.on ? 'active' : 'is-off'}`}
-              onClick={onToggleCam}
-            >
-              {myFraming.on ? '📷 Cámara: Encendida' : '🚫 Cámara: Pausada'}
-            </button>
-          </div>
-
-          <div className="dropdown-sliders">
-            <label className="slider-item">
-              <div className="slider-title">
-                <span>🔊 Volumen de su voz (hasta 400%)</span>
-                <strong>{peerMuted ? 'Silenciado' : `${Math.round(peerVolume * 100)}%`}</strong>
-              </div>
-              <input
-                type="range"
-                min={0}
-                max={4.0}
-                step={0.05}
-                value={peerMuted ? 0 : peerVolume}
-                onChange={(e) => {
-                  if (peerMuted) onTogglePeerMuted();
-                  onChangePeerVolume(Number(e.target.value));
-                }}
-              />
-            </label>
-
-            <div className="draw-toggle-row" style={{ marginTop: '4px', marginBottom: '4px' }}>
-              <span>🔉 Bajar peli cuando hablamos:</span>
-              <button
-                type="button"
-                className={`draw-switch-btn ${duckingEnabled ? 'on' : 'off'}`}
-                onClick={onToggleDucking}
-              >
-                {duckingEnabled ? 'Activado' : 'Desactivado'}
-              </button>
-            </div>
-
-            <label className="slider-item">
-              <div className="slider-title">
-                <span>🔍 Zoom cara</span>
-                <strong>{myFraming.zoom.toFixed(1)}×</strong>
-              </div>
-              <input
-                type="range"
-                min={1.0}
-                max={3.0}
-                step={0.1}
-                value={myFraming.zoom}
-                onChange={(e) => onChangeFraming({ ...myFraming, zoom: Number(e.target.value) })}
-              />
-            </label>
-
-            <label className="slider-item">
-              <div className="slider-title">
-                <span>↕️ Altura encuadre</span>
-                <strong>{myFraming.y > 0 ? `+${myFraming.y}` : myFraming.y}%</strong>
-              </div>
-              <input
-                type="range"
-                min={-25}
-                max={25}
-                step={1}
-                value={myFraming.y}
-                onChange={(e) => onChangeFraming({ ...myFraming, y: Number(e.target.value) })}
-              />
-            </label>
-          </div>
-        </div>
-
-        {/* 4. Ajustes y Utilidades */}
-        <div className="dropdown-footer">
           <button
             type="button"
-            className="footer-btn"
+            className={`kawaii-opt-icon-btn ${myFraming.mic ? 'active' : 'off'}`}
+            onClick={onToggleMic}
+            aria-label="Toggle Mic"
+          >
+            {myFraming.mic ? <IconMicOn size={22} /> : <IconMicOff size={22} />}
+          </button>
+
+          <button
+            type="button"
+            className={`kawaii-opt-icon-btn ${myFraming.on ? 'active' : 'off'}`}
+            onClick={onToggleCam}
+            aria-label="Toggle Camera"
+          >
+            {myFraming.on ? <IconCamOn size={22} /> : <IconCamOff size={22} />}
+          </button>
+
+          <button
+            type="button"
+            className={`kawaii-opt-icon-btn ${duckingEnabled ? 'active' : ''}`}
+            onClick={onToggleDucking}
+            aria-label="Auto Ducking"
+          >
+            <IconDucking size={22} />
+          </button>
+        </div>
+
+        {/* 3. Dibujo sobre película + Calidad + Pantalla completa (Solo Iconos) */}
+        <div className="kawaii-opt-row">
+          <button
+            type="button"
+            className={`kawaii-opt-icon-btn ${drawingActive ? 'active' : ''}`}
+            onClick={onToggleDrawing}
+            aria-label="Draw on Screen"
+          >
+            <IconPen size={20} />
+          </button>
+
+          <button
+            type="button"
+            className="kawaii-opt-icon-btn"
             onClick={() => {
               onOpenQuality();
               onClose();
             }}
+            aria-label="Quality"
           >
-            ⚙️ Calidad de streaming y Red
+            <IconSliders size={20} />
           </button>
+
           <button
             type="button"
-            className="footer-btn"
+            className="kawaii-opt-icon-btn"
             onClick={() => {
               onToggleFullscreen();
               onClose();
             }}
+            aria-label="Fullscreen"
           >
-            ⛶ Pantalla Completa
+            <IconFullscreen size={20} />
           </button>
+        </div>
+
+        {drawingActive && (
+          <div className="kawaii-opt-swatches">
+            {['#ff85a2', '#ffe082', '#8ce99a', '#91c9ff', '#ffffff'].map((c) => (
+              <button
+                key={c}
+                type="button"
+                className={`kawaii-swatch-dot ${drawingColor === c ? 'active' : ''}`}
+                style={{ background: c }}
+                onClick={() => onSelectDrawingColor(c)}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* 4. Sliders con Iconos: Volumen de Voz (hasta 400%) y Zoom Cámara */}
+        <div className="kawaii-opt-sliders">
+          <div className="kawaii-icon-slider">
+            <button
+              type="button"
+              className="kawaii-slider-icon-btn"
+              onClick={onTogglePeerMuted}
+              aria-label="Mute Peer"
+            >
+              <IconVolume size={18} />
+            </button>
+            <input
+              type="range"
+              min={0}
+              max={4.0}
+              step={0.05}
+              value={peerMuted ? 0 : peerVolume}
+              onChange={(e) => {
+                if (peerMuted) onTogglePeerMuted();
+                onChangePeerVolume(Number(e.target.value));
+              }}
+            />
+          </div>
+
+          <div className="kawaii-icon-slider">
+            <span className="kawaii-slider-icon-btn">
+              <IconResetView size={18} />
+            </span>
+            <input
+              type="range"
+              min={1.0}
+              max={3.0}
+              step={0.1}
+              value={myFraming.zoom}
+              onChange={(e) => onChangeFraming({ ...myFraming, zoom: Number(e.target.value) })}
+            />
+          </div>
         </div>
       </div>
     </div>

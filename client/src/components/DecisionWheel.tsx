@@ -1,4 +1,15 @@
 import React, { useState } from 'react';
+import {
+  IconCinema,
+  IconClose,
+  IconCoffee,
+  IconGamepad,
+  IconHeart,
+  IconHome,
+  IconPlus,
+  IconRefresh,
+  IconSparkle,
+} from './KawaiiIcons';
 
 export interface WheelState {
   title: string;
@@ -9,59 +20,45 @@ export interface WheelState {
 }
 
 export const DEFAULT_WHEEL_STATE: WheelState = {
-  title: '🍕 ¿Qué cenamos o pedimos hoy?',
-  options: [
-    'Pizza 🍕',
-    'Hamburguesas 🍔',
-    'Sushi 🍣',
-    'Pastas 🍝',
-    'Empanadas 🥟',
-    'Milanesas 🍟',
-  ],
+  title: 'Food',
+  options: ['Pizza', 'Burger', 'Sushi', 'Pasta', 'Tacos', 'Helado'],
   rotation: 0,
   winner: null,
   spinningAt: 0,
 };
 
-const PRESETS: { label: string; title: string; options: string[] }[] = [
+const PRESETS: { id: string; icon: React.ReactNode; options: string[] }[] = [
   {
-    label: '🍕 ¿Qué comemos?',
-    title: '🍕 ¿Qué cenamos o pedimos hoy?',
-    options: ['Pizza 🍕', 'Hamburguesas 🍔', 'Sushi 🍣', 'Pastas 🍝', 'Empanadas 🥟', 'Milanesas 🍟'],
+    id: 'food',
+    icon: <IconCoffee size={18} />,
+    options: ['Pizza', 'Burger', 'Sushi', 'Pasta', 'Empanadas', 'Helado'],
   },
   {
-    label: '🎬 ¿Qué género vemos?',
-    title: '🎬 ¿Qué género de peli vemos hoy?',
-    options: [
-      'Romance Cute 💕',
-      'Terror / Suspenso 👻',
-      'Comedia 😂',
-      'Ciencia Ficción 🚀',
-      'Animación ✨',
-      'Thriller / Misterio 🕵️',
-    ],
+    id: 'movie',
+    icon: <IconCinema size={18} />,
+    options: ['Romance', 'Terror', 'Comedia', 'Sci-Fi', 'Anime', 'Misterio'],
   },
   {
-    label: '🍨 ¿Postre o Dulce?',
-    title: '🍨 ¿Con qué nos damos un gustito?',
-    options: ['Helado 🍦', 'Chocolate 🍫', 'Frutillas con crema 🍓', 'Brownie con helado 🧁', 'Churros / Facturas 🥐'],
+    id: 'game',
+    icon: <IconGamepad size={18} />,
+    options: ['Dibujar', 'Peli', 'Preguntas', 'Tatetí', 'Charlar', 'Música'],
   },
   {
-    label: '🎲 ¿Quién elige hoy?',
-    title: '🎲 ¿A quién le toca elegir?',
-    options: ['Elige Izquierda 👈💖', 'Elige Derecha 💖👉', 'Piedra Papel o Tijera ✊✋✌️', 'Vemos un tráiler al azar 🍿'],
+    id: 'turn',
+    icon: <IconHeart size={18} />,
+    options: ['Izquierda', 'Derecha', 'Izquierda', 'Derecha'],
   },
 ];
 
 const SLICE_COLORS = [
-  '#ff6b9d',
-  '#a98bff',
-  '#ffcf6b',
-  '#63e6be',
-  '#74c0fc',
-  '#ff9770',
-  '#f783ac',
-  '#38d9a9',
+  '#ffc2d4',
+  '#ffe5a3',
+  '#b8f2d8',
+  '#bfe3ff',
+  '#decaff',
+  '#ffd4b8',
+  '#f7c6ff',
+  '#c4f5f0',
 ];
 
 interface Props {
@@ -71,13 +68,15 @@ interface Props {
 }
 
 export const DecisionWheel: React.FC<Props> = ({ state, onUpdateState, onBackToHub }) => {
-  // Hooks al inicio
   const [newOption, setNewOption] = useState('');
 
   const s: WheelState = {
     ...DEFAULT_WHEEL_STATE,
     ...state,
-    options: Array.isArray(state?.options) && state.options.length >= 2 ? state.options : DEFAULT_WHEEL_STATE.options,
+    options:
+      Array.isArray(state?.options) && state.options.length >= 2
+        ? state.options
+        : DEFAULT_WHEEL_STATE.options,
   };
 
   const handleSpin = () => {
@@ -85,7 +84,6 @@ export const DecisionWheel: React.FC<Props> = ({ state, onUpdateState, onBackToH
     if (count < 2) return;
     const winIdx = Math.floor(Math.random() * count);
     const sliceDeg = 360 / count;
-    // El puntero está arriba (270 deg en coordenadas SVG o 0 deg desde el tope)
     const sliceCenter = winIdx * sliceDeg + sliceDeg / 2;
     const extraSpins = (5 + Math.floor(Math.random() * 3)) * 360;
     const baseMod = s.rotation % 360;
@@ -121,45 +119,41 @@ export const DecisionWheel: React.FC<Props> = ({ state, onUpdateState, onBackToH
     });
   };
 
-  const handleApplyPreset = (p: { title: string; options: string[] }) => {
-    onUpdateState({
-      ...s,
-      title: p.title,
-      options: p.options,
-      winner: null,
-    });
-  };
-
   const count = s.options.length;
   const sliceAngle = 360 / count;
 
   return (
     <main className="cinema-stage wheel-stage">
-      <div className="screen-bezel cute-activity-bezel">
-        {/* Barra Superior */}
-        <div className="activity-header-bar">
-          <button type="button" className="studio-home-btn" onClick={onBackToHub}>
-            🏠 Menú
+      <div className="screen-bezel cute-activity-bezel kawaii-pastel-surface">
+        {/* Barra Superior de Iconos */}
+        <div className="kawaii-top-nav">
+          <button type="button" className="kawaii-icon-circle" onClick={onBackToHub} aria-label="Home">
+            <IconHome size={20} />
           </button>
-          <span className="studio-badge-title">🎡 Ruleta de Decisiones en Pareja</span>
-          <div className="wheel-presets-row">
+
+          <div className="kawaii-pill-tabs">
             {PRESETS.map((p) => (
               <button
-                key={p.label}
+                key={p.id}
                 type="button"
-                className="wheel-preset-btn"
-                onClick={() => handleApplyPreset(p)}
+                className="kawaii-tab-icon"
+                onClick={() =>
+                  onUpdateState({
+                    ...s,
+                    title: p.id,
+                    options: p.options,
+                    winner: null,
+                  })
+                }
               >
-                {p.label}
+                {p.icon}
               </button>
             ))}
           </div>
         </div>
 
-        {/* Cuerpo: Ruleta a la izquierda + Opciones a la derecha */}
         <div className="wheel-layout">
           <div className="wheel-visual-col">
-            <h3 className="wheel-current-title">{s.title}</h3>
             <div className="wheel-spinner-box">
               <div className="wheel-pointer">▼</div>
               <svg
@@ -167,7 +161,7 @@ export const DecisionWheel: React.FC<Props> = ({ state, onUpdateState, onBackToH
                 className="wheel-svg"
                 style={{
                   transform: `rotate(${s.rotation}deg)`,
-                  transition: 'transform 3.4s cubic-bezier(0.14, 0.85, 0.22, 1)',
+                  transition: 'transform 3.2s cubic-bezier(0.14, 0.85, 0.22, 1)',
                 }}
               >
                 {s.options.map((opt, i) => {
@@ -189,78 +183,68 @@ export const DecisionWheel: React.FC<Props> = ({ state, onUpdateState, onBackToH
                       <path
                         d={d}
                         fill={SLICE_COLORS[i % SLICE_COLORS.length]}
-                        stroke="#181122"
-                        strokeWidth="2"
+                        stroke="#ffffff"
+                        strokeWidth="2.5"
                       />
                       <text
                         x="56"
                         y="0"
-                        fill="#181122"
-                        fontSize="8.2"
-                        fontWeight="700"
+                        fill="#4a3b52"
+                        fontSize="8.5"
+                        fontWeight="800"
                         textAnchor="middle"
                         dominantBaseline="middle"
                         transform={`rotate(${midDeg})`}
                       >
-                        {opt.length > 16 ? `${opt.slice(0, 15)}…` : opt}
+                        {opt.length > 14 ? `${opt.slice(0, 13)}…` : opt}
                       </text>
                     </g>
                   );
                 })}
-                <circle cx="0" cy="0" r="16" fill="#181122" stroke="#ffcf6b" strokeWidth="3" />
-                <text x="0" y="1" fontSize="11" textAnchor="middle" dominantBaseline="middle">
-                  💖
-                </text>
+                <circle cx="0" cy="0" r="18" fill="#fff0f6" stroke="#ff9ebb" strokeWidth="3" />
               </svg>
             </div>
 
-            <button type="button" className="cute-primary-btn spin-big-btn" onClick={handleSpin}>
-              🎡 ¡Girar la Ruleta Juntos!
-            </button>
-
-            {s.winner && (
-              <div className="wheel-winner-banner">
-                <span>🎉 ¡La ruleta decidió!:</span>
-                <strong>{s.winner}</strong>
-              </div>
-            )}
+            <div className="kawaii-wheel-controls">
+              <button type="button" className="kawaii-action-circle big" onClick={handleSpin}>
+                <IconRefresh size={24} />
+              </button>
+              {s.winner && (
+                <div className="kawaii-winner-pill">
+                  <IconSparkle size={16} />
+                  <strong>{s.winner}</strong>
+                </div>
+              )}
+            </div>
           </div>
 
-          {/* Lista editable de opciones */}
-          <div className="wheel-options-col">
-            <h4>✨ Opciones en la ruleta ({s.options.length})</h4>
-            <div className="wheel-add-row">
+          <div className="kawaii-wheel-options">
+            <div className="kawaii-add-input-row">
               <input
                 type="text"
-                placeholder="Agregar opción (ej: Helado 🍦)…"
                 value={newOption}
-                maxLength={28}
+                maxLength={24}
                 onChange={(e) => setNewOption(e.target.value)}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') handleAddOption();
                 }}
               />
-              <button type="button" className="wheel-add-btn" onClick={handleAddOption}>
-                + Sumar
+              <button type="button" className="kawaii-icon-circle small" onClick={handleAddOption}>
+                <IconPlus size={18} />
               </button>
             </div>
 
-            <div className="wheel-chips-list">
+            <div className="kawaii-chips-wrap">
               {s.options.map((opt, i) => (
-                <div key={i} className="wheel-option-item">
-                  <span
-                    className="wheel-opt-dot"
-                    style={{ background: SLICE_COLORS[i % SLICE_COLORS.length] }}
-                  />
-                  <span className="wheel-opt-text">{opt}</span>
+                <div
+                  key={i}
+                  className="kawaii-opt-chip"
+                  style={{ background: SLICE_COLORS[i % SLICE_COLORS.length] }}
+                >
+                  <span>{opt}</span>
                   {s.options.length > 2 && (
-                    <button
-                      type="button"
-                      className="wheel-opt-del"
-                      onClick={() => handleRemoveOption(i)}
-                      title="Quitar opción"
-                    >
-                      ✕
+                    <button type="button" onClick={() => handleRemoveOption(i)}>
+                      <IconClose size={13} />
                     </button>
                   )}
                 </div>
