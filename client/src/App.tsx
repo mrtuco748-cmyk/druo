@@ -60,6 +60,7 @@ export const App: React.FC = () => {
   });
   const [peerFraming, setPeerFraming] = useState<CamFraming>({ zoom: 1.0, y: 0, on: true, mic: true });
   const [showMenu, setShowMenu] = useState(false);
+  const [hideTopbar, setHideTopbar] = useState(false);
 
   const [meSpeaking, setMeSpeaking] = useState(false);
   const [peerSpeaking, setPeerSpeaking] = useState(false);
@@ -378,7 +379,7 @@ export const App: React.FC = () => {
   }
 
   return (
-    <div className={`theater-shell view-${viewMode}`}>
+    <div className={`theater-shell view-${viewMode} ${hideTopbar ? 'topbar-hidden' : ''}`}>
       {/* Barra superior discreta */}
       <header className="theater-topbar">
         <div className="brand-cluster">
@@ -430,8 +431,34 @@ export const App: React.FC = () => {
             <span className="menu-btn-icon">☰</span>
             <span className="menu-btn-label">Menú</span>
           </button>
+
+          {/* Botón X para esconder barra superior, menús y títulos */}
+          <button
+            type="button"
+            className="top-btn hide-topbar-btn"
+            onClick={() => {
+              setShowMenu(false);
+              setHideTopbar(true);
+            }}
+            title="Ocultar menús y títulos (dejar solo cámaras y película)"
+            aria-label="Ocultar menús y barra superior"
+          >
+            ✕
+          </button>
         </div>
       </header>
+
+      {/* Botón flotante para restaurar la barra superior cuando está oculta */}
+      {hideTopbar && (
+        <button
+          type="button"
+          className="show-topbar-pill"
+          onClick={() => setHideTopbar(false)}
+          title="Volver a mostrar la barra de menú y opciones"
+        >
+          <span>☰ Mostrar Menú</span>
+        </button>
+      )}
 
       {/* Menú desplegable unificado */}
       <OptionsMenu
