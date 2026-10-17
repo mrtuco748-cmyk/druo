@@ -1,9 +1,14 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { CameraTile, CamFraming } from './components/CameraTile';
 import { CinemaScreen, RoomSource, RoomSubs } from './components/CinemaScreen';
+import { CoupleGames, DEFAULT_GAMES_STATE, GamesState } from './components/CoupleGames';
+import { ActivityId, CuteHub } from './components/CuteHub';
+import { DecisionWheel, DEFAULT_WHEEL_STATE, WheelState } from './components/DecisionWheel';
 import { DrawEvent, DrawStroke } from './components/DrawingCanvas';
+import { DrawingStudio, StudioBg, StudioEvent, StudioStroke } from './components/DrawingStudio';
 import { OptionsMenu } from './components/OptionsMenu';
 import { QualityDrawer } from './components/QualityDrawer';
+import { DEFAULT_RELAX_STATE, RelaxRoom, RelaxState } from './components/RelaxRoom';
 import { SourceDrawer } from './components/SourceDrawer';
 import { AudioPresetId, VideoPresetId } from './lib/quality';
 import { CallStats, PeerCall } from './lib/rtc';
@@ -36,6 +41,7 @@ export const App: React.FC = () => {
   const [entered, setEntered] = useState(false);
   const [wsOnline, setWsOnline] = useState(false);
   const [storageReady, setStorageReady] = useState(false);
+  const [activeActivity, setActiveActivity] = useState<ActivityId>('hub');
 
   const [peers, setPeers] = useState<{ id: string; session: string; name: string; seat: 'left' | 'right'; device: string }[]>([]);
   const [source, setSource] = useState<RoomSource | null>(null);
@@ -103,6 +109,14 @@ export const App: React.FC = () => {
   const [initialDrawings, setInitialDrawings] = useState<DrawStroke[]>([]);
   const drawReceiverRef = useRef<((ev: DrawEvent) => void) | null>(null);
 
+  // Estados sincronizados de las nuevas actividades en tiempo real
+  const [studioStrokes, setStudioStrokes] = useState<StudioStroke[]>([]);
+  const [studioBg, setStudioBg] = useState<StudioBg>('cream');
+  const studioReceiverRef = useRef<((ev: StudioEvent) => void) | null>(null);
+  const [gamesState, setGamesState] = useState<GamesState>(DEFAULT_GAMES_STATE);
+  const [wheelState, setWheelState] = useState<WheelState>(DEFAULT_WHEEL_STATE);
+  const [relaxState, setRelaxState] = useState<RelaxState>(DEFAULT_RELAX_STATE);
+
   const [viewMode, setViewMode] = useState<'cinema' | 'call-only' | 'focus-movie' | 'duo'>(() => {
     return (localStorage.getItem('druo.viewMode') as any) || 'cinema';
   });
@@ -110,6 +124,11 @@ export const App: React.FC = () => {
   const handleSelectViewMode = (mode: 'cinema' | 'call-only' | 'focus-movie' | 'duo') => {
     setViewMode(mode);
     localStorage.setItem('druo.viewMode', mode);
+  };
+
+  const handleSelectActivity = (act: ActivityId) => {
+    setActiveActivity(act);
+    sigRef.current?.send({ t: 'activity', activity: act });
   };
 
   const [stats, setStats] = useState<CallStats>({
@@ -235,6 +254,12 @@ export const App: React.FC = () => {
             if (m.state.playback) setPlayback(m.state.playback);
             setSubs(m.state.subs || null);
             if (m.state.drawings) setInitialDrawings(m.state.drawings);
+            if (m.state.activity) setActiveActivity(m.state.activity);
+            if (Array.isArray(m.state.studioStrokes)) setStudioStrokes(m.state.studioStrokes);
+            if (m.state.studioBg) setStudioBg(m.state.studioBg);
+            if (m.state.sharedState?.games) setGamesState(m.state.sharedState.games);
+            if (m.state.sharedState?.wheel) setWheelState(m.state.sharedState.wheel);
+            if (m.state.sharedState?.relax) setRelaxState(m.state.sharedState.relax);
             const other = (m.state.peers || []).find((p: any) => p.id !== myId);
             if (other && m.state.cams?.[other.id]) {
               setPeerFraming(m.state.cams[other.id]);
@@ -251,6 +276,7 @@ export const App: React.FC = () => {
           setPreferredVersionKey(null);
           setSource(m.source || null);
           if (m.playback) setPlayback(m.playback);
+          if (m.source) setActiveActivity('cinema');
         } else if (m.t === 'subs') {
           setSubs(m.subs || null);
         } else if (m.t === 'cam' && m.id !== myId) {
@@ -268,6 +294,14 @@ export const App: React.FC = () => {
           spawnReaction(m.emoji);
         } else if (m.t === 'draw') {
           drawReceiverRef.current?.(m);
+        } else if (m.t === 'activity' && m.activity) {
+          setActiveActivity(m.activity);
+        } else if (m.t === 'studio') {
+          studioReceiverRef.current?.(m as StudioEvent);
+        } else if (m.t === 'shared' && m.section && m.data) {
+          if (m.section === 'games') setGamesState(m.data);
+          else if (m.section === 'wheel') setWheelState(m.data);
+          else if (m.section === 'relax') setRelaxState(m.data);
         }
       },
       (online) => setWsOnline(online)
@@ -310,6 +344,7 @@ export const App: React.FC = () => {
   const handleSelectSource = (src: RoomSource) => {
     setPreferredVersionKey(null);
     setSource(src);
+    setActiveActivity('cinema');
     sigRef.current?.send({ t: 'source', source: src });
   };
 
@@ -320,6 +355,7 @@ export const App: React.FC = () => {
     if (announce) {
       const src: RoomSource = { kind: 'local', title: file.name, size: file.size };
       setSource(src);
+      setActiveActivity('cinema');
       sigRef.current?.send({ t: 'source', source: src });
     }
   };
@@ -357,12 +393,13 @@ export const App: React.FC = () => {
     return (
       <div className="lobby-curtain">
         <div className="lobby-card">
+          <div className="lobby-cute-badge">✨ Espacio privado para dos 💕</div>
           <div className="lobby-logo">DRUO</div>
-          <p className="lobby-sub">Sala privada de cine para dos</p>
+          <p className="lobby-sub">Cine, pizarra de dibujo pro, juegos, ruleta y rincón cute en tiempo real</p>
 
           <div className="lobby-fields">
             <label className="field-block">
-              <span>Tu nombre en la butaca</span>
+              <span>Tu nombre cute 🌸</span>
               <input
                 type="text"
                 value={myName}
@@ -392,7 +429,7 @@ export const App: React.FC = () => {
           </div>
 
           <button type="button" className="cta-enter" onClick={enterTheater}>
-            🍿 Entrar a la sala
+            💖 Entrar a nuestro espacio
           </button>
         </div>
       </div>
@@ -401,23 +438,56 @@ export const App: React.FC = () => {
 
   return (
     <div className={`theater-shell view-${viewMode}`}>
-      {/* Barra superior discreta */}
+      {/* Barra superior cute con acceso directo al Menú Principal y secciones */}
       <header className="theater-topbar">
         <div className="brand-cluster">
-          <span className="brand-title">DRUO</span>
+          <button
+            type="button"
+            className={`hub-home-pill ${activeActivity === 'hub' ? 'active' : ''}`}
+            onClick={() => handleSelectActivity('hub')}
+            title="Ir al Menú Principal Cute (sincronizado para ambos)"
+          >
+            <span>🌸</span>
+            <strong>DRUO</strong>
+            <span className="hub-home-sub">{activeActivity === 'hub' ? 'Menú Cute' : '🏠 Inicio'}</span>
+          </button>
+
+          <div className="topbar-activity-tabs">
+            {(
+              [
+                { id: 'hub', icon: '🏠', label: 'Menú' },
+                { id: 'cinema', icon: '🎬', label: 'Cine' },
+                { id: 'draw', icon: '🎨', label: 'Dibujo' },
+                { id: 'games', icon: '🎲', label: 'Juegos' },
+                { id: 'wheel', icon: '🎡', label: 'Ruleta' },
+                { id: 'relax', icon: '☕', label: 'Relax' },
+              ] as { id: ActivityId; icon: string; label: string }[]
+            ).map((tab) => (
+              <button
+                key={tab.id}
+                type="button"
+                className={`topbar-act-btn ${activeActivity === tab.id ? 'active' : ''}`}
+                onClick={() => handleSelectActivity(tab.id)}
+                title={`Ir a ${tab.label}`}
+              >
+                <span>{tab.icon}</span>
+                <span className="topbar-act-label">{tab.label}</span>
+              </button>
+            ))}
+          </div>
+
           <span className={`conn-pill ${wsOnline ? 'ok' : 'warn'}`}>
-            {wsOnline ? (otherPeer ? '2/2 en sala' : '1/2 esperando') : 'Reconectando…'}
+            {wsOnline ? (otherPeer ? '💑 2/2 juntos' : '⏳ 1/2 esperando') : 'Reconectando…'}
           </span>
-          <span className="conn-pill ok" title="Keep-alive activo para evitar que Render se suspenda mientras ven la peli">
-            ⚡ Sala activa
-          </span>
-          {source && <span className="now-playing">🎞️ {source.title}</span>}
+          {source && activeActivity === 'cinema' && (
+            <span className="now-playing">🎞️ {source.title}</span>
+          )}
         </div>
 
         <div className="action-cluster">
           {/* Reacciones rápidas */}
           <div className="react-bar">
-            {['❤️', '😂', '🥰'].map((em) => (
+            {['❤️', '😂', '🥰', '✨'].map((em) => (
               <button
                 key={em}
                 type="button"
@@ -447,10 +517,10 @@ export const App: React.FC = () => {
             type="button"
             className={`top-btn menu-toggle-btn ${showMenu ? 'accent' : ''}`}
             onClick={() => setShowMenu((v) => !v)}
-            title="Abrir menú de opciones, modos y películas"
+            title="Abrir menú de opciones, modos, volumen 400% y películas"
           >
             <span className="menu-btn-icon">☰</span>
-            <span className="menu-btn-label">Menú</span>
+            <span className="menu-btn-label">Ajustes</span>
           </button>
         </div>
       </header>
@@ -461,7 +531,10 @@ export const App: React.FC = () => {
         onClose={() => setShowMenu(false)}
         viewMode={viewMode}
         onSelectViewMode={handleSelectViewMode}
-        onOpenSources={() => setShowSources(true)}
+        onOpenSources={() => {
+          setActiveActivity('cinema');
+          setShowSources(true);
+        }}
         drawingActive={drawingActive}
         onToggleDrawing={() => setDrawingActive((d) => !d)}
         drawingColor={drawingColor}
@@ -493,15 +566,14 @@ export const App: React.FC = () => {
           type="button"
           className="call-return-btn"
           onClick={() => handleSelectViewMode('cinema')}
-          title="Volver a la pantalla de cine"
+          title="Volver a la actividad central"
         >
-          🎬 Volver al Cine
+          🌸 Volver al Centro
         </button>
       )}
 
-      {/* Escenario principal: Cámara Izquierda | Pantalla de Cine | Cámara Derecha */}
+      {/* Escenario principal: Cámara Izquierda | Actividad Central | Cámara Derecha */}
       <div className="theater-grid">
-
         <CameraTile
           side="left"
           label={leftIsMe ? myName : otherPeer?.name || 'Izquierda'}
@@ -519,39 +591,110 @@ export const App: React.FC = () => {
           onTogglePeerMuted={() => setPeerMuted((m) => !m)}
         />
 
-        <CinemaScreen
-          source={source}
-          playback={playback}
-          subs={subs}
-          serverNow={() => sigRef.current?.clock.now() || Date.now()}
-          someoneSpeaking={meSpeaking || peerSpeaking || peerSpeakingNet}
-          duckingEnabled={duckingEnabled}
-          waitOnBuffer={waitOnBuffer}
-          peerBuffering={peerBuffering}
-          preferredVersionKey={preferredVersionKey}
-          hlsLevel={hlsLevel}
-          movieCapBps={movieCapBps}
-          onLevelsLoaded={setHlsLevels}
-          onSelectVersionKey={setPreferredVersionKey}
-          onEmitSync={handleEmitSync}
-          onEmitBuffering={(b) => sigRef.current?.send({ t: 'buffering', value: b })}
-          onOpenSources={() => setShowSources(true)}
-          localFileUrl={localFileUrl}
-          onPickLocalFile={(f) => handleSelectLocalFile(f, false)}
-          drawingActive={drawingActive}
-          drawingColor={drawingColor}
-          peerName={otherPeer?.name}
-          initialStrokes={initialDrawings}
-          onEmitDraw={(ev) => sigRef.current?.send(ev)}
-          onRegisterDrawReceiver={(receiver) => {
-            drawReceiverRef.current = receiver;
-          }}
-          onCloseDrawing={() => setDrawingActive(false)}
-          onClearDrawing={() => {
-            setInitialDrawings([]);
-          }}
-          onAutoplayBlockedChange={setMovieAudioBlocked}
-        />
+        {activeActivity === 'hub' && (
+          <CuteHub
+            myName={myName}
+            peerName={otherPeer?.name}
+            hasMovieLoaded={!!source}
+            movieTitle={source?.title}
+            onSelectActivity={handleSelectActivity}
+            onSendReaction={(em) => {
+              spawnReaction(em);
+              sigRef.current?.send({ t: 'react', emoji: em });
+            }}
+          />
+        )}
+
+        {activeActivity === 'cinema' && (
+          <CinemaScreen
+            source={source}
+            playback={playback}
+            subs={subs}
+            serverNow={() => sigRef.current?.clock.now() || Date.now()}
+            someoneSpeaking={meSpeaking || peerSpeaking || peerSpeakingNet}
+            duckingEnabled={duckingEnabled}
+            waitOnBuffer={waitOnBuffer}
+            peerBuffering={peerBuffering}
+            preferredVersionKey={preferredVersionKey}
+            hlsLevel={hlsLevel}
+            movieCapBps={movieCapBps}
+            onLevelsLoaded={setHlsLevels}
+            onSelectVersionKey={setPreferredVersionKey}
+            onEmitSync={handleEmitSync}
+            onEmitBuffering={(b) => sigRef.current?.send({ t: 'buffering', value: b })}
+            onOpenSources={() => setShowSources(true)}
+            localFileUrl={localFileUrl}
+            onPickLocalFile={(f) => handleSelectLocalFile(f, false)}
+            drawingActive={drawingActive}
+            drawingColor={drawingColor}
+            peerName={otherPeer?.name}
+            initialStrokes={initialDrawings}
+            onEmitDraw={(ev) => sigRef.current?.send(ev)}
+            onRegisterDrawReceiver={(receiver) => {
+              drawReceiverRef.current = receiver;
+            }}
+            onCloseDrawing={() => setDrawingActive(false)}
+            onClearDrawing={() => {
+              setInitialDrawings([]);
+            }}
+            onAutoplayBlockedChange={setMovieAudioBlocked}
+          />
+        )}
+
+        {activeActivity === 'draw' && (
+          <DrawingStudio
+            myName={myName}
+            peerName={otherPeer?.name}
+            initialStrokes={studioStrokes}
+            initialBg={studioBg}
+            onEmitStudio={(ev) => sigRef.current?.send(ev)}
+            onRegisterStudioReceiver={(receiver) => {
+              studioReceiverRef.current = receiver;
+            }}
+            onSyncLocalState={(strokes, bg) => {
+              setStudioStrokes(strokes);
+              setStudioBg(bg);
+            }}
+            onBackToHub={() => handleSelectActivity('hub')}
+          />
+        )}
+
+        {activeActivity === 'games' && (
+          <CoupleGames
+            myName={myName}
+            peerName={otherPeer?.name}
+            mySeat={mySeat}
+            state={gamesState}
+            onUpdateState={(next) => {
+              setGamesState(next);
+              sigRef.current?.send({ t: 'shared', section: 'games', data: next });
+            }}
+            onBackToHub={() => handleSelectActivity('hub')}
+          />
+        )}
+
+        {activeActivity === 'wheel' && (
+          <DecisionWheel
+            state={wheelState}
+            onUpdateState={(next) => {
+              setWheelState(next);
+              sigRef.current?.send({ t: 'shared', section: 'wheel', data: next });
+            }}
+            onBackToHub={() => handleSelectActivity('hub')}
+          />
+        )}
+
+        {activeActivity === 'relax' && (
+          <RelaxRoom
+            state={relaxState}
+            someoneSpeaking={meSpeaking || peerSpeaking || peerSpeakingNet}
+            onUpdateState={(next) => {
+              setRelaxState(next);
+              sigRef.current?.send({ t: 'shared', section: 'relax', data: next });
+            }}
+            onBackToHub={() => handleSelectActivity('hub')}
+          />
+        )}
 
         <CameraTile
           side="right"

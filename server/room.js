@@ -13,6 +13,10 @@ export class Room {
     this.subs = null;
     this.cams = {};
     this.drawings = [];
+    this.activity = 'hub';
+    this.studioStrokes = [];
+    this.studioBg = 'cream';
+    this.sharedState = {};
   }
 
   /**
@@ -91,6 +95,22 @@ export class Room {
     this.drawings = [];
   }
 
+  addStudioStroke(stroke) {
+    if (!stroke || !stroke.id) return;
+    this.studioStrokes.push(stroke);
+    if (this.studioStrokes.length > 500) {
+      this.studioStrokes.splice(0, this.studioStrokes.length - 500);
+    }
+  }
+
+  removeStudioStroke(id) {
+    this.studioStrokes = this.studioStrokes.filter((s) => s.id !== id);
+  }
+
+  clearStudioStrokes() {
+    this.studioStrokes = [];
+  }
+
   peerList() {
     return [...this.peers.values()].map(({ id, session, name, seat, device }) => ({ id, session, name, seat, device }));
   }
@@ -103,6 +123,10 @@ export class Room {
       subs: this.subs,
       cams: this.cams,
       drawings: this.drawings,
+      activity: this.activity,
+      studioStrokes: this.studioStrokes,
+      studioBg: this.studioBg,
+      sharedState: this.sharedState,
     };
   }
 }

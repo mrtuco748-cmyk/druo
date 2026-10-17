@@ -184,7 +184,8 @@ wss.on('connection', (ws) => {
       }
       case 'source':
         room.setSource(m.source, me.id);
-        return broadcast({ t: 'source', source: room.source, playback: room.playback, by: me.id });
+        room.activity = 'cinema';
+        return broadcast({ t: 'source', source: room.source, playback: room.playback, activity: 'cinema', by: me.id });
       case 'subs':
         room.subs = m.subs ? { name: String(m.subs.name || '').slice(0, 120), text: String(m.subs.text || ''), offset: Number(m.subs.offset) || 0 } : null;
         return broadcast({ t: 'subs', subs: room.subs, by: me.id });
@@ -203,6 +204,31 @@ wss.on('connection', (ws) => {
           room.clearDrawings();
         }
         return toOther(me.id, { ...m, from: me.id });
+      case 'activity':
+        if (typeof m.activity === 'string') {
+          room.activity = m.activity.slice(0, 32);
+          return broadcast({ t: 'activity', activity: room.activity, by: me.id, name: me.name });
+        }
+        return;
+      case 'studio':
+        if (m.action === 'commit' && m.stroke) {
+          room.addStudioStroke(m.stroke);
+        } else if (m.action === 'remove' && m.id) {
+          room.removeStudioStroke(m.id);
+        } else if (m.action === 'replace' && Array.isArray(m.strokes)) {
+          room.studioStrokes = m.strokes.slice(-500);
+        } else if (m.action === 'bg' && typeof m.bg === 'string') {
+          room.studioBg = m.bg.slice(0, 32);
+        } else if (m.action === 'clear') {
+          room.clearStudioStrokes();
+        }
+        return toOther(me.id, { ...m, from: me.id, name: me.name });
+      case 'shared':
+        if (typeof m.key === 'string' && m.key.length <= 32) {
+          room.sharedState[m.key] = m.data;
+          return broadcast({ t: 'shared', key: m.key, data: m.data, by: me.id, name: me.name });
+        }
+        return;
     }
   });
 
