@@ -365,10 +365,29 @@ export const IconMusic: React.FC<IconProps> = ({ size, color, className }) => (
   </svg>
 );
 
-export const IconCards: React.FC<IconProps> = ({ size, color, className }) => (
+export const IconCards: React.FC<IconProps> = ({ size = 22, color, className }) => (
   <svg {...base(size, color, className)}>
-    <rect x="6" y="3" width="14" height="18" rx="3" />
-    <path d="M4 7v11a3 3 0 0 0 3 3h9" />
+    {/* Carta trasera inclinada a la izquierda */}
+    <path
+      d="M8.5 4.2L4.2 5.6a2.2 2.2 0 0 0-1.4 2.7l3.2 10.5a2.2 2.2 0 0 0 2.7 1.4l1.3-.4"
+      opacity="0.75"
+    />
+    {/* Carta principal al frente */}
+    <rect
+      x="8.5"
+      y="3"
+      width="12.5"
+      height="17.5"
+      rx="2.6"
+      fill="currentColor"
+      fillOpacity="0.16"
+    />
+    {/* Corazón central de naipe */}
+    <path
+      d="M14.75 14.3s-3.1-2-3.1-4.2a1.75 1.75 0 0 1 3.1-1.1 1.75 1.75 0 0 1 3.1 1.1c0 2.2-3.1 4.2-3.1 4.2z"
+      fill="currentColor"
+      stroke="none"
+    />
   </svg>
 );
 

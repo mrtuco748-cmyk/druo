@@ -2446,15 +2446,21 @@ select:focus {
 .wheel-stage,
 .relax-stage {
   overflow: hidden;
+  width: 100% !important;
+  height: 100% !important;
+  max-height: 100% !important;
+  min-height: 0 !important;
 }
 
 .kawaii-pastel-hub,
 .kawaii-pastel-surface,
 .kawaii-clean-studio {
   aspect-ratio: unset !important;
-  width: 100%;
-  height: 100%;
-  max-height: 100%;
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
+  min-height: 0 !important;
   background: radial-gradient(circle at 20% 20%, #291323 0%, #1e1024 52%, #150c1b 100%) !important;
   border: 2.5px solid #783554 !important;
   border-radius: 26px !important;
@@ -2869,15 +2875,106 @@ select:focus {
 
 /* ---------------- 3, 4, 7. ACTIVIDADES ROSA OSCURO PASTEL (Juegos, Ruleta, Relax) ---------------- */
 .kawaii-pastel-surface {
+  position: relative;
   padding: 14px 18px;
-  gap: 12px;
+  gap: 10px;
 }
 .kawaii-top-nav {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 10px;
+  flex-shrink: 0;
+  z-index: 15;
 }
+.kawaii-nav-cluster {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.kawaii-emoji-Trigger-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(43, 20, 36, 0.92);
+  border: 2px solid #753451;
+  padding: 3px 6px;
+  border-radius: 999px;
+}
+.kawaii-emoji-avatar-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 1.5px solid transparent;
+  background: #36182c;
+  font-size: 1.15rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.15s ease, border-color 0.15s ease;
+}
+.kawaii-emoji-avatar-btn:hover,
+.kawaii-emoji-avatar-btn.active {
+  transform: scale(1.12);
+  border-color: #ff85a2;
+  background: #4d213d;
+}
+
+.kawaii-emoji-picker-popover {
+  position: absolute;
+  top: 62px;
+  left: 16px;
+  width: min(280px, calc(100% - 32px));
+  background: rgba(36, 16, 30, 0.98);
+  backdrop-filter: blur(16px);
+  border: 2.5px solid #964267;
+  border-radius: 22px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.78);
+  z-index: 35;
+  animation: popInKawaii 0.16s ease-out;
+}
+.kawaii-emoji-picker-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.kawaii-emoji-picker-badge {
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: #ffc2d9;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.kawaii-emoji-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 6px;
+}
+.kawaii-emoji-cell {
+  height: 36px;
+  border-radius: 12px;
+  border: 1.5px solid #5e2942;
+  background: #2b1424;
+  font-size: 1.18rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.14s ease, border-color 0.14s ease;
+}
+.kawaii-emoji-cell:hover,
+.kawaii-emoji-cell.active {
+  transform: scale(1.14);
+  border-color: #ff85a2;
+  background: #4a2038;
+}
+
 .kawaii-pill-tabs {
   display: inline-flex;
   background: rgba(43, 20, 36, 0.92);
@@ -2887,8 +2984,8 @@ select:focus {
   gap: 6px;
 }
 .kawaii-tab-icon {
-  width: 38px;
-  height: 38px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   border: none;
   background: transparent;
@@ -2899,6 +2996,10 @@ select:focus {
   cursor: pointer;
   transition: all 0.16s ease;
 }
+.kawaii-tab-icon:hover {
+  background: #3d1c33;
+  color: #ffc2d9;
+}
 .kawaii-tab-icon.active {
   background: linear-gradient(135deg, #e0537c, #ff85a2);
   color: #fff;
@@ -2907,28 +3008,32 @@ select:focus {
 
 .activity-content-center {
   flex: 1 1 0;
+  width: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
   min-height: 0;
+  overflow-y: auto;
+  padding: 4px;
 }
 .kawaii-card-panel {
   width: 100%;
-  max-width: 520px;
+  max-width: 540px;
   background: rgba(41, 19, 34, 0.92);
   border: 2.5px solid #803959;
   border-radius: 26px;
-  padding: 20px;
+  padding: clamp(14px, 2.2vh, 22px);
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
-  gap: 16px;
+  gap: clamp(10px, 1.8vh, 16px);
   box-shadow: 0 14px 36px rgba(0, 0, 0, 0.55);
+  margin: auto;
 }
 .kawaii-question-text {
   margin: 0;
-  font-size: clamp(1rem, 1.7vw, 1.25rem);
+  font-size: clamp(0.96rem, 1.6vw, 1.22rem);
   font-weight: 800;
   color: #fde8f1;
   line-height: 1.4;
@@ -2941,11 +3046,11 @@ select:focus {
 }
 .kawaii-vote-card {
   flex: 1;
-  max-width: 180px;
+  max-width: 185px;
   background: #2e1526;
   border: 2px solid #6e304c;
   border-radius: 20px;
-  padding: 14px;
+  padding: 12px 14px;
   color: #f4b8d0;
   display: flex;
   flex-direction: column;
@@ -2953,6 +3058,10 @@ select:focus {
   gap: 6px;
   cursor: pointer;
   transition: all 0.16s ease;
+}
+.kawaii-big-emoji {
+  font-size: 1.85rem;
+  line-height: 1.1;
 }
 .kawaii-vote-card.selected {
   background: #54213a;
@@ -2964,6 +3073,13 @@ select:focus {
   background: #1d4232;
   border-color: #63e6be;
   color: #b8f2d8;
+}
+
+.kawaii-game-nav-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
 }
 
 .kawaii-action-circle {
@@ -2992,7 +3108,7 @@ select:focus {
   background: #2b1323;
   border: 2px dashed #8a3d5f;
   border-radius: 20px;
-  padding: 20px;
+  padding: 18px 20px;
   width: 100%;
 }
 
@@ -3003,22 +3119,32 @@ select:focus {
 .kawaii-score-badge {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 7px;
   background: #2b1424;
   border: 2px solid #6b2f4b;
   padding: 6px 14px;
   border-radius: 999px;
   color: #e8abc4;
+  cursor: pointer;
+  transition: transform 0.14s ease, border-color 0.14s ease;
+}
+.kawaii-score-badge:hover {
+  transform: scale(1.06);
+  border-color: #ff85a2;
 }
 .kawaii-score-badge.active {
   background: #4f2037;
   border-color: #ff85a2;
   color: #ffc2d9;
 }
+.kawaii-badge-emoji {
+  font-size: 1.15rem;
+  line-height: 1;
+}
 .kawaii-ttt-grid {
   display: grid;
-  grid-template-columns: repeat(3, 68px);
-  grid-template-rows: repeat(3, 68px);
+  grid-template-columns: repeat(3, clamp(58px, 8vh, 72px));
+  grid-template-rows: repeat(3, clamp(58px, 8vh, 72px));
   gap: 8px;
 }
 .kawaii-ttt-cell {
@@ -3030,16 +3156,24 @@ select:focus {
   justify-content: center;
   cursor: pointer;
   color: #ff85a2;
+  transition: background 0.14s ease, transform 0.12s ease;
+}
+.kawaii-ttt-cell:hover {
+  background: #381a2e;
 }
 .kawaii-ttt-cell.is-right {
   color: #c5a3ff;
+}
+.kawaii-cell-emoji {
+  font-size: clamp(1.55rem, 3vh, 2rem);
+  line-height: 1;
 }
 
 /* Ruleta Rosa Oscuro Pastel */
 .wheel-layout {
   flex: 1 1 0;
   display: grid;
-  grid-template-columns: minmax(200px, 1fr) minmax(200px, 260px);
+  grid-template-columns: minmax(190px, 1fr) minmax(190px, 250px);
   gap: 16px;
   align-items: center;
   min-height: 0;
@@ -3052,8 +3186,8 @@ select:focus {
 }
 .wheel-spinner-box {
   position: relative;
-  width: clamp(175px, 24vw, 230px);
-  height: clamp(175px, 24vw, 230px);
+  width: clamp(165px, 22vw, 220px);
+  height: clamp(165px, 22vw, 220px);
 }
 .wheel-pointer {
   position: absolute;
@@ -3098,16 +3232,20 @@ select:focus {
 }
 .kawaii-add-input-row {
   display: flex;
+  align-items: center;
   gap: 6px;
+}
+.kawaii-add-input-row.full-width {
+  width: 100%;
 }
 .kawaii-add-input-row input {
   flex: 1;
   background: #22101c;
   border: 1.5px solid #6e304c;
   border-radius: 999px;
-  padding: 6px 12px;
+  padding: 7px 12px;
   color: #fce4ef;
-  font-size: 0.8rem;
+  font-size: 0.82rem;
 }
 .kawaii-chips-wrap {
   display: flex;
@@ -3213,10 +3351,15 @@ select:focus {
   .theater-shell.view-cinema .cinema-stage.studio-stage,
   .theater-shell.view-cinema .cinema-stage.games-stage,
   .theater-shell.view-cinema .cinema-stage.wheel-stage,
-  .theater-shell.view-cinema .cinema-stage.relax-stage {
-    aspect-ratio: unset;
-    height: 64vh;
-    max-height: 68vh;
+  .theater-shell.view-cinema .cinema-stage.relax-stage,
+  .theater-shell.view-duo .cinema-stage.cute-hub-stage,
+  .theater-shell.view-duo .cinema-stage.studio-stage,
+  .theater-shell.view-duo .cinema-stage.games-stage,
+  .theater-shell.view-duo .cinema-stage.wheel-stage,
+  .theater-shell.view-duo .cinema-stage.relax-stage {
+    aspect-ratio: unset !important;
+    height: 62vh !important;
+    max-height: 66vh !important;
   }
   .wheel-layout {
     grid-template-columns: 1fr;
@@ -3227,3 +3370,4 @@ select:focus {
     border-radius: 24px;
   }
 }
+

@@ -1,14 +1,16 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   IconCards,
+  IconChevronLeft,
   IconChevronRight,
+  IconClose,
   IconFire,
   IconGrid,
   IconHeart,
   IconHome,
+  IconPlus,
   IconRefresh,
   IconSparkle,
-  IconStar,
 } from './KawaiiIcons';
 
 export interface GamesState {
@@ -20,6 +22,10 @@ export interface GamesState {
   board: ('left' | 'right' | null)[];
   turn: 'left' | 'right';
   scores: { left: number; right: number };
+  leftEmoji?: string;
+  rightEmoji?: string;
+  customLikely?: string[];
+  customCards?: Partial<Record<'sweet' | 'deep' | 'spicy', string[]>>;
 }
 
 export const DEFAULT_GAMES_STATE: GamesState = {
@@ -31,7 +37,32 @@ export const DEFAULT_GAMES_STATE: GamesState = {
   board: Array(9).fill(null),
   turn: 'left',
   scores: { left: 0, right: 0 },
+  leftEmoji: '🩷',
+  rightEmoji: '💜',
+  customLikely: [],
+  customCards: {},
 };
+
+const EMOJI_PRESETS = [
+  '🩷',
+  '💜',
+  '✨',
+  '🌙',
+  '🐱',
+  '🐶',
+  '🍓',
+  '🍒',
+  '🎀',
+  '👑',
+  '🔥',
+  '🌸',
+  '🦊',
+  '🐰',
+  '🦋',
+  '🍕',
+  '🎮',
+  '👻',
+];
 
 const LIKELY_QUESTIONS = [
   '¿Quién es más probable que se quede dormido a los 15 minutos de empezar la película?',
@@ -111,12 +142,22 @@ export const CoupleGames: React.FC<Props> = ({
   onUpdateState,
   onBackToHub,
 }) => {
+  // Todos los hooks al inicio
+  const [editingSide, setEditingSide] = useState<'left' | 'right' | null>(null);
+  const [customEmojiInput, setCustomEmojiInput] = useState('');
+  const [showAddPrompt, setShowAddPrompt] = useState(false);
+  const [newPromptText, setNewPromptText] = useState('');
+
   const s: GamesState = {
     ...DEFAULT_GAMES_STATE,
     ...state,
     votes: state?.votes || {},
     board: Array.isArray(state?.board) && state.board.length === 9 ? state.board : Array(9).fill(null),
     scores: state?.scores || { left: 0, right: 0 },
+    leftEmoji: state?.leftEmoji || '🩷',
+    rightEmoji: state?.rightEmoji || '💜',
+    customLikely: Array.isArray(state?.customLikely) ? state.customLikely : [],
+    customCards: state?.customCards || {},
   };
 
   const leftName = mySeat === 'left' ? myName : peerName || '1';
@@ -127,6 +168,22 @@ export const CoupleGames: React.FC<Props> = ({
   const otherVote = s.votes[otherSeat];
   const bothVoted = Boolean(myVote && otherVote);
 
+  const allLikely = [...(s.customLikely || []), ...LIKELY_QUESTIONS];
+  const activeCat = s.cardCategory || 'sweet';
+  const allCards = [...(s.customCards?.[activeCat] || []), ...(CARDS_DECK[activeCat] || CARDS_DECK.sweet)];
+
+  const handleSelectEmoji = (side: 'left' | 'right', em: string) => {
+    const trimmed = em.trim();
+    if (!trimmed) return;
+    onUpdateState({
+      ...s,
+      leftEmoji: side === 'left' ? trimmed : s.leftEmoji,
+      rightEmoji: side === 'right' ? trimmed : s.rightEmoji,
+    });
+    setCustomEmojiInput('');
+    setEditingSide(null);
+  };
+
   const handleVote = (choice: 'left' | 'right') => {
     onUpdateState({
       ...s,
@@ -134,23 +191,53 @@ export const CoupleGames: React.FC<Props> = ({
     });
   };
 
-  const handleNextLikely = () => {
+  const handleStepLikely = (delta: number) => {
+    const len = allLikely.length;
     onUpdateState({
       ...s,
-      likelyIdx: (s.likelyIdx + 1) % LIKELY_QUESTIONS.length,
+      likelyIdx: (s.likelyIdx + delta + len) % len,
       votes: {},
     });
   };
 
-  const handleNextCard = (cat?: 'sweet' | 'deep' | 'spicy') => {
-    const activeCat = cat || s.cardCategory;
-    const deck = CARDS_DECK[activeCat];
-    const nextIdx = cat ? 0 : (s.cardIdx + 1) % deck.length;
+  const handleStepCard = (delta: number, cat?: 'sweet' | 'deep' | 'spicy') => {
+    const nextCat = cat || activeCat;
+    const deck = [...(s.customCards?.[nextCat] || []), ...(CARDS_DECK[nextCat] || CARDS_DECK.sweet)];
+    const len = Math.max(1, deck.length);
+    const nextIdx = cat ? 0 : (s.cardIdx + delta + len) % len;
     onUpdateState({
       ...s,
-      cardCategory: activeCat,
+      cardCategory: nextCat,
       cardIdx: nextIdx,
     });
+  };
+
+  const handleAddCustomPrompt = () => {
+    const text = newPromptText.trim();
+    if (!text) return;
+    setNewPromptText('');
+    setShowAddPrompt(false);
+
+    if (s.tab === 'likely') {
+      const nextCustom = [text, ...(s.customLikely || [])];
+      onUpdateState({
+        ...s,
+        customLikely: nextCustom,
+        likelyIdx: 0,
+        votes: {},
+      });
+    } else if (s.tab === 'cards') {
+      const prevCatList = s.customCards?.[activeCat] || [];
+      const nextCustomCards = {
+        ...(s.customCards || {}),
+        [activeCat]: [text, ...prevCatList],
+      };
+      onUpdateState({
+        ...s,
+        customCards: nextCustomCards,
+        cardIdx: 0,
+      });
+    }
   };
 
   const winner = checkWinner(s.board);
@@ -179,48 +266,133 @@ export const CoupleGames: React.FC<Props> = ({
     });
   };
 
-  const question = LIKELY_QUESTIONS[s.likelyIdx % LIKELY_QUESTIONS.length];
-  const deck = CARDS_DECK[s.cardCategory] || CARDS_DECK.sweet;
-  const currentCard = deck[s.cardIdx % deck.length];
+  const question = allLikely[s.likelyIdx % allLikely.length];
+  const currentCard = allCards[s.cardIdx % allCards.length];
 
   return (
     <main className="cinema-stage games-stage">
       <div className="screen-bezel cute-activity-bezel kawaii-pastel-surface">
-        {/* Barra Superior de Iconos (Sin Textos, Sin Emojis) */}
+        {/* Barra Superior de Iconos + Personalización de Emojis */}
         <div className="kawaii-top-nav">
-          <button type="button" className="kawaii-icon-circle" onClick={onBackToHub} aria-label="Home">
-            <IconHome size={20} />
-          </button>
+          <div className="kawaii-nav-cluster">
+            <button type="button" className="kawaii-icon-circle" onClick={onBackToHub} aria-label="Home">
+              <IconHome size={20} />
+            </button>
+
+            {/* Botones rápidos para personalizar el emoji de cada jugador */}
+            <div className="kawaii-emoji-Trigger-pill">
+              <button
+                type="button"
+                className={`kawaii-emoji-avatar-btn ${editingSide === 'left' ? 'active' : ''}`}
+                onClick={() => setEditingSide(editingSide === 'left' ? null : 'left')}
+                title={leftName}
+              >
+                <span>{s.leftEmoji}</span>
+              </button>
+              <button
+                type="button"
+                className={`kawaii-emoji-avatar-btn ${editingSide === 'right' ? 'active' : ''}`}
+                onClick={() => setEditingSide(editingSide === 'right' ? null : 'right')}
+                title={rightName}
+              >
+                <span>{s.rightEmoji}</span>
+              </button>
+            </div>
+          </div>
 
           <div className="kawaii-pill-tabs">
             <button
               type="button"
               className={`kawaii-tab-icon ${s.tab === 'likely' ? 'active' : ''}`}
-              onClick={() => onUpdateState({ ...s, tab: 'likely' })}
+              onClick={() => {
+                setShowAddPrompt(false);
+                onUpdateState({ ...s, tab: 'likely' });
+              }}
               aria-label="Votes"
             >
-              <IconHeart size={20} />
+              <IconHeart size={21} />
             </button>
             <button
               type="button"
               className={`kawaii-tab-icon ${s.tab === 'cards' ? 'active' : ''}`}
-              onClick={() => onUpdateState({ ...s, tab: 'cards' })}
-              aria-label="Cards"
+              onClick={() => {
+                setShowAddPrompt(false);
+                onUpdateState({ ...s, tab: 'cards' });
+              }}
+              aria-label="Cards Deck"
             >
-              <IconCards size={20} />
+              <IconCards size={24} />
             </button>
             <button
               type="button"
               className={`kawaii-tab-icon ${s.tab === 'ttt' ? 'active' : ''}`}
-              onClick={() => onUpdateState({ ...s, tab: 'ttt' })}
+              onClick={() => {
+                setShowAddPrompt(false);
+                onUpdateState({ ...s, tab: 'ttt' });
+              }}
               aria-label="Tic Tac Toe"
             >
-              <IconGrid size={20} />
+              <IconGrid size={21} />
             </button>
           </div>
         </div>
 
-        {/* Contenido limpio */}
+        {/* Popover para elegir o escribir cualquier Emoji personalizado */}
+        {editingSide && (
+          <div className="kawaii-emoji-picker-popover">
+            <div className="kawaii-emoji-picker-head">
+              <span className="kawaii-emoji-picker-badge">
+                {editingSide === 'left' ? s.leftEmoji : s.rightEmoji} {editingSide === 'left' ? leftName : rightName}
+              </span>
+              <button
+                type="button"
+                className="kawaii-opt-close"
+                onClick={() => setEditingSide(null)}
+              >
+                <IconClose size={14} />
+              </button>
+            </div>
+            <div className="kawaii-emoji-grid">
+              {EMOJI_PRESETS.map((em) => (
+                <button
+                  key={em}
+                  type="button"
+                  className={`kawaii-emoji-cell ${
+                    (editingSide === 'left' ? s.leftEmoji : s.rightEmoji) === em ? 'active' : ''
+                  }`}
+                  onClick={() => handleSelectEmoji(editingSide, em)}
+                >
+                  {em}
+                </button>
+              ))}
+            </div>
+            <div className="kawaii-add-input-row">
+              <input
+                type="text"
+                value={customEmojiInput}
+                maxLength={4}
+                placeholder="✨"
+                onChange={(e) => setCustomEmojiInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && customEmojiInput.trim()) {
+                    handleSelectEmoji(editingSide, customEmojiInput);
+                  }
+                }}
+              />
+              <button
+                type="button"
+                className="kawaii-icon-circle small"
+                onClick={() => {
+                  if (customEmojiInput.trim()) handleSelectEmoji(editingSide, customEmojiInput);
+                }}
+              >
+                <IconPlus size={16} />
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Contenido central adaptable */}
         <div className="activity-content-center">
           {s.tab === 'likely' && (
             <div className="kawaii-card-panel">
@@ -234,7 +406,7 @@ export const CoupleGames: React.FC<Props> = ({
                   }`}
                   onClick={() => handleVote('left')}
                 >
-                  <IconHeart size={26} />
+                  <span className="kawaii-big-emoji">{s.leftEmoji}</span>
                   <strong>{leftName}</strong>
                 </button>
                 <button
@@ -244,14 +416,48 @@ export const CoupleGames: React.FC<Props> = ({
                   }`}
                   onClick={() => handleVote('right')}
                 >
-                  <IconStar size={26} />
+                  <span className="kawaii-big-emoji">{s.rightEmoji}</span>
                   <strong>{rightName}</strong>
                 </button>
               </div>
 
-              <button type="button" className="kawaii-action-circle" onClick={handleNextLikely}>
-                <IconChevronRight size={24} />
-              </button>
+              {showAddPrompt ? (
+                <div className="kawaii-add-input-row full-width">
+                  <input
+                    type="text"
+                    value={newPromptText}
+                    maxLength={140}
+                    placeholder="¿Quién es más probable que...?"
+                    onChange={(e) => setNewPromptText(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') handleAddCustomPrompt();
+                    }}
+                  />
+                  <button type="button" className="kawaii-icon-circle small active" onClick={handleAddCustomPrompt}>
+                    <IconPlus size={16} />
+                  </button>
+                  <button type="button" className="kawaii-icon-circle small" onClick={() => setShowAddPrompt(false)}>
+                    <IconClose size={15} />
+                  </button>
+                </div>
+              ) : (
+                <div className="kawaii-game-nav-row">
+                  <button type="button" className="kawaii-icon-circle" onClick={() => handleStepLikely(-1)}>
+                    <IconChevronLeft size={20} />
+                  </button>
+                  <button type="button" className="kawaii-action-circle" onClick={() => handleStepLikely(1)}>
+                    <IconChevronRight size={24} />
+                  </button>
+                  <button
+                    type="button"
+                    className="kawaii-icon-circle"
+                    onClick={() => setShowAddPrompt(true)}
+                    aria-label="Add Question"
+                  >
+                    <IconPlus size={19} />
+                  </button>
+                </div>
+              )}
             </div>
           )}
 
@@ -260,22 +466,22 @@ export const CoupleGames: React.FC<Props> = ({
               <div className="kawaii-pill-tabs">
                 <button
                   type="button"
-                  className={`kawaii-tab-icon ${s.cardCategory === 'sweet' ? 'active' : ''}`}
-                  onClick={() => handleNextCard('sweet')}
+                  className={`kawaii-tab-icon ${activeCat === 'sweet' ? 'active' : ''}`}
+                  onClick={() => handleStepCard(0, 'sweet')}
                 >
                   <IconHeart size={18} />
                 </button>
                 <button
                   type="button"
-                  className={`kawaii-tab-icon ${s.cardCategory === 'deep' ? 'active' : ''}`}
-                  onClick={() => handleNextCard('deep')}
+                  className={`kawaii-tab-icon ${activeCat === 'deep' ? 'active' : ''}`}
+                  onClick={() => handleStepCard(0, 'deep')}
                 >
                   <IconSparkle size={18} />
                 </button>
                 <button
                   type="button"
-                  className={`kawaii-tab-icon ${s.cardCategory === 'spicy' ? 'active' : ''}`}
-                  onClick={() => handleNextCard('spicy')}
+                  className={`kawaii-tab-icon ${activeCat === 'spicy' ? 'active' : ''}`}
+                  onClick={() => handleStepCard(0, 'spicy')}
                 >
                   <IconFire size={18} />
                 </button>
@@ -285,23 +491,65 @@ export const CoupleGames: React.FC<Props> = ({
                 <p className="kawaii-question-text">{currentCard}</p>
               </div>
 
-              <button type="button" className="kawaii-action-circle" onClick={() => handleNextCard()}>
-                <IconChevronRight size={24} />
-              </button>
+              {showAddPrompt ? (
+                <div className="kawaii-add-input-row full-width">
+                  <input
+                    type="text"
+                    value={newPromptText}
+                    maxLength={160}
+                    placeholder="Escribí tu propia carta o reto..."
+                    onChange={(e) => setNewPromptText(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') handleAddCustomPrompt();
+                    }}
+                  />
+                  <button type="button" className="kawaii-icon-circle small active" onClick={handleAddCustomPrompt}>
+                    <IconPlus size={16} />
+                  </button>
+                  <button type="button" className="kawaii-icon-circle small" onClick={() => setShowAddPrompt(false)}>
+                    <IconClose size={15} />
+                  </button>
+                </div>
+              ) : (
+                <div className="kawaii-game-nav-row">
+                  <button type="button" className="kawaii-icon-circle" onClick={() => handleStepCard(-1)}>
+                    <IconChevronLeft size={20} />
+                  </button>
+                  <button type="button" className="kawaii-action-circle" onClick={() => handleStepCard(1)}>
+                    <IconChevronRight size={24} />
+                  </button>
+                  <button
+                    type="button"
+                    className="kawaii-icon-circle"
+                    onClick={() => setShowAddPrompt(true)}
+                    aria-label="Add Card"
+                  >
+                    <IconPlus size={19} />
+                  </button>
+                </div>
+              )}
             </div>
           )}
 
           {s.tab === 'ttt' && (
-            <div className="kawaii-card-panel">
+            <div className="kawaii-card-panel kawaii-ttt-panel">
               <div className="kawaii-ttt-scores">
-                <span className={`kawaii-score-badge ${s.turn === 'left' && !winner ? 'active' : ''}`}>
-                  <IconHeart size={18} />
+                <button
+                  type="button"
+                  className={`kawaii-score-badge ${s.turn === 'left' && !winner ? 'active' : ''}`}
+                  onClick={() => setEditingSide(editingSide === 'left' ? null : 'left')}
+                >
+                  <span className="kawaii-badge-emoji">{s.leftEmoji}</span>
                   <strong>{s.scores.left}</strong>
-                </span>
-                <span className={`kawaii-score-badge ${s.turn === 'right' && !winner ? 'active' : ''}`}>
-                  <IconStar size={18} />
+                </button>
+                <button
+                  type="button"
+                  className={`kawaii-score-badge ${s.turn === 'right' && !winner ? 'active' : ''}`}
+                  onClick={() => setEditingSide(editingSide === 'right' ? null : 'right')}
+                >
+                  <span className="kawaii-badge-emoji">{s.rightEmoji}</span>
                   <strong>{s.scores.right}</strong>
-                </span>
+                </button>
               </div>
 
               <div className="kawaii-ttt-grid">
@@ -313,9 +561,9 @@ export const CoupleGames: React.FC<Props> = ({
                     onClick={() => handleCellClick(i)}
                   >
                     {cell === 'left' ? (
-                      <IconHeart size={30} />
+                      <span className="kawaii-cell-emoji">{s.leftEmoji}</span>
                     ) : cell === 'right' ? (
-                      <IconStar size={30} />
+                      <span className="kawaii-cell-emoji">{s.rightEmoji}</span>
                     ) : null}
                   </button>
                 ))}

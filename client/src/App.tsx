@@ -146,6 +146,9 @@ export const App: React.FC = () => {
 
   const handleSelectActivity = (act: ActivityId) => {
     setActiveActivity(act);
+    if (viewMode === 'call-only') {
+      handleSelectViewMode('cinema');
+    }
     sigRef.current?.send({ t: 'activity', activity: act });
   };
 
