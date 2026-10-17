@@ -15,6 +15,12 @@ interface Props {
   onToggleMic: () => void;
   onToggleCam: () => void;
   onChangeFraming: (next: CamFraming) => void;
+  peerVolume: number;
+  onChangePeerVolume: (v: number) => void;
+  peerMuted: boolean;
+  onTogglePeerMuted: () => void;
+  duckingEnabled: boolean;
+  onToggleDucking: () => void;
   onOpenQuality: () => void;
   onToggleFullscreen: () => void;
 }
@@ -33,6 +39,12 @@ export const OptionsMenu: React.FC<Props> = ({
   onToggleMic,
   onToggleCam,
   onChangeFraming,
+  peerVolume,
+  onChangePeerVolume,
+  peerMuted,
+  onTogglePeerMuted,
+  duckingEnabled,
+  onToggleDucking,
   onOpenQuality,
   onToggleFullscreen,
 }) => {
@@ -161,9 +173,9 @@ export const OptionsMenu: React.FC<Props> = ({
           </div>
         </div>
 
-        {/* 3. Dispositivos y Encuadre */}
+        {/* 3. Audio de Voz, Dispositivos y Encuadre */}
         <div className="dropdown-section">
-          <div className="dropdown-section-label">🎙️ Tu Cámara y Micrófono</div>
+          <div className="dropdown-section-label">🎙️ Voz, Cámara y Micrófono</div>
           <div className="dropdown-device-buttons">
             <button
               type="button"
@@ -182,6 +194,35 @@ export const OptionsMenu: React.FC<Props> = ({
           </div>
 
           <div className="dropdown-sliders">
+            <label className="slider-item">
+              <div className="slider-title">
+                <span>🔊 Volumen de su voz (hasta 400%)</span>
+                <strong>{peerMuted ? 'Silenciado' : `${Math.round(peerVolume * 100)}%`}</strong>
+              </div>
+              <input
+                type="range"
+                min={0}
+                max={4.0}
+                step={0.05}
+                value={peerMuted ? 0 : peerVolume}
+                onChange={(e) => {
+                  if (peerMuted) onTogglePeerMuted();
+                  onChangePeerVolume(Number(e.target.value));
+                }}
+              />
+            </label>
+
+            <div className="draw-toggle-row" style={{ marginTop: '4px', marginBottom: '4px' }}>
+              <span>🔉 Bajar peli cuando hablamos:</span>
+              <button
+                type="button"
+                className={`draw-switch-btn ${duckingEnabled ? 'on' : 'off'}`}
+                onClick={onToggleDucking}
+              >
+                {duckingEnabled ? 'Activado' : 'Desactivado'}
+              </button>
+            </div>
+
             <label className="slider-item">
               <div className="slider-title">
                 <span>🔍 Zoom cara</span>

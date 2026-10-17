@@ -415,16 +415,16 @@ export const CinemaScreen: React.FC<Props> = ({
     return () => URL.revokeObjectURL(url);
   }, [subs?.text, subs?.offset]);
 
-  // Ducking automático: baja suavemente el volumen de la peli cuando alguien habla
+  // Ducking automático: baja el volumen de la peli al 20% cuando cualquiera de los dos habla
   useEffect(() => {
-    const eff = someoneSpeaking && duckingEnabled ? volume * 0.32 : volume;
+    const eff = someoneSpeaking && duckingEnabled ? volume * 0.2 : volume;
     if (videoRef.current) videoRef.current.volume = Math.max(0, Math.min(1, eff));
     if (ytPlayerRef.current?.setVolume) {
       try {
         ytPlayerRef.current.setVolume(Math.round(eff * 100));
       } catch {}
     }
-  }, [someoneSpeaking, duckingEnabled, volume]);
+  }, [someoneSpeaking, duckingEnabled, volume, resolvedUrl]);
 
   // Bucle de sincronización continua (corrige deriva con playbackRate o seek)
   useEffect(() => {

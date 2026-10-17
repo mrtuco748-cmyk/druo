@@ -17,6 +17,10 @@ interface Props {
   onChangeFraming?: (next: CamFraming) => void;
   onSpeakingChange?: (speaking: boolean) => void;
   onAudioBlockedChange?: (blocked: boolean) => void;
+  peerVolume?: number;
+  onChangePeerVolume?: (vol: number) => void;
+  peerMuted?: boolean;
+  onTogglePeerMuted?: () => void;
 }
 
 export const CameraTile: React.FC<Props> = ({
@@ -29,10 +33,38 @@ export const CameraTile: React.FC<Props> = ({
   onChangeFraming,
   onSpeakingChange,
   onAudioBlockedChange,
+  peerVolume: peerVolumeProp,
+  onChangePeerVolume,
+  peerMuted: peerMutedProp,
+  onTogglePeerMuted,
 }) => {
   const videoRef = useRef<HTMLVideoElement | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const audioCtxRef = useRef<AudioContext | null>(null);
+  const gainNodeRef = useRef<GainNode | null>(null);
   const [speaking, setSpeaking] = useState(false);
   const [showAdjust, setShowAdjust] = useState(false);
+  const [audioBlocked, setAudioBlocked] = useState(false);
+  const [localPeerVolume, setLocalPeerVolume] = useState(2.0);
+  const [localPeerMuted, setLocalPeerMuted] = useState(false);
+  const [showVolPop, setShowVolPop] = useState(false);
+
+  const peerVolume = peerVolumeProp !== undefined ? peerVolumeProp : localPeerVolume;
+  const peerMuted = peerMutedProp !== undefined ? peerMutedProp : localPeerMuted;
+
+  const setPeerVolume = (v: number) => {
+    const clamped = Math.max(0, Math.min(4, v));
+    setLocalPeerVolume(clamped);
+    onChangePeerVolume?.(clamped);
+  };
+
+  const togglePeerMuted = () => {
+    if (onTogglePeerMuted) {
+      onTogglePeerMuted();
+    } else {
+      setLocalPeerMuted((m) => !m);
+    }
+  };
 
   useEffect(() => {
     const el = videoRef.current;
@@ -52,7 +84,7 @@ export const CameraTile: React.FC<Props> = ({
     }
   }, [stream, framing.on]);
 
-  // Detector de voz liviano (AnalyserNode) para iluminar el borde
+  // Detector de voz sensible (AnalyserNode) para iluminar el borde y activar el auto-ducking de la peli
   useEffect(() => {
     if (!stream || !stream.getAudioTracks().length) {
       setSpeaking(false);
@@ -64,9 +96,11 @@ export const CameraTile: React.FC<Props> = ({
     try {
       const AC = window.AudioContext || (window as any).webkitAudioContext;
       ctx = new AC();
+      ctx.resume().catch(() => {});
       const src = ctx.createMediaStreamSource(stream);
       const analyser = ctx.createAnalyser();
       analyser.fftSize = 256;
+      analyser.smoothingTimeConstant = 0.5;
       src.connect(analyser);
       const buf = new Uint8Array(analyser.frequencyBinCount);
       let hold = 0;
@@ -74,17 +108,17 @@ export const CameraTile: React.FC<Props> = ({
         if (ctx?.state === 'suspended') ctx.resume().catch(() => {});
         analyser.getByteFrequencyData(buf);
         let sum = 0;
-        for (let i = 2; i < 28; i++) sum += buf[i];
-        const avg = sum / 26;
-        const active = avg > 36 && framing.mic !== false;
-        if (active) hold = 2;
+        for (let i = 2; i < 32; i++) sum += buf[i];
+        const avg = sum / 30;
+        const active = avg > 20 && framing.mic !== false;
+        if (active) hold = 5; // Mantiene ~800ms el ducking entre palabras para que no salte el volumen
         else if (hold > 0) hold -= 1;
         const nowSpeaking = hold > 0;
         setSpeaking((prev) => {
           if (prev !== nowSpeaking) onSpeakingChange?.(nowSpeaking);
           return nowSpeaking;
         });
-      }, 160);
+      }, 150);
     } catch {}
     return () => {
       clearInterval(timer);
@@ -98,15 +132,7 @@ export const CameraTile: React.FC<Props> = ({
   const y = Math.max(-30, Math.min(30, framing.y || 0));
   const hasVideo = !!stream && stream.getVideoTracks().some((t) => t.enabled) && framing.on !== false;
 
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  const [audioBlocked, setAudioBlocked] = useState(false);
-  const [peerVolume, setPeerVolume] = useState(1);
-  const [peerMuted, setPeerMuted] = useState(false);
-  const [showVolPop, setShowVolPop] = useState(false);
-  const audioCtxRef = useRef<AudioContext | null>(null);
-  const gainNodeRef = useRef<GainNode | null>(null);
-
-  // Control de audio remoto: elemento <audio> con playsInline y Web Audio GainNode para boost de hasta 250%
+  // Control de audio remoto: elemento <audio> con playsInline y Web Audio GainNode + Compressor para boost hasta 400%
   useEffect(() => {
     if (isMe) return;
     const el = audioRef.current;
@@ -135,9 +161,10 @@ export const CameraTile: React.FC<Props> = ({
         });
     }
 
-    // Configurar Web Audio para reproducir por el altavoz multimedia y permitir boost
+    // Configurar Web Audio con GainNode (hasta 400%) + DynamicsCompressor para que la voz se escuche siempre fuerte y clara
     let srcNode: MediaStreamAudioSourceNode | null = null;
     let gainNode: GainNode | null = null;
+    let compNode: DynamicsCompressorNode | null = null;
     try {
       const AC = window.AudioContext || (window as any).webkitAudioContext;
       const ctx = audioCtxRef.current || new AC();
@@ -148,21 +175,33 @@ export const CameraTile: React.FC<Props> = ({
       gainNode.gain.value = peerMuted ? 0 : peerVolume;
       gainNodeRef.current = gainNode;
 
-      srcNode.connect(gainNode);
-      gainNode.connect(ctx.destination);
+      compNode = ctx.createDynamicsCompressor();
+      compNode.threshold.value = -8;
+      compNode.knee.value = 12;
+      compNode.ratio.value = 4;
+      compNode.attack.value = 0.003;
+      compNode.release.value = 0.15;
 
-      if (ctx.state === 'running') {
-        // Web Audio activo: silenciamos el tag <audio> para que no suene doble
-        el.muted = true;
-      }
+      srcNode.connect(gainNode);
+      gainNode.connect(compNode);
+      compNode.connect(ctx.destination);
+
+      const syncMuteState = () => {
+        if (ctx.state === 'running' && el) {
+          el.muted = true;
+        }
+      };
+
+      ctx.onstatechange = syncMuteState;
+      ctx.resume().then(syncMuteState).catch(() => {});
+      syncMuteState();
 
       const unlockAudio = () => {
         if (ctx.state === 'suspended') {
-          ctx.resume().then(() => {
-            if (el) el.muted = true;
-          }).catch(() => {});
+          ctx.resume().then(syncMuteState).catch(() => {});
         }
         el.play().then(() => {
+          syncMuteState();
           setAudioBlocked(false);
           onAudioBlockedChange?.(false);
         }).catch(() => {});
@@ -177,6 +216,7 @@ export const CameraTile: React.FC<Props> = ({
         try {
           srcNode?.disconnect();
           gainNode?.disconnect();
+          compNode?.disconnect();
         } catch {}
       };
     } catch (e) {
@@ -197,7 +237,9 @@ export const CameraTile: React.FC<Props> = ({
 
   const handleUnlockAudioClick = () => {
     if (audioCtxRef.current?.state === 'suspended') {
-      audioCtxRef.current.resume().catch(() => {});
+      audioCtxRef.current.resume().then(() => {
+        if (audioRef.current) audioRef.current.muted = true;
+      }).catch(() => {});
     }
     if (audioRef.current) {
       audioRef.current.play().then(() => {
@@ -286,21 +328,21 @@ export const CameraTile: React.FC<Props> = ({
                 type="button"
                 className="btn-ghost"
                 style={{ padding: '2px 8px', fontSize: '0.72rem' }}
-                onClick={() => setPeerMuted((m) => !m)}
+                onClick={togglePeerMuted}
               >
                 {peerMuted ? 'Desmutear' : 'Mutear'}
               </button>
             </div>
             <label>
-              <span>Nivel: {peerMuted ? 'Silenciado' : `${Math.round(peerVolume * 100)}%`}</span>
+              <span>Nivel: {peerMuted ? 'Silenciado' : `${Math.round(peerVolume * 100)}% (máx 400%)`}</span>
               <input
                 type="range"
                 min={0}
-                max={1.5}
+                max={4.0}
                 step={0.05}
                 value={peerMuted ? 0 : peerVolume}
                 onChange={(e) => {
-                  setPeerMuted(false);
+                  if (peerMuted) togglePeerMuted();
                   setPeerVolume(Number(e.target.value));
                 }}
               />

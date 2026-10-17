@@ -63,9 +63,20 @@ export const App: React.FC = () => {
 
   const [meSpeaking, setMeSpeaking] = useState(false);
   const [peerSpeaking, setPeerSpeaking] = useState(false);
-  const [duckingEnabled, setDuckingEnabled] = useState(false); // Por defecto desactivado para no silenciar la peli por accidente
+  const [duckingEnabled, setDuckingEnabled] = useState(true); // Activado por defecto para que baje la peli cuando hablan
+  const [peerVolume, setPeerVolume] = useState<number>(() => {
+    const saved = Number(localStorage.getItem('druo.peerVolume'));
+    return saved > 0 && saved <= 4.0 ? saved : 2.0; // Por defecto 200% para que las voces se escuchen siempre más fuerte
+  });
+  const [peerMuted, setPeerMuted] = useState(false);
   const [waitOnBuffer, setWaitOnBuffer] = useState(true);
   const [peerBuffering, setPeerBuffering] = useState(false);
+
+  const handleChangePeerVolume = (v: number) => {
+    const clamped = Math.max(0, Math.min(4.0, v));
+    setPeerVolume(clamped);
+    localStorage.setItem('druo.peerVolume', String(clamped));
+  };
 
   const [movieAudioBlocked, setMovieAudioBlocked] = useState(false);
   const [voiceAudioBlocked, setVoiceAudioBlocked] = useState(false);
@@ -448,6 +459,12 @@ export const App: React.FC = () => {
         onToggleMic={toggleMic}
         onToggleCam={toggleCam}
         onChangeFraming={updateMyFraming}
+        peerVolume={peerVolume}
+        onChangePeerVolume={handleChangePeerVolume}
+        peerMuted={peerMuted}
+        onTogglePeerMuted={() => setPeerMuted((m) => !m)}
+        duckingEnabled={duckingEnabled}
+        onToggleDucking={() => setDuckingEnabled((d) => !d)}
         onOpenQuality={() => setShowQuality(true)}
         onToggleFullscreen={toggleFullscreen}
       />
@@ -484,6 +501,10 @@ export const App: React.FC = () => {
           onChangeFraming={leftIsMe ? updateMyFraming : undefined}
           onSpeakingChange={leftIsMe ? setMeSpeaking : setPeerSpeaking}
           onAudioBlockedChange={!leftIsMe ? setVoiceAudioBlocked : undefined}
+          peerVolume={peerVolume}
+          onChangePeerVolume={handleChangePeerVolume}
+          peerMuted={peerMuted}
+          onTogglePeerMuted={() => setPeerMuted((m) => !m)}
         />
 
         <CinemaScreen
@@ -530,6 +551,10 @@ export const App: React.FC = () => {
           onChangeFraming={!leftIsMe ? updateMyFraming : undefined}
           onSpeakingChange={!leftIsMe ? setMeSpeaking : setPeerSpeaking}
           onAudioBlockedChange={leftIsMe ? setVoiceAudioBlocked : undefined}
+          peerVolume={peerVolume}
+          onChangePeerVolume={handleChangePeerVolume}
+          peerMuted={peerMuted}
+          onTogglePeerMuted={() => setPeerMuted((m) => !m)}
         />
       </div>
 
