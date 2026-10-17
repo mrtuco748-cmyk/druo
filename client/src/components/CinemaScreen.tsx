@@ -165,12 +165,42 @@ export const CinemaScreen: React.FC<Props> = ({
     };
   }, [autoplayBlocked, playback.playing]);
 
+  const isCurrentlyPlaying = playback.playing || isPlaying;
+
+  // Auto-hide automático de la barra a los 3 segundos cuando el video está reproduciéndose
+  useEffect(() => {
+    clearTimeout(hideTimer.current);
+    if (isCurrentlyPlaying && !isScrubbing) {
+      hideTimer.current = setTimeout(() => {
+        setControlsVisible(false);
+      }, 3000);
+    } else {
+      setControlsVisible(true);
+    }
+    return () => clearTimeout(hideTimer.current);
+  }, [isCurrentlyPlaying, isScrubbing]);
+
   const bumpControls = () => {
     setControlsVisible(true);
     clearTimeout(hideTimer.current);
-    hideTimer.current = setTimeout(() => {
-      if (playback.playing) setControlsVisible(false);
-    }, 3400);
+    if (isCurrentlyPlaying && !isScrubbing) {
+      hideTimer.current = setTimeout(() => {
+        setControlsVisible(false);
+      }, 3000);
+    }
+  };
+
+  const handleStageClick = (e: React.MouseEvent | React.TouchEvent) => {
+    const target = e.target as HTMLElement | null;
+    if (target?.closest('.cinema-controls, .ctrl-btn, .autoplay-banner, .drawing-toolbar, .drawing-overlay.is-active, .screen-empty')) {
+      return;
+    }
+    if (controlsVisible && isCurrentlyPlaying) {
+      setControlsVisible(false);
+      clearTimeout(hideTimer.current);
+    } else {
+      bumpControls();
+    }
   };
 
   // Resolver URL reproducible según el tipo de fuente
@@ -630,7 +660,7 @@ export const CinemaScreen: React.FC<Props> = ({
     <main
       className={`cinema-stage ${controlsVisible ? 'show-ui' : 'hide-ui'}`}
       onMouseMove={bumpControls}
-      onTouchStart={bumpControls}
+      onClick={handleStageClick}
     >
       <div className="screen-bezel">
         <div className="screen-glow" />
@@ -670,7 +700,7 @@ export const CinemaScreen: React.FC<Props> = ({
         )}
 
         {source?.kind === 'youtube' && (
-          <div className="yt-wrap" onClick={togglePlay}>
+          <div className="yt-wrap">
             <div ref={ytHostRef} className="yt-host" />
           </div>
         )}
@@ -696,7 +726,6 @@ export const CinemaScreen: React.FC<Props> = ({
             className={`cinema-video ${!resolvedUrl ? 'is-hidden' : ''}`}
             playsInline
             crossOrigin="anonymous"
-            onClick={togglePlay}
             onWaiting={() => onEmitBuffering(true)}
             onPlaying={() => {
               onEmitBuffering(false);

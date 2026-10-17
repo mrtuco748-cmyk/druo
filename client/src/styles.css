@@ -1633,7 +1633,7 @@ select:focus {
 /* Modo 4: Dúo (PC) */
 .theater-shell.view-duo .theater-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) clamp(200px, 20vw, 300px);
+  grid-template-columns: minmax(0, 1fr) clamp(180px, 16vw, 240px);
   grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
   grid-template-areas:
     'screen right'
@@ -1662,10 +1662,10 @@ select:focus {
 }
 
 .theater-shell.view-duo .screen-bezel {
-  max-height: 100%;
-  max-width: 100%;
-  width: auto;
+  width: 100%;
   height: auto;
+  max-width: calc((100vh - 66px) * 16 / 9);
+  max-height: 100%;
   aspect-ratio: 16 / 9;
   margin: auto;
 }
@@ -1903,7 +1903,7 @@ select:focus {
   .theater-shell.view-duo .theater-grid {
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    grid-template-rows: auto minmax(0, 1fr);
+    grid-template-rows: 1fr auto;
     grid-template-areas:
       'screen screen'
       'left right';
@@ -1919,22 +1919,26 @@ select:focus {
   .theater-shell.view-duo .cinema-stage {
     grid-area: screen;
     width: 100%;
-    height: auto;
-    aspect-ratio: 16 / 9;
-    max-height: 52vh;
+    height: 100%;
+    max-height: 100%;
     min-height: 0;
     min-width: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
   .theater-shell.view-duo .screen-bezel {
     width: 100%;
+    height: auto;
     max-width: 100%;
     max-height: 100%;
     aspect-ratio: 16 / 9;
     border-radius: 12px;
+    margin: auto;
   }
   .theater-shell.view-duo .cam-slot {
-    height: 100%;
-    max-height: 100%;
+    height: clamp(120px, 20vh, 160px);
+    max-height: 160px;
     width: 100%;
     max-width: none;
     min-height: 0;
@@ -2082,13 +2086,17 @@ select:focus {
     width: 100%;
     min-height: 0;
     min-width: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
   .theater-shell.view-duo .screen-bezel {
+    width: 100%;
+    height: auto;
     max-width: 100%;
     max-height: 100%;
-    width: auto;
-    height: auto;
     aspect-ratio: 16 / 9;
+    margin: auto;
   }
   .theater-shell.view-duo .cam-slot {
     height: 100%;
