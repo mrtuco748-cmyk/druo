@@ -135,6 +135,14 @@ export const CinemaScreen: React.FC<Props> = ({
   const [trackBlobUrl, setTrackBlobUrl] = useState<string | null>(null);
   const [controlsVisible, setControlsVisible] = useState(true);
   const hideTimer = useRef<any>(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isScrubbing, setIsScrubbing] = useState(false);
+  const [scrubPos, setScrubPos] = useState(0);
+  const [hoverPos, setHoverPos] = useState<number | null>(null);
+  const [hoverX, setHoverX] = useState(0);
+  const timelineRef = useRef<HTMLDivElement | null>(null);
+  const [bufferedPct, setBufferedPct] = useState(0);
+  const [prevVol, setPrevVol] = useState(1);
 
   const unlockAudio = () => {
     const v = videoRef.current;
@@ -489,7 +497,6 @@ export const CinemaScreen: React.FC<Props> = ({
   }, [playback, resolvedUrl, source?.kind, waitOnBuffer, peerBuffering]);
 
   // Fullscreen support
-  const [isFullscreen, setIsFullscreen] = useState(false);
   useEffect(() => {
     const onFsChange = () => setIsFullscreen(Boolean(document.fullscreenElement));
     document.addEventListener('fullscreenchange', onFsChange);
@@ -512,15 +519,7 @@ export const CinemaScreen: React.FC<Props> = ({
     }
   };
 
-  // Scrubber behavior (evita que la barra salte o pelee contra el dedo)
-  const [isScrubbing, setIsScrubbing] = useState(false);
-  const [scrubPos, setScrubPos] = useState(0);
-  const [hoverPos, setHoverPos] = useState<number | null>(null);
-  const [hoverX, setHoverX] = useState(0);
-  const timelineRef = useRef<HTMLDivElement | null>(null);
-
   // Porcentaje cargado en buffer
-  const [bufferedPct, setBufferedPct] = useState(0);
   useEffect(() => {
     const v = videoRef.current;
     if (!v) return;
@@ -570,7 +569,6 @@ export const CinemaScreen: React.FC<Props> = ({
     onEmitSync({ playing: playback.playing, position: clamped }, 'seek');
   };
 
-  const [prevVol, setPrevVol] = useState(1);
   const toggleMute = () => {
     if (volume > 0) {
       setPrevVol(volume);
