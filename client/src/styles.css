@@ -1633,8 +1633,8 @@ select:focus {
 /* Modo 4: Dúo (PC) */
 .theater-shell.view-duo .theater-grid {
   display: grid;
-  grid-template-columns: 1fr clamp(200px, 22vw, 320px);
-  grid-template-rows: 1fr 1fr;
+  grid-template-columns: minmax(0, 1fr) clamp(200px, 20vw, 300px);
+  grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
   grid-template-areas:
     'screen right'
     'screen left';
@@ -1644,6 +1644,7 @@ select:focus {
   max-height: 100%;
   min-height: 0;
   min-width: 0;
+  box-sizing: border-box;
   overflow: hidden;
 }
 
@@ -1651,6 +1652,7 @@ select:focus {
   grid-area: screen;
   height: 100%;
   max-height: 100%;
+  max-width: 100%;
   min-height: 0;
   min-width: 0;
   overflow: hidden;
@@ -1661,31 +1663,29 @@ select:focus {
 
 .theater-shell.view-duo .screen-bezel {
   max-height: 100%;
-  max-width: calc((100vh - 66px) * 16 / 9);
-  width: 100%;
+  max-width: 100%;
+  width: auto;
   height: auto;
   aspect-ratio: 16 / 9;
   margin: auto;
 }
 
-.theater-shell.view-duo .cam-left {
-  grid-area: left;
+.theater-shell.view-duo .cam-slot {
   height: 100%;
   max-height: 100%;
+  width: 100%;
+  max-width: 100%;
   min-height: 0;
   min-width: 0;
-  max-width: none;
   overflow: hidden;
+}
+
+.theater-shell.view-duo .cam-left {
+  grid-area: left;
 }
 
 .theater-shell.view-duo .cam-right {
   grid-area: right;
-  height: 100%;
-  max-height: 100%;
-  min-height: 0;
-  min-width: 0;
-  max-width: none;
-  overflow: hidden;
 }
 
 .theater-shell.view-duo .cam-frame {
@@ -1899,21 +1899,31 @@ select:focus {
     right: 8px;
   }
 
-  /* Vista Dúo Celular: Película priorizada al 62% arriba, Cámaras 38% abajo */
+  /* Vista Dúo Celular: Película arriba (16:9), Cámaras lado a lado abajo */
   .theater-shell.view-duo .theater-grid {
-    grid-template-columns: 1fr 1fr;
-    grid-template-rows: 62% 38%;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr);
     grid-template-areas:
       'screen screen'
       'left right';
     gap: 6px;
     padding: 4px 6px;
+    height: 100%;
+    max-height: 100%;
+    min-height: 0;
+    min-width: 0;
+    box-sizing: border-box;
+    overflow: hidden;
   }
   .theater-shell.view-duo .cinema-stage {
     grid-area: screen;
     width: 100%;
-    height: 100%;
-    max-height: 100%;
+    height: auto;
+    aspect-ratio: 16 / 9;
+    max-height: 52vh;
+    min-height: 0;
+    min-width: 0;
   }
   .theater-shell.view-duo .screen-bezel {
     width: 100%;
@@ -1922,13 +1932,28 @@ select:focus {
     aspect-ratio: 16 / 9;
     border-radius: 12px;
   }
+  .theater-shell.view-duo .cam-slot {
+    height: 100%;
+    max-height: 100%;
+    width: 100%;
+    max-width: none;
+    min-height: 0;
+    min-width: 0;
+    overflow: hidden;
+  }
   .theater-shell.view-duo .cam-left {
     grid-area: left;
-    height: 100%;
   }
   .theater-shell.view-duo .cam-right {
     grid-area: right;
+  }
+  .theater-shell.view-duo .cam-frame {
+    width: 100%;
     height: 100%;
+    max-height: 100%;
+    max-width: 100%;
+    aspect-ratio: unset;
+    border-radius: 12px;
   }
 
   .cinema-controls {
@@ -2036,26 +2061,57 @@ select:focus {
   }
 
   .theater-shell.view-duo .theater-grid {
-    grid-template-columns: minmax(0, 1fr) clamp(80px, 14vw, 125px);
-    grid-template-rows: 1fr 1fr;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) clamp(90px, 16vw, 140px);
+    grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
     grid-template-areas:
       'screen right'
       'screen left';
     gap: 6px;
     padding: 3px 6px;
+    height: 100%;
+    max-height: 100%;
+    min-height: 0;
+    min-width: 0;
+    box-sizing: border-box;
+    overflow: hidden;
   }
   .theater-shell.view-duo .cinema-stage {
     grid-area: screen;
     height: 100%;
     width: 100%;
+    min-height: 0;
+    min-width: 0;
+  }
+  .theater-shell.view-duo .screen-bezel {
+    max-width: 100%;
+    max-height: 100%;
+    width: auto;
+    height: auto;
+    aspect-ratio: 16 / 9;
+  }
+  .theater-shell.view-duo .cam-slot {
+    height: 100%;
+    max-height: 100%;
+    width: 100%;
+    max-width: 100%;
+    min-height: 0;
+    min-width: 0;
+    overflow: hidden;
   }
   .theater-shell.view-duo .cam-left {
     grid-area: left;
-    height: 100%;
   }
   .theater-shell.view-duo .cam-right {
     grid-area: right;
+  }
+  .theater-shell.view-duo .cam-frame {
+    width: 100%;
     height: 100%;
+    max-height: 100%;
+    max-width: 100%;
+    aspect-ratio: unset;
+    border-radius: 10px;
   }
 }
 
