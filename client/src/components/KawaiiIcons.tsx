@@ -399,3 +399,13 @@ export const IconGrid: React.FC<IconProps> = ({ size, color, className }) => (
     <line x1="3" y1="15" x2="21" y2="15" />
   </svg>
 );
+
+export const IconCanvasBg: React.FC<IconProps> = ({ size, color, className }) => (
+  <svg {...base(size, color, className)}>
+    <rect x="3" y="4" width="18" height="16" rx="3" fill="currentColor" fillOpacity="0.18" />
+    <path d="M3 15l4.5-4.5a1.5 1.5 0 0 1 2.1 0L15 16" />
+    <path d="M13.5 14.5l2-2a1.5 1.5 0 0 1 2.1 0L21 16" />
+    <circle cx="8.5" cy="8.5" r="1.6" fill="currentColor" stroke="none" />
+  </svg>
+);
+

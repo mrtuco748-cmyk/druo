@@ -3,6 +3,7 @@ import {
   IconAirbrush,
   IconBrush,
   IconBucket,
+  IconCanvasBg,
   IconChevronLeft,
   IconChevronRight,
   IconCircle,
@@ -38,7 +39,7 @@ export type StudioTool =
   | 'star'
   | 'eyedropper';
 
-export type StudioBg = 'cream' | 'white' | 'pink' | 'night' | 'grid' | 'dots';
+export type StudioBg = string;
 
 export interface StudioPoint {
   x: number;
@@ -98,14 +99,40 @@ const KAWAII_PALETTE = [
   '#ffffff', // Pure White
 ];
 
-const BG_COLORS: Record<StudioBg, string> = {
-  cream: '#22131e',
-  pink: '#2e1726',
-  night: '#150d1a',
-  grid: '#1d1424',
-  dots: '#241524',
-  white: '#fff5f8',
+const BG_COLORS: Record<string, string> = {
+  night: '#180d17',
+  pink: '#3b172c',
+  plum: '#1d152e',
+  grid: '#231222',
+  cream: '#fff7ee',
+  white: '#ffffff',
+  pastelPink: '#ffdbe9',
+  mint: '#e3faee',
+  sky: '#e3f2fd',
+  dots: '#fff2f7',
+  gridLight: '#fff9fc',
 };
+
+const BG_PRESET_LIST: { id: StudioBg; pattern?: 'grid' | 'dots' }[] = [
+  { id: 'night' },
+  { id: 'pink' },
+  { id: 'plum' },
+  { id: 'grid', pattern: 'grid' },
+  { id: 'white' },
+  { id: 'cream' },
+  { id: 'pastelPink' },
+  { id: 'mint' },
+  { id: 'sky' },
+  { id: 'dots', pattern: 'dots' },
+  { id: 'gridLight', pattern: 'grid' },
+];
+
+function resolveBgColor(mode: StudioBg): string {
+  if (BG_COLORS[mode]) return BG_COLORS[mode];
+  if (typeof mode === 'string' && mode.startsWith('#')) return mode;
+  return '#180d17';
+}
+
 
 function hexToRgba(hex: string): [number, number, number, number] {
   const clean = hex.replace('#', '');
@@ -229,8 +256,9 @@ export const DrawingStudio: React.FC<Props> = ({
   const [color, setColor] = useState<string>('#ff85a2');
   const [size, setSize] = useState<number>(8);
   const [filledShape, setFilledShape] = useState<boolean>(false);
-  const [bg, setBg] = useState<StudioBg>(initialBg || 'cream');
+  const [bg, setBg] = useState<StudioBg>(initialBg || 'night');
   const [menuOpen, setMenuOpen] = useState<boolean>(false);
+  const [bgMenuOpen, setBgMenuOpen] = useState<boolean>(false);
 
   // Pan y Zoom INDEPENDIENTE para cada usuario
   const [pan, setPan] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
@@ -253,7 +281,7 @@ export const DrawingStudio: React.FC<Props> = ({
 
   const strokesRef = useRef<StudioStroke[]>(initialStrokes || []);
   const myRedoRef = useRef<StudioStroke[]>([]);
-  const bgRef = useRef<StudioBg>(initialBg || 'cream');
+  const bgRef = useRef<StudioBg>(initialBg || 'night');
 
   const currentStrokeRef = useRef<StudioStroke | null>(null);
   const remoteLiveStrokeRef = useRef<StudioStroke | null>(null);
@@ -288,11 +316,14 @@ export const DrawingStudio: React.FC<Props> = ({
 
   const drawWorldBackground = (ctx: CanvasRenderingContext2D, mode: StudioBg) => {
     ctx.save();
-    ctx.fillStyle = BG_COLORS[mode] || '#22131e';
+    ctx.fillStyle = resolveBgColor(mode);
     ctx.fillRect(0, 0, WORLD_W, WORLD_H);
 
-    if (mode === 'grid') {
-      ctx.strokeStyle = 'rgba(255, 145, 185, 0.14)';
+    if (mode === 'grid' || mode === 'gridLight') {
+      ctx.strokeStyle =
+        mode === 'gridLight'
+          ? 'rgba(224, 83, 124, 0.16)'
+          : 'rgba(255, 145, 185, 0.16)';
       ctx.lineWidth = 1;
       const step = 32;
       ctx.beginPath();
@@ -306,12 +337,12 @@ export const DrawingStudio: React.FC<Props> = ({
       }
       ctx.stroke();
     } else if (mode === 'dots') {
-      ctx.fillStyle = 'rgba(255, 158, 195, 0.22)';
+      ctx.fillStyle = 'rgba(224, 83, 124, 0.28)';
       const step = 28;
       for (let x = step; x < WORLD_W; x += step) {
         for (let y = step; y < WORLD_H; y += step) {
           ctx.beginPath();
-          ctx.arc(x, y, 1.6, 0, Math.PI * 2);
+          ctx.arc(x, y, 1.7, 0, Math.PI * 2);
           ctx.fill();
         }
       }
@@ -336,7 +367,8 @@ export const DrawingStudio: React.FC<Props> = ({
     ctx.save();
     const scale = w / 1000;
     const strokePx = Math.max(1.5, s.size * scale);
-    const strokeColor = s.tool === 'eraser' ? BG_COLORS[bgRef.current] : s.color;
+    const strokeColor = s.tool === 'eraser' ? resolveBgColor(bgRef.current) : s.color;
+
 
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
@@ -531,7 +563,7 @@ export const DrawingStudio: React.FC<Props> = ({
     ctx.shadowColor = 'rgba(0, 0, 0, 0.55)';
     ctx.shadowBlur = 24;
     ctx.shadowOffsetY = 6;
-    ctx.fillStyle = BG_COLORS[bgRef.current];
+    ctx.fillStyle = resolveBgColor(bgRef.current);
     ctx.beginPath();
     ctx.roundRect(baseX, baseY, sheetW, sheetH, 14);
     ctx.fill();
@@ -790,6 +822,7 @@ export const DrawingStudio: React.FC<Props> = ({
 
   const handlePointerDown = (e: React.PointerEvent<HTMLCanvasElement>) => {
     if (menuOpen) setMenuOpen(false);
+    if (bgMenuOpen) setBgMenuOpen(false);
     e.currentTarget.setPointerCapture(e.pointerId);
     activePointersRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
 
@@ -1045,6 +1078,7 @@ export const DrawingStudio: React.FC<Props> = ({
   };
 
   const isViewMoved = pan.x !== 0 || pan.y !== 0 || zoom !== 1;
+  const currentBgHex = resolveBgColor(bg);
   const cursorPos = remoteCursor
     ? worldNormToScreenPct(remoteCursor.x, remoteCursor.y)
     : null;
@@ -1080,7 +1114,7 @@ export const DrawingStudio: React.FC<Props> = ({
             </div>
           )}
 
-          {/* Esquina Superior Izquierda: Botón Circular Volver al Inicio + Botón Mano para Mover Lienzo */}
+          {/* Esquina Superior Izquierda: Inicio + Mover Lienzo + Selector de Fondo del Lienzo */}
           <div className="kawaii-floating-top-left">
             <button
               type="button"
@@ -1099,6 +1133,63 @@ export const DrawingStudio: React.FC<Props> = ({
             >
               <IconHand size={20} />
             </button>
+
+            {/* Botón directo para elegir el Fondo del Lienzo */}
+            <div className="kawaii-bg-picker-anchor">
+              <button
+                type="button"
+                className={`kawaii-icon-circle kawaii-bg-trigger-btn ${bgMenuOpen ? 'active' : ''}`}
+                onClick={() => {
+                  setBgMenuOpen((o) => !o);
+                  setMenuOpen(false);
+                }}
+                aria-label="Canvas Background"
+              >
+                <IconCanvasBg size={19} />
+                <span
+                  className="kawaii-bg-live-indicator"
+                  style={{ background: currentBgHex }}
+                />
+              </button>
+
+              {bgMenuOpen && (
+                <div className="kawaii-bg-popover">
+                  <div className="kawaii-bg-grid">
+                    {/* Color libre personalizado para el fondo del lienzo */}
+                    <label
+                      className="kawaii-bg-swatch custom"
+                      title="Color personalizado de lienzo"
+                    >
+                      <input
+                        type="color"
+                        value={currentBgHex}
+                        onChange={(e) => handleChangeBg(e.target.value)}
+                      />
+                      <span
+                        className="kawaii-bg-swatch-fill"
+                        style={{ background: currentBgHex }}
+                      />
+                      <span className="kawaii-bg-plus">+</span>
+                    </label>
+
+                    {BG_PRESET_LIST.map((item) => {
+                      const cHex = resolveBgColor(item.id);
+                      return (
+                        <button
+                          key={item.id}
+                          type="button"
+                          className={`kawaii-bg-swatch ${bg === item.id ? 'active' : ''} ${
+                            item.pattern ? `pattern-${item.pattern}` : ''
+                          }`}
+                          style={{ backgroundColor: cHex }}
+                          onClick={() => handleChangeBg(item.id)}
+                        />
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
 
             {isViewMoved && (
               <button
@@ -1215,17 +1306,30 @@ export const DrawingStudio: React.FC<Props> = ({
                 {/* 4. Fondos de Hoja + Relleno de Figura + Descargar + Limpiar (Solo Iconos) */}
                 <div className="kawaii-bottom-actions">
                   <div className="kawaii-bg-dots">
-                    {(['cream', 'white', 'pink', 'grid', 'dots', 'night'] as StudioBg[]).map(
-                      (bKey) => (
-                        <button
-                          key={bKey}
-                          type="button"
-                          className={`kawaii-bg-dot ${bg === bKey ? 'active' : ''}`}
-                          style={{ background: BG_COLORS[bKey] }}
-                          onClick={() => handleChangeBg(bKey)}
-                        />
-                      )
-                    )}
+                    <label className="kawaii-bg-dot custom">
+                      <input
+                        type="color"
+                        value={currentBgHex}
+                        onChange={(e) => handleChangeBg(e.target.value)}
+                      />
+                      <span
+                        className="kawaii-bg-dot-fill"
+                        style={{ background: currentBgHex }}
+                      />
+                    </label>
+                    {(
+                      ['night', 'pink', 'white', 'cream', 'pastelPink', 'grid', 'dots'] as StudioBg[]
+                    ).map((bKey) => (
+                      <button
+                        key={bKey}
+                        type="button"
+                        className={`kawaii-bg-dot ${bg === bKey ? 'active' : ''} ${
+                          bKey === 'grid' ? 'pattern-grid' : bKey === 'dots' ? 'pattern-dots' : ''
+                        }`}
+                        style={{ backgroundColor: resolveBgColor(bKey) }}
+                        onClick={() => handleChangeBg(bKey)}
+                      />
+                    ))}
                   </div>
 
                   <div className="kawaii-util-btns">
@@ -1259,7 +1363,10 @@ export const DrawingStudio: React.FC<Props> = ({
               type="button"
               className={`kawaii-main-fab ${menuOpen ? 'open' : ''}`}
               style={{ '--fab-color': color } as React.CSSProperties}
-              onClick={() => setMenuOpen((o) => !o)}
+              onClick={() => {
+                setMenuOpen((o) => !o);
+                setBgMenuOpen(false);
+              }}
               aria-label="Tools"
             >
               {menuOpen ? <IconClose size={24} /> : renderActiveToolIcon(tool, 24)}

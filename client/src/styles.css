@@ -2842,6 +2842,102 @@ select:focus {
   background: #ff9ebb;
 }
 
+.kawaii-bg-picker-anchor {
+  position: relative;
+  display: inline-flex;
+}
+.kawaii-bg-trigger-btn {
+  position: relative;
+}
+.kawaii-bg-live-indicator {
+  position: absolute;
+  bottom: 3px;
+  right: 3px;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  border: 2px solid #2b1424;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+}
+.kawaii-bg-popover {
+  position: absolute;
+  top: 50px;
+  left: 0;
+  background: rgba(38, 18, 32, 0.97);
+  backdrop-filter: blur(16px);
+  border: 2.5px solid #853b5c;
+  border-radius: 22px;
+  padding: 10px;
+  width: 186px;
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.72);
+  z-index: 30;
+  animation: popInKawaii 0.16s ease-out;
+}
+.kawaii-bg-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 7px;
+  justify-items: center;
+}
+.kawaii-bg-swatch {
+  position: relative;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  border: 2px solid #753451;
+  cursor: pointer;
+  transition: transform 0.15s ease, border-color 0.15s ease;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.35);
+  overflow: hidden;
+  padding: 0;
+}
+.kawaii-bg-swatch:hover {
+  transform: scale(1.1);
+  border-color: #ff9ebb;
+}
+.kawaii-bg-swatch.active {
+  border: 2.5px solid #ff85a2;
+  box-shadow: 0 0 0 2px rgba(255, 133, 162, 0.45);
+  transform: scale(1.12);
+}
+.kawaii-bg-swatch.custom {
+  border: 2px dashed #ff85a2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.kawaii-bg-swatch.custom input {
+  opacity: 0;
+  position: absolute;
+  inset: 0;
+  cursor: pointer;
+}
+.kawaii-bg-swatch-fill {
+  position: absolute;
+  inset: 0;
+}
+.kawaii-bg-plus {
+  position: relative;
+  z-index: 1;
+  font-size: 0.95rem;
+  font-weight: 900;
+  color: #fff;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.85);
+  pointer-events: none;
+}
+.kawaii-bg-swatch.pattern-grid,
+.kawaii-bg-dot.pattern-grid {
+  background-image:
+    linear-gradient(to right, rgba(255, 133, 162, 0.38) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 133, 162, 0.38) 1px, transparent 1px);
+  background-size: 8px 8px;
+}
+.kawaii-bg-swatch.pattern-dots,
+.kawaii-bg-dot.pattern-dots {
+  background-image: radial-gradient(rgba(224, 83, 124, 0.55) 1.5px, transparent 1.5px);
+  background-size: 7px 7px;
+}
+
 .kawaii-bottom-actions {
   display: flex;
   align-items: center;
@@ -2850,18 +2946,38 @@ select:focus {
 }
 .kawaii-bg-dots {
   display: flex;
-  gap: 5px;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
 }
 .kawaii-bg-dot {
-  width: 18px;
-  height: 18px;
+  position: relative;
+  width: 19px;
+  height: 19px;
   border-radius: 6px;
   border: 1.5px solid #753451;
   cursor: pointer;
+  padding: 0;
+  overflow: hidden;
+  transition: transform 0.14s ease;
+}
+.kawaii-bg-dot.custom {
+  border: 1.5px dashed #ff85a2;
+  display: inline-flex;
+}
+.kawaii-bg-dot.custom input {
+  opacity: 0;
+  position: absolute;
+  inset: 0;
+  cursor: pointer;
+}
+.kawaii-bg-dot-fill {
+  width: 100%;
+  height: 100%;
 }
 .kawaii-bg-dot.active {
   border: 2px solid #ff85a2;
-  transform: scale(1.15);
+  transform: scale(1.16);
 }
 .kawaii-util-btns {
   display: flex;
@@ -2872,6 +2988,7 @@ select:focus {
   height: 34px;
   border-radius: 10px;
 }
+
 
 /* ---------------- 3, 4, 7. ACTIVIDADES ROSA OSCURO PASTEL (Juegos, Ruleta, Relax) ---------------- */
 .kawaii-pastel-surface {

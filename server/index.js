@@ -223,12 +223,21 @@ wss.on('connection', (ws) => {
           room.clearStudioStrokes();
         }
         return toOther(me.id, { ...m, from: me.id, name: me.name });
-      case 'shared':
-        if (typeof m.key === 'string' && m.key.length <= 32) {
-          room.sharedState[m.key] = m.data;
-          return broadcast({ t: 'shared', key: m.key, data: m.data, by: me.id, name: me.name });
+      case 'shared': {
+        const sharedKey = typeof m.section === 'string' ? m.section : m.key;
+        if (typeof sharedKey === 'string' && sharedKey.length <= 32) {
+          room.sharedState[sharedKey] = m.data;
+          return broadcast({
+            t: 'shared',
+            section: sharedKey,
+            key: sharedKey,
+            data: m.data,
+            by: me.id,
+            name: me.name,
+          });
         }
         return;
+      }
     }
   });
 
