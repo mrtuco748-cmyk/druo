@@ -136,10 +136,19 @@ export const App: React.FC = () => {
   const [relaxState, setRelaxState] = useState<RelaxState>(DEFAULT_RELAX_STATE);
 
   const [viewMode, setViewMode] = useState<'cinema' | 'call-only' | 'focus-movie' | 'duo'>(() => {
+    if (mobile) return 'cinema';
     return (localStorage.getItem('druo.viewMode') as any) || 'cinema';
   });
 
+  useEffect(() => {
+    if (mobile && viewMode !== 'cinema') {
+      setViewMode('cinema');
+      localStorage.setItem('druo.viewMode', 'cinema');
+    }
+  }, [mobile, viewMode]);
+
   const handleSelectViewMode = (mode: 'cinema' | 'call-only' | 'focus-movie' | 'duo') => {
+    if (mobile) return;
     setViewMode(mode);
     localStorage.setItem('druo.viewMode', mode);
   };
@@ -560,6 +569,7 @@ export const App: React.FC = () => {
       <OptionsMenu
         open={showMenu}
         onClose={() => setShowMenu(false)}
+        isMobile={mobile}
         viewMode={viewMode}
         onSelectViewMode={handleSelectViewMode}
         onOpenSources={() => {
@@ -591,8 +601,8 @@ export const App: React.FC = () => {
         </button>
       )}
 
-      {/* Botón flotante para volver al cine en Solo Videollamada */}
-      {viewMode === 'call-only' && (
+      {/* Botón flotante para volver al cine en Solo Videollamada (Solo PC) */}
+      {viewMode === 'call-only' && !mobile && (
         <button
           type="button"
           className="call-return-btn"
@@ -771,6 +781,7 @@ export const App: React.FC = () => {
       <QualityDrawer
         open={showQuality}
         onClose={() => setShowQuality(false)}
+        isMobile={mobile}
         source={source}
         preferredVersionKey={preferredVersionKey}
         onSelectVersionKey={setPreferredVersionKey}

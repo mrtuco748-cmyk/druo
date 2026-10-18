@@ -22,6 +22,7 @@ import {
 interface Props {
   open: boolean;
   onClose: () => void;
+  isMobile?: boolean;
   viewMode: 'cinema' | 'call-only' | 'focus-movie' | 'duo';
   onSelectViewMode: (mode: 'cinema' | 'call-only' | 'focus-movie' | 'duo') => void;
   onOpenSources: () => void;
@@ -46,6 +47,7 @@ interface Props {
 export const OptionsMenu: React.FC<Props> = ({
   open,
   onClose,
+  isMobile,
   viewMode,
   onSelectViewMode,
   onOpenSources,
@@ -78,53 +80,55 @@ export const OptionsMenu: React.FC<Props> = ({
           </button>
         </div>
 
-        {/* 1. Modos de Vista (Solo Iconos SVG) */}
-        <div className="kawaii-opt-row">
-          <button
-            type="button"
-            className={`kawaii-opt-icon-btn ${viewMode === 'cinema' ? 'active' : ''}`}
-            onClick={() => {
-              onSelectViewMode('cinema');
-              onClose();
-            }}
-            aria-label="Cinema View"
-          >
-            <IconViewCinema size={22} />
-          </button>
-          <button
-            type="button"
-            className={`kawaii-opt-icon-btn ${viewMode === 'call-only' ? 'active' : ''}`}
-            onClick={() => {
-              onSelectViewMode('call-only');
-              onClose();
-            }}
-            aria-label="Call View"
-          >
-            <IconViewCall size={22} />
-          </button>
-          <button
-            type="button"
-            className={`kawaii-opt-icon-btn ${viewMode === 'focus-movie' ? 'active' : ''}`}
-            onClick={() => {
-              onSelectViewMode('focus-movie');
-              onClose();
-            }}
-            aria-label="Focus View"
-          >
-            <IconViewFocus size={22} />
-          </button>
-          <button
-            type="button"
-            className={`kawaii-opt-icon-btn ${viewMode === 'duo' ? 'active' : ''}`}
-            onClick={() => {
-              onSelectViewMode('duo');
-              onClose();
-            }}
-            aria-label="Duo View"
-          >
-            <IconViewDuo size={22} />
-          </button>
-        </div>
+        {/* 1. Modos de Vista (Solo en PC) */}
+        {!isMobile && (
+          <div className="kawaii-opt-row">
+            <button
+              type="button"
+              className={`kawaii-opt-icon-btn ${viewMode === 'cinema' ? 'active' : ''}`}
+              onClick={() => {
+                onSelectViewMode('cinema');
+                onClose();
+              }}
+              aria-label="Cinema View"
+            >
+              <IconViewCinema size={22} />
+            </button>
+            <button
+              type="button"
+              className={`kawaii-opt-icon-btn ${viewMode === 'call-only' ? 'active' : ''}`}
+              onClick={() => {
+                onSelectViewMode('call-only');
+                onClose();
+              }}
+              aria-label="Call View"
+            >
+              <IconViewCall size={22} />
+            </button>
+            <button
+              type="button"
+              className={`kawaii-opt-icon-btn ${viewMode === 'focus-movie' ? 'active' : ''}`}
+              onClick={() => {
+                onSelectViewMode('focus-movie');
+                onClose();
+              }}
+              aria-label="Focus View"
+            >
+              <IconViewFocus size={22} />
+            </button>
+            <button
+              type="button"
+              className={`kawaii-opt-icon-btn ${viewMode === 'duo' ? 'active' : ''}`}
+              onClick={() => {
+                onSelectViewMode('duo');
+                onClose();
+              }}
+              aria-label="Duo View"
+            >
+              <IconViewDuo size={22} />
+            </button>
+          </div>
+        )}
 
         {/* 2. Dispositivos, Películas, Auto-Ducking y Pantalla Completa (Solo Iconos SVG) */}
         <div className="kawaii-opt-row">

@@ -32,6 +32,7 @@ interface Props {
   waitOnBuffer: boolean;
   onToggleWaitOnBuffer: (v: boolean) => void;
   stats: CallStats;
+  isMobile?: boolean;
   viewMode: 'cinema' | 'call-only' | 'focus-movie' | 'duo';
   onSelectViewMode: (mode: 'cinema' | 'call-only' | 'focus-movie' | 'duo') => void;
 }
@@ -58,6 +59,7 @@ export const QualityDrawer: React.FC<Props> = ({
   waitOnBuffer,
   onToggleWaitOnBuffer,
   stats,
+  isMobile,
   viewMode,
   onSelectViewMode,
 }) => {
@@ -84,44 +86,46 @@ export const QualityDrawer: React.FC<Props> = ({
             <span>Tu cámara activa: <strong>{stats.activeVideoLabel} ({stats.resolution})</strong></span>
           </div>
 
-          {/* 0. Modos de vista */}
-          <section className="q-section">
-            <h4>👁️ Modo de vista de la pantalla</h4>
-            <div className="chip-grid">
-              <button
-                type="button"
-                className={`q-chip ${viewMode === 'cinema' ? 'active' : ''}`}
-                onClick={() => onSelectViewMode('cinema')}
-              >
-                <strong>🎬 Modo Cine</strong>
-                <small>Película al centro, cámaras a los lados</small>
-              </button>
-              <button
-                type="button"
-                className={`q-chip ${viewMode === 'call-only' ? 'active' : ''}`}
-                onClick={() => onSelectViewMode('call-only')}
-              >
-                <strong>💬 Solo Videollamada</strong>
-                <small>Cámaras gigantes cara a cara (sin película)</small>
-              </button>
-              <button
-                type="button"
-                className={`q-chip ${viewMode === 'focus-movie' ? 'active' : ''}`}
-                onClick={() => onSelectViewMode('focus-movie')}
-              >
-                <strong>⛶ Enfoque Película</strong>
-                <small>Película completa, cámaras flotantes</small>
-              </button>
-              <button
-                type="button"
-                className={`q-chip ${viewMode === 'duo' ? 'active' : ''}`}
-                onClick={() => onSelectViewMode('duo')}
-              >
-                <strong>📱 Modo Dúo</strong>
-                <small>Cámaras ampliadas para ver reacciones</small>
-              </button>
-            </div>
-          </section>
+          {/* 0. Modos de vista (Solo en PC) */}
+          {!isMobile && (
+            <section className="q-section">
+              <h4>👁️ Modo de vista de la pantalla</h4>
+              <div className="chip-grid">
+                <button
+                  type="button"
+                  className={`q-chip ${viewMode === 'cinema' ? 'active' : ''}`}
+                  onClick={() => onSelectViewMode('cinema')}
+                >
+                  <strong>🎬 Modo Cine</strong>
+                  <small>Película al centro, cámaras a los lados</small>
+                </button>
+                <button
+                  type="button"
+                  className={`q-chip ${viewMode === 'call-only' ? 'active' : ''}`}
+                  onClick={() => onSelectViewMode('call-only')}
+                >
+                  <strong>💬 Solo Videollamada</strong>
+                  <small>Cámaras gigantes cara a cara (sin película)</small>
+                </button>
+                <button
+                  type="button"
+                  className={`q-chip ${viewMode === 'focus-movie' ? 'active' : ''}`}
+                  onClick={() => onSelectViewMode('focus-movie')}
+                >
+                  <strong>⛶ Enfoque Película</strong>
+                  <small>Película completa, cámaras flotantes</small>
+                </button>
+                <button
+                  type="button"
+                  className={`q-chip ${viewMode === 'duo' ? 'active' : ''}`}
+                  onClick={() => onSelectViewMode('duo')}
+                >
+                  <strong>📱 Modo Dúo</strong>
+                  <small>Cámaras ampliadas para ver reacciones</small>
+                </button>
+              </div>
+            </section>
+          )}
 
           {/* 1. Calidad de la película en este dispositivo */}
           <section className="q-section">
