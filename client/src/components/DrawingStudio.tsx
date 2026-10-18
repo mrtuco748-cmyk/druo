@@ -546,8 +546,9 @@ export const DrawingStudio: React.FC<Props> = ({
     ctx.fillStyle = '#160b14';
     ctx.fillRect(0, 0, vw, vh);
 
-    // Calcular caja base centrada de la hoja
-    const scaleFit = Math.min((vw - 24) / WORLD_W, (vh - 24) / WORLD_H);
+    // Calcular caja base centrada de la hoja (en móvil aprovechamos casi el 100% del ancho)
+    const pad = vw < 600 ? 8 : 24;
+    const scaleFit = Math.min((vw - pad) / WORLD_W, (vh - pad) / WORLD_H);
     const sheetW = WORLD_W * scaleFit;
     const sheetH = WORLD_H * scaleFit;
     const baseX = (vw - sheetW) / 2;
@@ -613,7 +614,8 @@ export const DrawingStudio: React.FC<Props> = ({
     const ux = (sx - vw / 2 - panRef.current.x) / zoomRef.current + vw / 2;
     const uy = (sy - vh / 2 - panRef.current.y) / zoomRef.current + vh / 2;
 
-    const scaleFit = Math.min((vw - 24) / WORLD_W, (vh - 24) / WORLD_H);
+    const pad = vw < 600 ? 8 : 24;
+    const scaleFit = Math.min((vw - pad) / WORLD_W, (vh - pad) / WORLD_H);
     const sheetW = WORLD_W * scaleFit;
     const sheetH = WORLD_H * scaleFit;
     const baseX = (vw - sheetW) / 2;
@@ -636,7 +638,8 @@ export const DrawingStudio: React.FC<Props> = ({
     const vw = rect.width || 1;
     const vh = rect.height || 1;
 
-    const scaleFit = Math.min((vw - 24) / WORLD_W, (vh - 24) / WORLD_H);
+    const pad = vw < 600 ? 8 : 24;
+    const scaleFit = Math.min((vw - pad) / WORLD_W, (vh - pad) / WORLD_H);
     const sheetW = WORLD_W * scaleFit;
     const sheetH = WORLD_H * scaleFit;
     const baseX = (vw - sheetW) / 2;

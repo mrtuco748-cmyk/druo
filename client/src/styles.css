@@ -1729,6 +1729,7 @@ select:focus {
     overflow: hidden;
   }
   .theater-shell.view-cinema .cinema-stage {
+    order: 1;
     flex: 0 0 auto;
     width: 100%;
     height: auto;
@@ -1747,6 +1748,7 @@ select:focus {
 
   /* Cámara remota (el otro en PC) ocupa el espacio inferior en grande */
   .theater-shell.view-cinema .cam-slot.is-remote {
+    order: 2;
     flex: 1 1 0;
     width: 100%;
     height: 100%;
@@ -3463,28 +3465,404 @@ select:focus {
   box-shadow: 0 10px 22px rgba(255, 117, 151, 0.35);
 }
 
+/* ============================================================================
+   SOPORTE COMPLETO PARA MÓVIL (Vertical y Horizontal en todas las vistas y actividades)
+   ============================================================================ */
+
 @media (max-width: 820px) {
-  .theater-shell.view-cinema .cinema-stage.cute-hub-stage,
-  .theater-shell.view-cinema .cinema-stage.studio-stage,
-  .theater-shell.view-cinema .cinema-stage.games-stage,
-  .theater-shell.view-cinema .cinema-stage.wheel-stage,
-  .theater-shell.view-cinema .cinema-stage.relax-stage,
-  .theater-shell.view-duo .cinema-stage.cute-hub-stage,
-  .theater-shell.view-duo .cinema-stage.studio-stage,
-  .theater-shell.view-duo .cinema-stage.games-stage,
-  .theater-shell.view-duo .cinema-stage.wheel-stage,
-  .theater-shell.view-duo .cinema-stage.relax-stage {
-    aspect-ratio: unset !important;
-    height: 62vh !important;
-    max-height: 66vh !important;
+  /* 1. Barra superior compacta para que nunca se desborde en pantallas de celular */
+  .kawaii-topbar {
+    height: 44px !important;
+    min-height: 44px !important;
+    max-height: 44px !important;
+    padding: 4px 8px !important;
+    gap: 4px !important;
+    flex-wrap: nowrap !important;
   }
-  .wheel-layout {
-    grid-template-columns: 1fr;
+  .kawaii-topbar .brand-cluster,
+  .kawaii-topbar .action-cluster {
+    flex-wrap: nowrap !important;
+    gap: 5px !important;
+    min-width: 0;
+  }
+  .kawaii-nav-pills {
+    padding: 2px 3px !important;
+    gap: 2px !important;
+    border-width: 1.5px !important;
+  }
+  .topbar-act-btn {
+    width: 31px !important;
+    height: 31px !important;
+  }
+  .topbar-act-btn svg {
+    width: 16px !important;
+    height: 16px !important;
+  }
+  .kawaii-status-dot {
+    width: 9px !important;
+    height: 9px !important;
+    flex-shrink: 0;
+  }
+  .kawaii-topbar .top-btn {
+    width: 33px !important;
+    height: 33px !important;
+    border-width: 1.5px !important;
+    flex-shrink: 0;
+  }
+  .kawaii-topbar .top-btn svg {
+    width: 16px !important;
+    height: 16px !important;
+  }
+  .kawaii-react-bar {
+    padding: 2px !important;
+    gap: 2px !important;
+  }
+  .kawaii-react-bar .react-btn {
+    width: 28px !important;
+    height: 28px !important;
+  }
+
+  /* 2. Menú de opciones flotante adaptado a móvil */
+  .kawaii-options-popover {
+    top: 48px !important;
+    right: 8px !important;
+    width: min(246px, calc(100vw - 16px)) !important;
+    max-height: calc(100dvh - 58px) !important;
+    overflow-y: auto !important;
+    padding: 12px !important;
+    gap: 10px !important;
+  }
+
+  /* 4. Bordes y contenedores de actividades en móvil */
+  .kawaii-pastel-hub,
+  .kawaii-pastel-surface,
+  .kawaii-clean-studio {
+    border-radius: 18px !important;
+    border-width: 2px !important;
+  }
+
+  /* 5. Menú Principal Cute (Hub) en móvil */
+  .kawaii-hub-inner {
+    padding: 10px !important;
+    gap: 12px !important;
+  }
+  .kawaii-hub-reacts {
+    padding: 4px 10px !important;
+    gap: 8px !important;
+  }
+  .kawaii-react-circle {
+    width: 36px !important;
+    height: 36px !important;
+  }
+  .kawaii-cards-grid {
+    gap: 10px !important;
   }
   .kawaii-hub-card {
-    width: 92px;
-    height: 92px;
-    border-radius: 24px;
+    width: 82px !important;
+    height: 82px !important;
+    border-radius: 20px !important;
+  }
+  .kawaii-hub-card svg {
+    width: 30px !important;
+    height: 30px !important;
+  }
+
+  /* 6. Estudio de Dibujo en móvil */
+  .kawaii-floating-top-left {
+    top: 8px !important;
+    left: 8px !important;
+    gap: 5px !important;
+  }
+  .kawaii-floating-top-right {
+    top: 8px !important;
+    right: 8px !important;
+  }
+  .kawaii-icon-circle {
+    width: 36px !important;
+    height: 36px !important;
+  }
+  .kawaii-icon-circle.small {
+    width: 30px !important;
+    height: 30px !important;
+  }
+  .kawaii-chevron-btn {
+    width: 32px !important;
+    height: 32px !important;
+  }
+  .kawaii-fab-wrapper {
+    bottom: 8px !important;
+    right: 8px !important;
+  }
+  .kawaii-main-fab {
+    width: 46px !important;
+    height: 46px !important;
+  }
+  .kawaii-fab-popover {
+    position: absolute !important;
+    bottom: 54px !important;
+    right: 0 !important;
+    width: min(236px, calc(100vw - 28px)) !important;
+    max-height: calc(100% - 62px) !important;
+    overflow-y: auto !important;
+    padding: 10px !important;
+    gap: 8px !important;
+    border-radius: 20px !important;
+  }
+  .kawaii-bg-popover {
+    top: 42px !important;
+    left: 0 !important;
+    width: min(180px, calc(100vw - 28px)) !important;
+    padding: 8px !important;
+  }
+
+  /* 7. Juegos de Pareja en móvil */
+  .kawaii-pastel-surface {
+    padding: 8px 10px !important;
+    gap: 6px !important;
+  }
+  .kawaii-top-nav {
+    gap: 6px !important;
+  }
+  .kawaii-nav-cluster {
+    gap: 5px !important;
+  }
+  .kawaii-emoji-Trigger-pill {
+    padding: 2px 4px !important;
+    gap: 3px !important;
+  }
+  .kawaii-emoji-avatar-btn {
+    width: 28px !important;
+    height: 28px !important;
+    font-size: 0.98rem !important;
+  }
+  .kawaii-pill-tabs {
+    padding: 3px !important;
+    gap: 3px !important;
+  }
+  .kawaii-tab-icon {
+    width: 32px !important;
+    height: 32px !important;
+  }
+  .kawaii-card-panel {
+    padding: 10px 12px !important;
+    gap: 8px !important;
+    border-radius: 18px !important;
+  }
+  .kawaii-question-text {
+    font-size: 0.94rem !important;
+    line-height: 1.32 !important;
+  }
+  .likely-buttons-row {
+    gap: 8px !important;
+  }
+  .kawaii-vote-card {
+    padding: 8px 10px !important;
+    border-radius: 14px !important;
+    gap: 4px !important;
+  }
+  .kawaii-big-emoji {
+    font-size: 1.4rem !important;
+  }
+  .kawaii-action-circle {
+    width: 38px !important;
+    height: 38px !important;
+  }
+  .kawaii-action-circle.big {
+    width: 44px !important;
+    height: 44px !important;
+  }
+  .kawaii-reading-card {
+    padding: 12px 14px !important;
+    border-radius: 16px !important;
+  }
+  .kawaii-ttt-scores {
+    gap: 8px !important;
+  }
+  .kawaii-score-badge {
+    padding: 4px 10px !important;
+    font-size: 0.82rem !important;
+  }
+  .kawaii-ttt-grid {
+    grid-template-columns: repeat(3, clamp(46px, 6.8dvh, 60px)) !important;
+    grid-template-rows: repeat(3, clamp(46px, 6.8dvh, 60px)) !important;
+    gap: 6px !important;
+  }
+  .kawaii-ttt-cell {
+    border-radius: 14px !important;
+  }
+  .kawaii-cell-emoji {
+    font-size: 1.35rem !important;
+  }
+  .kawaii-emoji-picker-popover {
+    top: 48px !important;
+    left: 8px !important;
+    width: min(260px, calc(100% - 16px)) !important;
+    padding: 10px !important;
+  }
+
+  /* 8. Ruleta de Decisiones en móvil */
+  .wheel-layout {
+    grid-template-columns: 1fr !important;
+    gap: 8px !important;
+    overflow-y: auto !important;
+    align-content: start !important;
+    padding: 2px !important;
+  }
+  .wheel-visual-col {
+    gap: 6px !important;
+  }
+  .wheel-spinner-box {
+    width: clamp(120px, 32vw, 155px) !important;
+    height: clamp(120px, 32vw, 155px) !important;
+  }
+  .kawaii-wheel-options {
+    padding: 8px 10px !important;
+    gap: 6px !important;
+    max-height: none !important;
+    overflow: visible !important;
+    border-radius: 16px !important;
+  }
+
+  /* 9. Rincón Relax en móvil */
+  .kawaii-relax-center {
+    gap: 10px !important;
+    overflow-y: auto !important;
+    padding: 4px 0 !important;
+  }
+  .kawaii-timer-circle {
+    padding: 10px 18px !important;
+    border-radius: 22px !important;
+    gap: 6px !important;
+  }
+  .kawaii-timer-digits {
+    font-size: 1.75rem !important;
+  }
+  .kawaii-num-pill {
+    width: 32px !important;
+    height: 32px !important;
+    font-size: 0.72rem !important;
+  }
+  .kawaii-ambience-row {
+    gap: 8px !important;
+  }
+  .kawaii-amb-circle {
+    width: 44px !important;
+    height: 44px !important;
+    border-radius: 14px !important;
   }
 }
+
+/* En celulares angostos ocultamos la barra de reacciones del topbar (ya están en el Hub) */
+@media (max-width: 540px) {
+  .kawaii-topbar .kawaii-react-bar {
+    display: none !important;
+  }
+}
+
+/* Actividades interactivas (Hub, Pizarra, Juegos, Ruleta, Relax) en Celular Vertical:
+   Actividad grande arriba (1fr) y ambas cámaras lado a lado abajo sin tapar controles */
+@media (max-width: 820px) and (orientation: portrait) {
+  .theater-shell.is-interactive-activity.view-cinema .theater-grid,
+  .theater-shell.is-interactive-activity.view-duo .theater-grid {
+    position: relative !important;
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+    grid-template-rows: minmax(0, 1fr) clamp(94px, 15.5dvh, 128px) !important;
+    grid-template-areas:
+      'screen screen'
+      'left right' !important;
+    gap: 6px !important;
+    padding: 4px 6px 6px !important;
+    height: 100% !important;
+    max-height: 100% !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+  }
+
+  .theater-shell.is-interactive-activity.view-cinema .cinema-stage,
+  .theater-shell.is-interactive-activity.view-duo .cinema-stage {
+    grid-area: screen !important;
+    order: unset !important;
+    width: 100% !important;
+    height: 100% !important;
+    max-height: 100% !important;
+    min-height: 0 !important;
+    aspect-ratio: unset !important;
+  }
+
+  .theater-shell.is-interactive-activity.view-cinema .cam-slot,
+  .theater-shell.is-interactive-activity.view-duo .cam-slot {
+    position: relative !important;
+    bottom: auto !important;
+    right: auto !important;
+    left: auto !important;
+    top: auto !important;
+    order: unset !important;
+    width: 100% !important;
+    height: 100% !important;
+    max-width: 100% !important;
+    max-height: 100% !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    z-index: 2 !important;
+  }
+
+  .theater-shell.is-interactive-activity.view-cinema .cam-left,
+  .theater-shell.is-interactive-activity.view-duo .cam-left {
+    grid-area: left !important;
+  }
+
+  .theater-shell.is-interactive-activity.view-cinema .cam-right,
+  .theater-shell.is-interactive-activity.view-duo .cam-right {
+    grid-area: right !important;
+  }
+
+  .theater-shell.is-interactive-activity.view-cinema .cam-slot .cam-frame,
+  .theater-shell.is-interactive-activity.view-duo .cam-slot .cam-frame {
+    width: 100% !important;
+    height: 100% !important;
+    max-height: 100% !important;
+    max-width: 100% !important;
+    aspect-ratio: unset !important;
+    border-radius: 14px !important;
+  }
+
+  .theater-shell.is-interactive-activity.view-cinema .cam-slot.is-local .cam-badge-row {
+    display: flex !important;
+  }
+
+  /* En modo Enfoque (view-focus-movie) en móvil vertical: actividad a pantalla completa */
+  .theater-shell.is-interactive-activity.view-focus-movie .cinema-stage {
+    width: 100% !important;
+    height: 100% !important;
+    max-height: 100% !important;
+    aspect-ratio: unset !important;
+  }
+  .theater-shell.is-interactive-activity.view-focus-movie .cam-slot {
+    bottom: 10px !important;
+    width: 68px !important;
+    height: 50px !important;
+  }
+  .theater-shell.is-interactive-activity.view-focus-movie .cam-left {
+    left: 10px !important;
+  }
+  .theater-shell.is-interactive-activity.view-focus-movie .cam-right {
+    left: 84px !important;
+    right: auto !important;
+  }
+}
+
+/* Celular horizontal con actividades interactivas */
+@media (max-height: 520px) and (orientation: landscape) {
+  .theater-shell.is-interactive-activity .cinema-stage,
+  .theater-shell.is-interactive-activity .screen-bezel {
+    width: 100% !important;
+    height: 100% !important;
+    max-height: 100% !important;
+    max-width: 100% !important;
+    aspect-ratio: unset !important;
+  }
+}
+
+
 

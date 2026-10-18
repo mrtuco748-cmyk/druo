@@ -456,7 +456,11 @@ export const App: React.FC = () => {
   }
 
   return (
-    <div className={`theater-shell view-${viewMode}`}>
+    <div
+      className={`theater-shell view-${viewMode} activity-${activeActivity} ${
+        activeActivity !== 'cinema' ? 'is-interactive-activity' : 'is-cinema-activity'
+      }`}
+    >
       {/* Barra superior Pastel Kawaii minimalista (Solo Iconos SVG, Sin Textos, Sin Emojis) */}
       <header className="theater-topbar kawaii-topbar">
         <div className="brand-cluster">
