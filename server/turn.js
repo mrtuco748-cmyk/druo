@@ -7,6 +7,9 @@ const STUN = [
       'stun:stun.l.google.com:19302',
       'stun:stun1.l.google.com:19302',
       'stun:stun2.l.google.com:19302',
+      'stun:stun3.l.google.com:19302',
+      'stun:stun4.l.google.com:19302',
+      'stun:stun.services.mozilla.com',
     ],
   },
 ];
@@ -24,10 +27,21 @@ function stripPort53(servers) {
 }
 
 export function turnConfigured() {
-  return !!(process.env.CF_TURN_KEY_ID && process.env.CF_TURN_API_TOKEN);
+  return (
+    !!(process.env.CF_TURN_KEY_ID && process.env.CF_TURN_API_TOKEN) ||
+    !!(process.env.TURN_URL && process.env.TURN_USERNAME)
+  );
 }
 
 export async function getIceServers() {
+  if (process.env.TURN_URL && process.env.TURN_USERNAME) {
+    const custom = {
+      urls: process.env.TURN_URL.split(',').map((u) => u.trim()),
+      username: process.env.TURN_USERNAME,
+      credential: process.env.TURN_PASSWORD || process.env.TURN_CREDENTIAL || '',
+    };
+    return [...STUN, custom];
+  }
   if (!turnConfigured()) return STUN;
   if (cache.servers && Date.now() - cache.at < (TTL / 2) * 1000) return cache.servers;
 

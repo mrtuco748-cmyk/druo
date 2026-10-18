@@ -294,64 +294,128 @@ export function createRemoteVoiceProcessor(
   try {
     const srcNode = ctx.createMediaStreamSource(new MediaStream([audioTrack]));
 
-    // 1. Filtro Pasa-Altos (110 Hz): elimina retumbe grave, golpes y bajos de la película
+    // 1. Filtro Pasa-Altos (125 Hz): elimina retumbe grave, vibración del celular y bajos de la película
     const hpFilter = ctx.createBiquadFilter();
     hpFilter.type = 'highpass';
-    hpFilter.frequency.value = 110;
+    hpFilter.frequency.value = 125;
     hpFilter.Q.value = 0.707;
 
-    // 2. Filtro Anti-Barro (230 Hz, -3.5 dB): quita el sonido "encajonado/ahogado" que deja el AEC cuando suena la peli
+    // 2. Filtro Anti-Barro (240 Hz, -3.0 dB): quita el sonido encajonado
     const mudFilter = ctx.createBiquadFilter();
     mudFilter.type = 'peaking';
-    mudFilter.frequency.value = 230;
-    mudFilter.Q.value = 1.2;
-    mudFilter.gain.value = -3.5;
+    mudFilter.frequency.value = 240;
+    mudFilter.Q.value = 1.1;
+    mudFilter.gain.value = -3.0;
 
-    // 3. Realce de Presencia y Dicción Vocal (2500 Hz, +4.5 dB): hace que cada sílaba y letra se escuche clara y adelante
+    // 3. Realce moderado de Presencia y Dicción Vocal (2300 Hz, +2.0 dB): claridad sin acentuar siseo
     const presenceFilter = ctx.createBiquadFilter();
     presenceFilter.type = 'peaking';
-    presenceFilter.frequency.value = 2500;
-    presenceFilter.Q.value = 0.95;
-    presenceFilter.gain.value = 4.5;
+    presenceFilter.frequency.value = 2300;
+    presenceFilter.Q.value = 0.85;
+    presenceFilter.gain.value = 2.0;
 
-    // 4. Filtro Suavizador de Agudos (7800 Hz): elimina siseo metálico digital sin apagar la voz
+    // 4. Filtro Pasa-Bajos (7000 Hz): corta siseo térmico, estática y ruido blanco de micrófonos de celular
     const lpFilter = ctx.createBiquadFilter();
     lpFilter.type = 'lowpass';
-    lpFilter.frequency.value = 7800;
+    lpFilter.frequency.value = 7000;
     lpFilter.Q.value = 0.707;
 
-    // 5. Compresor de Nivelación Vocal (empareja sílabas suaves y fuertes antes del boost)
+    // 5. Compuerta de Ruido Inteligente (Noise Gate): silencia completamente el ruido de fondo cuando ella está callada
+    const gateGain = ctx.createGain();
+    gateGain.gain.value = 1.0;
+
+    const analyser = ctx.createAnalyser();
+    analyser.fftSize = 512;
+    analyser.smoothingTimeConstant = 0.18;
+    const timeBuf = new Uint8Array(analyser.fftSize);
+
+    // 6. Nivelador suave de volumen vocal
     const vocalComp = ctx.createDynamicsCompressor();
-    vocalComp.threshold.value = -24;
-    vocalComp.knee.value = 18;
-    vocalComp.ratio.value = 3.0;
-    vocalComp.attack.value = 0.008;
-    vocalComp.release.value = 0.16;
+    vocalComp.threshold.value = -18;
+    vocalComp.knee.value = 12;
+    vocalComp.ratio.value = 2.2;
+    vocalComp.attack.value = 0.01;
+    vocalComp.release.value = 0.15;
 
-    // 6. Ganancia de Usuario (0% a 400%)
+    // 7. Ganancia de Usuario (0% a 350%)
     const gainNode = ctx.createGain();
-    gainNode.gain.value = Math.max(0, Math.min(4.0, initialGain));
+    gainNode.gain.value = Math.max(0, Math.min(3.5, initialGain));
 
-    // 7. Limitador de Protección Final (evita que al 300%-400% sature o distorsione el parlante junto con la película)
+    // 8. Limitador de Protección Final
     const limiter = ctx.createDynamicsCompressor();
-    limiter.threshold.value = -1.2;
+    limiter.threshold.value = -1.5;
     limiter.knee.value = 2;
     limiter.ratio.value = 20;
     limiter.attack.value = 0.001;
-    limiter.release.value = 0.06;
+    limiter.release.value = 0.05;
 
+    // Conexión del grafo de audio
     srcNode.connect(hpFilter);
     hpFilter.connect(mudFilter);
     mudFilter.connect(presenceFilter);
     presenceFilter.connect(lpFilter);
-    lpFilter.connect(vocalComp);
+
+    // Analizador post-filtros para evaluar si hay voz real o solo ruido de fondo
+    lpFilter.connect(analyser);
+
+    // Cadena principal: lpFilter -> gateGain -> vocalComp -> gainNode -> limiter -> destination
+    lpFilter.connect(gateGain);
+    gateGain.connect(vocalComp);
     vocalComp.connect(gainNode);
     gainNode.connect(limiter);
     limiter.connect(ctx.destination);
 
+    let gateOpen = true;
+    let holdCounter = 0; // Sostiene ~420ms entre palabras de una misma frase
+    let noiseFloor = 3.5;
+
+    const gateTimer = setInterval(() => {
+      if (ctx.state !== 'running' || !audioTrack.enabled) return;
+
+      analyser.getByteTimeDomainData(timeBuf);
+      let sumSq = 0;
+      for (let i = 0; i < timeBuf.length; i++) {
+        const sample = (timeBuf[i] - 128) / 128;
+        sumSq += sample * sample;
+      }
+      const rms = Math.sqrt(sumSq / timeBuf.length) * 100;
+
+      // Umbral adaptativo: por encima del piso de ruido ambiente
+      const voiceThreshold = Math.max(2.6, noiseFloor * 1.55);
+
+      if (rms > voiceThreshold) {
+        holdCounter = 14; // ~420ms (14 * 30ms)
+        if (!gateOpen) {
+          gateOpen = true;
+          try {
+            gateGain.gain.setTargetAtTime(1.0, ctx.currentTime, 0.015);
+          } catch {
+            gateGain.gain.value = 1.0;
+          }
+        }
+      } else {
+        if (holdCounter === 0) {
+          noiseFloor = noiseFloor * 0.96 + rms * 0.04;
+          noiseFloor = Math.max(1.0, Math.min(9.0, noiseFloor));
+        }
+
+        if (holdCounter > 0) {
+          holdCounter--;
+        } else if (gateOpen) {
+          gateOpen = false;
+          try {
+            // Atenuación suave y transparente (-46 dB) que elimina el 100% del ruido blanco
+            gateGain.gain.setTargetAtTime(0.005, ctx.currentTime, 0.035);
+          } catch {
+            gateGain.gain.value = 0.005;
+          }
+        }
+      }
+    }, 30);
+
     return {
       setGain: (val: number) => {
-        const clamped = Math.max(0, Math.min(4.0, val));
+        const clamped = Math.max(0, Math.min(3.5, val));
         try {
           gainNode.gain.setTargetAtTime(clamped, ctx.currentTime, 0.015);
         } catch {
@@ -359,12 +423,15 @@ export function createRemoteVoiceProcessor(
         }
       },
       destroy: () => {
+        clearInterval(gateTimer);
         try {
           srcNode.disconnect();
           hpFilter.disconnect();
           mudFilter.disconnect();
           presenceFilter.disconnect();
           lpFilter.disconnect();
+          analyser.disconnect();
+          gateGain.disconnect();
           vocalComp.disconnect();
           gainNode.disconnect();
           limiter.disconnect();

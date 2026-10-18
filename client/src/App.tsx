@@ -107,7 +107,7 @@ export const App: React.FC = () => {
   const [duckingEnabled, setDuckingEnabled] = useState(true); // Activado por defecto para que baje la peli cuando hablan
   const [peerVolume, setPeerVolume] = useState<number>(() => {
     const saved = Number(localStorage.getItem('druo.peerVolume'));
-    return saved > 0 && saved <= 4.0 ? saved : 2.0; // Por defecto 200% para que las voces se escuchen siempre más fuerte
+    return saved > 0 && saved <= 3.5 ? saved : 1.35; // Volumen óptimo claro y natural sin inflar siseo de fondo
   });
   const [peerMuted, setPeerMuted] = useState(false);
   const [waitOnBuffer, setWaitOnBuffer] = useState(true);
@@ -295,12 +295,10 @@ export const App: React.FC = () => {
     try {
       stream = await navigator.mediaDevices.getUserMedia({
         audio: {
-          echoCancellation: { ideal: true },
-          noiseSuppression: { ideal: true },
-          autoGainControl: { ideal: true },
-          channelCount: { ideal: 1 },
-          sampleRate: { ideal: 48000 },
-          sampleSize: { ideal: 16 },
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+          channelCount: 1,
         },
         video: {
           facingMode: 'user',
@@ -330,7 +328,14 @@ export const App: React.FC = () => {
     const rtc = new PeerCall(
       myId,
       (data) => sigRef.current?.send({ t: 'signal', data }),
-      (rem) => setRemoteStream(new MediaStream(rem.getTracks())),
+      (rem) => {
+        setRemoteStream((prev) => {
+          const prevIds = prev ? prev.getTracks().map((t) => `${t.id}-${t.readyState}`).sort().join(',') : '';
+          const newIds = rem ? rem.getTracks().map((t) => `${t.id}-${t.readyState}`).sort().join(',') : '';
+          if (prev && prevIds === newIds) return prev;
+          return new MediaStream(rem.getTracks());
+        });
+      },
       (st) => setStats(st)
     );
     rtcRef.current = rtc;

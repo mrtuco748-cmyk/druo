@@ -79,6 +79,9 @@ export const CameraTile: React.FC<Props> = ({
     }
   };
 
+  const curVideoTrackIdRef = useRef<string | null>(null);
+  const curAudioTrackIdRef = useRef<string | null>(null);
+
   useEffect(() => {
     const el = videoRef.current;
     if (!el) return;
@@ -87,10 +90,14 @@ export const CameraTile: React.FC<Props> = ({
     el.defaultMuted = true;
     (el as any).setAttribute('playsinline', 'true');
     (el as any).setAttribute('webkit-playsinline', 'true');
-    if (el.srcObject !== stream) {
+
+    const vTrack = stream?.getVideoTracks()[0];
+    const vTrackId = vTrack?.id || null;
+    if (curVideoTrackIdRef.current !== vTrackId || !el.srcObject) {
+      curVideoTrackIdRef.current = vTrackId;
       el.srcObject = stream || null;
     }
-    if (stream) {
+    if (stream && framing.on !== false) {
       el.play().catch((err) => {
         console.warn('[CameraTile] play error:', err);
       });
@@ -134,13 +141,14 @@ export const CameraTile: React.FC<Props> = ({
   const y = Math.max(-30, Math.min(30, framing.y || 0));
   const hasVideo = !!stream && stream.getVideoTracks().some((t) => t.enabled) && framing.on !== false;
 
-  // Cadena de Claridad Vocal Broadcast para el audio remoto (EQ vocal + anti-barro + compresor + boost hasta 400% + limitador)
+  // Cadena de Claridad Vocal Broadcast para el audio remoto (EQ vocal + anti-barro + compuerta de ruido + compresor + boost)
   useEffect(() => {
     if (isMe) return;
     const el = audioRef.current;
     if (!el) return;
     const aTrack = stream?.getAudioTracks()[0];
     if (!aTrack) {
+      curAudioTrackIdRef.current = null;
       el.srcObject = null;
       voiceChainRef.current?.destroy();
       voiceChainRef.current = null;
@@ -148,6 +156,12 @@ export const CameraTile: React.FC<Props> = ({
       onAudioBlockedChange?.(false);
       return;
     }
+
+    // Si ya tenemos la cadena armada para este mismo track, no la reinicies para evitar cortes y parpadeos
+    if (curAudioTrackIdRef.current === aTrack.id && voiceChainRef.current) {
+      return;
+    }
+    curAudioTrackIdRef.current = aTrack.id;
 
     const curStream = el.srcObject as MediaStream | null;
     const curTrack = curStream?.getAudioTracks()[0];
@@ -164,8 +178,9 @@ export const CameraTile: React.FC<Props> = ({
 
     const syncMuteState = () => {
       if (ctx && ctx.state === 'running' && chain && el) {
-        // Silenciar el elemento <audio> nativo cuando la cadena WebAudio está activa para evitar doble audio desfasado
-        el.muted = true;
+        // En móviles, NO usar el.muted = true porque Android Chrome suspende el decodificador WebRTC.
+        // Se usa volume = 0 para que no suene doble sin apagar el flujo de audio.
+        el.muted = false;
         el.volume = 0;
       } else if (el) {
         el.muted = peerMuted;
@@ -210,6 +225,7 @@ export const CameraTile: React.FC<Props> = ({
       window.removeEventListener('click', unlockAudio);
       window.removeEventListener('touchstart', unlockAudio);
       ctx?.removeEventListener?.('statechange', syncMuteState);
+      curAudioTrackIdRef.current = null;
       voiceChainRef.current?.destroy();
       voiceChainRef.current = null;
     };

@@ -33,6 +33,9 @@ const DEFAULT_ICE_SERVERS: RTCIceServer[] = [
       'stun:stun.l.google.com:19302',
       'stun:stun1.l.google.com:19302',
       'stun:stun2.l.google.com:19302',
+      'stun:stun3.l.google.com:19302',
+      'stun:stun4.l.google.com:19302',
+      'stun:stun.services.mozilla.com',
     ],
   },
 ];
@@ -254,8 +257,8 @@ export class PeerCall {
           }
         }, delay);
       } else if (st === 'disconnected') {
-        // Esperar 3.5s antes de reiniciar ICE: la mayoría de micro-cortes Wi-Fi se recuperan solos
-        const delay = this.polite ? 4500 : 3200;
+        // En conexiones móviles o 4G/5G, dar 6s-7.5s de gracia para que se recupere solo sin reiniciar ICE
+        const delay = this.polite ? 7500 : 6000;
         this.iceDisconnectTimer = setTimeout(() => {
           if (
             this.pc &&
@@ -455,10 +458,10 @@ export class PeerCall {
       await this.setRemotePeer(from, session);
     }
     const pc = this.ensurePc();
-    await this.attachLocalTracks();
 
     try {
       if (data.sdp) {
+        await this.attachLocalTracks();
         const description = data.sdp as RTCSessionDescriptionInit;
         const readyForOffer =
           !this.makingOffer &&

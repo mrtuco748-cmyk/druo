@@ -16,10 +16,10 @@ export interface VideoPresetSpec {
 }
 
 export const VIDEO_LADDER: VideoPresetSpec[] = [
-  { id: 'off',  label: 'Solo voz', hint: '0 kbps · cámara en pausa', width: 0,    height: 0,   fps: 0,  maxBitrate: 0,         scaleDown: 4 },
-  { id: 'min',  label: 'Mínima',   hint: '60 kbps · 120p 10 fps',    width: 160,  height: 120, fps: 10, maxBitrate: 60_000,    scaleDown: 4 },
-  { id: 'low',  label: 'Baja',     hint: '140 kbps · 240p 15 fps',   width: 320,  height: 240, fps: 15, maxBitrate: 140_000,   scaleDown: 2 },
-  { id: 'med',  label: 'Media',    hint: '280 kbps · 360p 20 fps',   width: 480,  height: 360, fps: 20, maxBitrate: 280_000,   scaleDown: 1.5 },
+  { id: 'off',  label: 'Solo voz', hint: '0 kbps · cámara en pausa', width: 0,    height: 0,   fps: 0,  maxBitrate: 0,         scaleDown: 1 },
+  { id: 'min',  label: 'Mínima',   hint: '60 kbps · 120p 10 fps',    width: 160,  height: 120, fps: 10, maxBitrate: 60_000,    scaleDown: 1 },
+  { id: 'low',  label: 'Baja',     hint: '140 kbps · 240p 15 fps',   width: 320,  height: 240, fps: 15, maxBitrate: 140_000,   scaleDown: 1 },
+  { id: 'med',  label: 'Media',    hint: '280 kbps · 360p 20 fps',   width: 480,  height: 360, fps: 20, maxBitrate: 280_000,   scaleDown: 1 },
   { id: 'high', label: 'Alta',     hint: '550 kbps · 480p 24 fps',   width: 640,  height: 480, fps: 24, maxBitrate: 550_000,   scaleDown: 1 },
   { id: 'hd',   label: 'HD',       hint: '1.1 Mbps · 720p 30 fps',   width: 1280, height: 720, fps: 30, maxBitrate: 1_100_000, scaleDown: 1 },
 ];
