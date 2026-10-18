@@ -144,14 +144,22 @@ export const App: React.FC = () => {
   const [immersiveToast, setImmersiveToast] = useState<string | null>(null);
   const toastTimerRef = useRef<any>(null);
   const lastTapRef = useRef<number>(0);
+  const lastToggleAtRef = useRef<number>(0);
 
   const toggleImmersiveMode = () => {
+    const now = Date.now();
+    // Prevenir doble disparo si el navegador emite eventos consecutivos (pointerdown + click + dblclick)
+    if (now - lastToggleAtRef.current < 450) {
+      return;
+    }
+    lastToggleAtRef.current = now;
+
     setImmersiveMode((prev) => {
       const next = !prev;
       clearTimeout(toastTimerRef.current);
       setImmersiveToast(
         next
-          ? '✨ Modo inmersivo activado · Toca 2 veces para mostrar controles'
+          ? '✨ Modo inmersivo activado · Toca 2 veces para mostrar'
           : '✨ Interfaz visible'
       );
       toastTimerRef.current = setTimeout(() => {
@@ -171,7 +179,7 @@ export const App: React.FC = () => {
       return;
     }
     const now = Date.now();
-    if (now - lastTapRef.current < 380) {
+    if (now - lastTapRef.current < 450) {
       toggleImmersiveMode();
       lastTapRef.current = 0;
     } else {
@@ -513,7 +521,6 @@ export const App: React.FC = () => {
         activeActivity !== 'cinema' ? 'is-interactive-activity' : 'is-cinema-activity'
       } ${immersiveMode ? 'is-ui-hidden' : ''}`}
       onPointerDown={handlePointerDown}
-      onDoubleClick={toggleImmersiveMode}
     >
       {/* Barra superior Pastel Kawaii minimalista (Solo Iconos SVG, Sin Textos, Sin Emojis) */}
       <header className="theater-topbar kawaii-topbar">
