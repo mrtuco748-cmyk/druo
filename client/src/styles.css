@@ -1714,8 +1714,177 @@ select:focus {
   border-radius: 14px;
 }
 
-/* ---------------- Celular (Vertical y Horizontal): Vistas Adaptadas ---------------- */
-@media (max-width: 820px) {
+/* ---------------- Dispositivos Móviles (Vertical y Horizontal) ---------------- */
+.theater-shell.is-mobile-device {
+  padding-bottom: 0 !important;
+  background: #07050a !important;
+  background-color: #07050a !important;
+}
+
+.theater-shell.is-mobile-device .theater-topbar {
+  padding: 4px 8px !important;
+  gap: 4px !important;
+  flex-wrap: nowrap !important;
+}
+.theater-shell.is-mobile-device .brand-title {
+  font-size: 1.25rem !important;
+}
+.theater-shell.is-mobile-device .action-cluster {
+  flex-wrap: nowrap !important;
+  gap: 5px !important;
+}
+.theater-shell.is-mobile-device .now-playing {
+  display: none !important;
+}
+
+.theater-shell.is-mobile-device .theater-grid {
+  position: relative !important;
+  display: block !important;
+  width: 100% !important;
+  height: 100% !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  overflow: hidden !important;
+  background: #07050a !important;
+}
+
+.theater-shell.is-mobile-device .cinema-stage,
+.theater-shell.is-mobile-device .kawaii-pastel-hub,
+.theater-shell.is-mobile-device .kawaii-clean-studio,
+.theater-shell.is-mobile-device .kawaii-pastel-surface {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
+  margin: 0 !important;
+  box-sizing: border-box !important;
+  z-index: 10 !important;
+}
+
+.theater-shell.is-mobile-device .cinema-stage {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: #000 !important;
+}
+
+.theater-shell.is-mobile-device .screen-bezel {
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
+  aspect-ratio: unset !important;
+  border-radius: 0 !important;
+  border: none !important;
+  box-shadow: none !important;
+  background: #000 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.theater-shell.is-mobile-device .screen-bezel video,
+.theater-shell.is-mobile-device .screen-bezel .yt-wrap,
+.theater-shell.is-mobile-device .screen-bezel iframe {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: contain !important;
+}
+
+.theater-shell.is-mobile-device .cam-slot {
+  position: absolute !important;
+  z-index: 35 !important;
+  pointer-events: auto !important;
+  margin: 0 !important;
+  max-width: none !important;
+  max-height: none !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.theater-shell.is-mobile-device .cam-slot.cam-left {
+  left: calc(12px + env(safe-area-inset-left, 0px)) !important;
+  right: auto !important;
+}
+
+.theater-shell.is-mobile-device .cam-slot.cam-right {
+  right: calc(12px + env(safe-area-inset-right, 0px)) !important;
+  left: auto !important;
+}
+
+.theater-shell.is-mobile-device .cam-slot .cam-frame {
+  width: 100% !important;
+  height: auto !important;
+  aspect-ratio: 4 / 3 !important;
+  max-height: none !important;
+  max-width: none !important;
+  border-radius: 14px !important;
+  border: 2px solid rgba(255, 133, 162, 0.75) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.85) !important;
+  background: rgba(18, 10, 22, 0.94) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+  overflow: hidden !important;
+  margin: 0 !important;
+}
+
+.theater-shell.is-mobile-device .cam-slot .cam-video {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  object-position: center 25% !important;
+}
+
+.theater-shell.is-mobile-device .cam-slot.is-speaking .cam-frame {
+  border-color: #ffd166 !important;
+  box-shadow: 0 0 20px rgba(255, 209, 102, 0.65) !important;
+}
+
+.theater-shell.is-mobile-device .cam-slot .cam-badge-row {
+  display: flex !important;
+  position: absolute !important;
+  bottom: 4px !important;
+  left: 4px !important;
+  right: 4px !important;
+  font-size: 0.65rem !important;
+  padding: 2px 5px !important;
+  background: rgba(0, 0, 0, 0.65) !important;
+  border-radius: 6px !important;
+  backdrop-filter: blur(4px) !important;
+  justify-content: space-between !important;
+  z-index: 5 !important;
+}
+
+.theater-shell.is-mobile-device .cinema-controls {
+  left: 8px !important;
+  right: 8px !important;
+  bottom: calc(8px + env(safe-area-inset-bottom, 0px)) !important;
+  padding: 5px 8px !important;
+  gap: 5px !important;
+  border-radius: 12px !important;
+  z-index: 30 !important;
+}
+.theater-shell.is-mobile-device .ctrl-btn {
+  width: 32px !important;
+  height: 32px !important;
+  border-radius: 8px !important;
+}
+.theater-shell.is-mobile-device .ctrl-btn svg {
+  width: 15px !important;
+  height: 15px !important;
+}
+.theater-shell.is-mobile-device .ctrl-vol,
+.theater-shell.is-mobile-device .now-playing {
+  display: none !important;
+}
+.theater-shell.is-mobile-device .ctrl-time {
+  font-size: 0.68rem !important;
+  padding: 0 2px !important;
+}
+
+@media (max-width: 820px), (max-width: 1024px) and (orientation: landscape), (max-height: 550px) and (orientation: landscape) {
   .theater-shell {
     padding-bottom: 0 !important;
     background: #07050a !important;
@@ -1738,7 +1907,7 @@ select:focus {
     display: none !important;
   }
 
-  /* El escenario en celular: ocupa el 100% relativo y sin desbordes */
+  /* El escenario en celular: ocupa el 100% relativo y sin desbordes ni columnas laterales */
   .theater-grid {
     position: relative !important;
     display: block !important;
@@ -1750,7 +1919,7 @@ select:focus {
     background: #07050a !important;
   }
 
-  /* Todas las actividades (Cine, Hub, Dibujo, Juegos, Ruleta, Relax) ocupan la pantalla completa */
+  /* Todas las actividades ocupan la pantalla completa */
   .cinema-stage,
   .kawaii-pastel-hub,
   .kawaii-clean-studio,
@@ -1766,7 +1935,7 @@ select:focus {
     z-index: 10 !important;
   }
 
-  /* En Modo Cine: La película se ve grande y completa con fondo negro */
+  /* En Modo Cine: Película grande, completa, sin bordes decorativos molestos */
   .cinema-stage {
     display: flex !important;
     align-items: center !important;
@@ -1785,6 +1954,7 @@ select:focus {
     box-shadow: none !important;
     background: #000 !important;
     margin: 0 !important;
+    padding: 0 !important;
   }
 
   .screen-bezel video,
@@ -1809,23 +1979,25 @@ select:focus {
   }
 
   .cam-slot.cam-left {
-    left: calc(8px + env(safe-area-inset-left, 0px)) !important;
+    left: calc(12px + env(safe-area-inset-left, 0px)) !important;
     right: auto !important;
   }
 
   .cam-slot.cam-right {
-    right: calc(8px + env(safe-area-inset-right, 0px)) !important;
+    right: calc(12px + env(safe-area-inset-right, 0px)) !important;
     left: auto !important;
   }
 
   .cam-slot .cam-frame {
     width: 100% !important;
-    height: 100% !important;
+    height: auto !important;
     aspect-ratio: 4 / 3 !important;
+    max-height: none !important;
+    max-width: none !important;
     border-radius: 14px !important;
-    border: 2px solid rgba(255, 133, 162, 0.7) !important;
+    border: 2px solid rgba(255, 133, 162, 0.75) !important;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.85) !important;
-    background: rgba(18, 10, 22, 0.92) !important;
+    background: rgba(18, 10, 22, 0.94) !important;
     backdrop-filter: blur(8px) !important;
     -webkit-backdrop-filter: blur(8px) !important;
     overflow: hidden !important;
@@ -1889,67 +2061,62 @@ select:focus {
 }
 
 /* En vertical: Cámaras arriba a los costados en horizontal */
-@media (max-width: 820px) and (orientation: portrait) {
+@media (orientation: portrait) {
+  .theater-shell.is-mobile-device .cam-slot,
   .cam-slot {
-    top: 10px !important;
+    top: calc(10px + env(safe-area-inset-top, 0px)) !important;
     bottom: auto !important;
     transform: none !important;
     width: clamp(100px, 28vw, 130px) !important;
     height: auto !important;
   }
 
-  /* Dejar espacio para las cámaras superiores en las actividades interactivas en modo vertical */
-  .kawaii-pastel-hub .kawaii-hub-inner {
+  .theater-shell.is-mobile-device .kawaii-pastel-hub .kawaii-hub-inner {
     padding-top: 100px !important;
   }
-  .kawaii-clean-studio .kawaii-floating-top-left {
+  .theater-shell.is-mobile-device .kawaii-clean-studio .kawaii-floating-top-left {
     top: 102px !important;
     left: 8px !important;
     z-index: 40 !important;
   }
-  .kawaii-clean-studio .kawaii-floating-top-right {
+  .theater-shell.is-mobile-device .kawaii-clean-studio .kawaii-floating-top-right {
     top: 102px !important;
     right: 8px !important;
     z-index: 40 !important;
   }
-  .kawaii-pastel-surface {
+  .theater-shell.is-mobile-device .kawaii-pastel-surface {
     padding-top: 96px !important;
   }
 }
 
 /* En horizontal (landscape): Cámaras centradas verticalmente a los extremos izquierdo y derecho */
-@media (max-width: 950px) and (orientation: landscape), (max-height: 520px) and (orientation: landscape) {
-  .theater-shell {
-    padding-bottom: 0 !important;
-    background: #07050a !important;
-    background-color: #07050a !important;
+@media (orientation: landscape) {
+  .theater-shell.is-mobile-device,
+  .theater-shell.is-mobile-device .theater-grid {
+    height: 100% !important;
+    width: 100% !important;
   }
-  .theater-topbar {
+
+  .theater-shell.is-mobile-device .theater-topbar {
     padding: 3px 8px !important;
     height: 40px !important;
     min-height: 40px !important;
     max-height: 40px !important;
   }
-  .action-cluster {
-    flex-wrap: nowrap !important;
-    overflow-x: auto !important;
-    scrollbar-width: none !important;
-  }
 
-  .cam-slot {
+  .theater-shell.is-mobile-device .cam-slot {
     top: 50% !important;
     transform: translateY(-50%) !important;
     bottom: auto !important;
-    width: clamp(120px, 16vw, 150px) !important;
+    width: clamp(115px, 15vw, 145px) !important;
     height: auto !important;
   }
 
-  /* En actividades interactivas en horizontal, centrar contenido para no chocar con cámaras laterales */
-  .kawaii-pastel-hub .kawaii-hub-inner {
+  .theater-shell.is-mobile-device .kawaii-pastel-hub .kawaii-hub-inner {
     padding-left: clamp(120px, 16vw, 150px) !important;
     padding-right: clamp(120px, 16vw, 150px) !important;
   }
-  .kawaii-pastel-surface {
+  .theater-shell.is-mobile-device .kawaii-pastel-surface {
     padding-left: clamp(120px, 16vw, 150px) !important;
     padding-right: clamp(120px, 16vw, 150px) !important;
   }

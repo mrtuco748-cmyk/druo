@@ -33,8 +33,14 @@ import { Signaling } from './lib/signaling';
 import { PlaybackState } from './lib/sync';
 import { resumeSharedAudioContext } from './lib/voiceEngine';
 
-const isMobileDevice = () =>
-  /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent) || window.innerWidth < 820;
+const isMobileDevice = () => {
+  if (typeof navigator === 'undefined') return false;
+  const ua = navigator.userAgent || '';
+  if (/Android|iPhone|iPad|iPod|Mobile/i.test(ua)) return true;
+  if (window.innerWidth < 820) return true;
+  if (window.innerWidth <= 1024 && window.innerHeight <= 600) return true;
+  return false;
+};
 
 function getOrCreateId(key: string, prefix: string) {
   let v = localStorage.getItem(key);
@@ -48,7 +54,17 @@ function getOrCreateId(key: string, prefix: string) {
 const SESSION_ID = `s-${Math.random().toString(36).slice(2, 10)}`;
 
 export const App: React.FC = () => {
-  const mobile = isMobileDevice();
+  const [mobile, setMobile] = useState(() => isMobileDevice());
+
+  useEffect(() => {
+    const onResize = () => setMobile(isMobileDevice());
+    window.addEventListener('resize', onResize);
+    window.addEventListener('orientationchange', onResize);
+    return () => {
+      window.removeEventListener('resize', onResize);
+      window.removeEventListener('orientationchange', onResize);
+    };
+  }, []);
   const [myId] = useState(() => getOrCreateId('druo.peerId', mobile ? 'mov' : 'pc'));
   const [mySeat, setMySeat] = useState<'left' | 'right'>(
     () => (localStorage.getItem('druo.seat') as 'left' | 'right') || (mobile ? 'right' : 'left')
@@ -517,7 +533,7 @@ export const App: React.FC = () => {
 
   return (
     <div
-      className={`theater-shell view-${viewMode} activity-${activeActivity} ${
+      className={`theater-shell ${mobile ? 'is-mobile-device' : 'is-desktop-device'} view-${viewMode} activity-${activeActivity} ${
         activeActivity !== 'cinema' ? 'is-interactive-activity' : 'is-cinema-activity'
       } ${immersiveMode ? 'is-ui-hidden' : ''}`}
       onPointerDown={handlePointerDown}
