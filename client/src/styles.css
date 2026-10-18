@@ -3582,12 +3582,60 @@ select:focus {
   }
 }
 
-/* En celulares angostos ocultamos la barra de reacciones del topbar (ya están en el Hub) */
-@media (max-width: 540px) {
-  .kawaii-topbar .kawaii-react-bar {
-    display: none !important;
+/* ---------------- Modo Inmersivo / Ocultar Interfaces (Doble Tap en Fondo) ---------------- */
+.theater-shell.is-ui-hidden {
+  grid-template-rows: 1fr !important;
+}
+
+.theater-shell.is-ui-hidden .theater-topbar {
+  display: none !important;
+}
+
+.theater-shell.is-ui-hidden .cinema-controls {
+  display: none !important;
+}
+
+.theater-shell.is-ui-hidden .call-return-btn {
+  display: none !important;
+}
+
+.theater-shell.is-ui-hidden .master-audio-banner {
+  display: none !important;
+}
+
+/* Toast flotante estético al ocultar / mostrar la interfaz */
+.immersive-toast {
+  position: fixed;
+  top: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(14, 8, 18, 0.94);
+  border: 1.5px solid rgba(255, 133, 162, 0.65);
+  color: #fff;
+  font-size: 0.82rem;
+  font-weight: 500;
+  padding: 8px 18px;
+  border-radius: 999px;
+  z-index: 100;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  pointer-events: none;
+  animation: fadeInOutToast 0.25s ease-out;
+  white-space: nowrap;
+}
+
+@keyframes fadeInOutToast {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -8px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
   }
 }
+
 
 
 

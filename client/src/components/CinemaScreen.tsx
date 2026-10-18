@@ -157,7 +157,10 @@ export const CinemaScreen: React.FC<Props> = ({
     lastSpeechAtRef.current = Date.now();
   }
 
+  const hasUserInteractedRef = useRef<boolean>(false);
+
   const unlockAudio = () => {
+    hasUserInteractedRef.current = true;
     const v = videoRef.current;
     if (v) {
       v.muted = false;
@@ -174,6 +177,24 @@ export const CinemaScreen: React.FC<Props> = ({
     setAutoplayBlocked(false);
     onAutoplayBlockedChange?.(false);
   };
+
+  useEffect(() => {
+    const onUserInteraction = () => {
+      hasUserInteractedRef.current = true;
+      const v = videoRef.current;
+      if (v && v.muted && !autoplayBlocked) {
+        v.muted = false;
+      }
+    };
+    window.addEventListener('click', onUserInteraction, { passive: true });
+    window.addEventListener('touchstart', onUserInteraction, { passive: true });
+    window.addEventListener('pointerdown', onUserInteraction, { passive: true });
+    return () => {
+      window.removeEventListener('click', onUserInteraction);
+      window.removeEventListener('touchstart', onUserInteraction);
+      window.removeEventListener('pointerdown', onUserInteraction);
+    };
+  }, [autoplayBlocked]);
 
   useEffect(() => {
     if (!autoplayBlocked) return;
@@ -503,7 +524,9 @@ export const CinemaScreen: React.FC<Props> = ({
       const clamped = Math.max(0, Math.min(1, val));
       smoothVolRef.current = clamped;
       if (videoRef.current && Math.abs(videoRef.current.volume - clamped) > 0.005) {
-        videoRef.current.volume = clamped;
+        try {
+          videoRef.current.volume = clamped;
+        } catch {}
       }
       if (ytPlayerRef.current?.setVolume) {
         try {
@@ -512,8 +535,8 @@ export const CinemaScreen: React.FC<Props> = ({
       }
     };
 
-    const ceilingVol = volume * 0.85;
-    const duckedVol = volume * 0.05;
+    const ceilingVol = volume;
+    const duckedVol = volume * 0.40;
     const targetVol = someoneSpeaking && duckingEnabled ? duckedVol : ceilingVol;
 
     // Si alguien empieza a hablar, bajamos rápido para que la primera sílaba no se meta al micrófono ni active el AEC agresivo
@@ -610,7 +633,9 @@ export const CinemaScreen: React.FC<Props> = ({
       const v = videoRef.current;
       if (!v || !resolvedUrl) return;
       if (Math.abs(v.volume - effVol) > 0.015) {
-        v.volume = effVol;
+        try {
+          v.volume = effVol;
+        } catch {}
       }
       setCurrentPos(v.currentTime || 0);
       if (v.duration && Number.isFinite(v.duration)) setDuration(v.duration);
@@ -642,10 +667,12 @@ export const CinemaScreen: React.FC<Props> = ({
             onAutoplayBlockedChange?.(false);
           })
           .catch(() => {
-            v.muted = true;
-            v.play().catch(() => {});
-            setAutoplayBlocked(true);
-            onAutoplayBlockedChange?.(true);
+            if (!hasUserInteractedRef.current && (v.currentTime || 0) < 0.5) {
+              v.muted = true;
+              v.play().catch(() => {});
+              setAutoplayBlocked(true);
+              onAutoplayBlockedChange?.(true);
+            }
           });
       } else if (!shouldPlay && !v.paused) {
         suppressEventsUntil.current = Date.now() + 600;
@@ -704,6 +731,7 @@ export const CinemaScreen: React.FC<Props> = ({
 
   // Acciones de usuario en los controles compartidos (funcionan igual desde compu o celular)
   const togglePlay = () => {
+    hasUserInteractedRef.current = true;
     const nextPlaying = !playback.playing;
     let pos = currentPos;
     if (source?.kind === 'youtube' && ytPlayerRef.current?.getCurrentTime) {
@@ -713,12 +741,22 @@ export const CinemaScreen: React.FC<Props> = ({
     }
     suppressEventsUntil.current = Date.now() + 600;
     if (videoRef.current) {
-      if (nextPlaying) videoRef.current.play().catch(() => {});
-      else videoRef.current.pause();
+      if (nextPlaying) {
+        videoRef.current.muted = false;
+        videoRef.current.play().catch(() => {});
+      } else {
+        videoRef.current.pause();
+      }
     }
     if (ytPlayerRef.current) {
-      if (nextPlaying) ytPlayerRef.current.playVideo?.();
-      else ytPlayerRef.current.pauseVideo?.();
+      if (nextPlaying) {
+        try {
+          ytPlayerRef.current.unMute?.();
+        } catch {}
+        ytPlayerRef.current.playVideo?.();
+      } else {
+        ytPlayerRef.current.pauseVideo?.();
+      }
     }
     onEmitSync(
       { playing: nextPlaying, position: pos, playlistIndex: currentPlaylistIdxRef.current },
@@ -893,6 +931,10 @@ export const CinemaScreen: React.FC<Props> = ({
             ref={videoRef}
             className={`cinema-video ${!resolvedUrl ? 'is-hidden' : ''}`}
             playsInline
+            // @ts-ignore
+            webkit-playsinline="true"
+            // @ts-ignore
+            x5-playsinline="true"
             onWaiting={() => onEmitBuffering(true)}
             onPlaying={() => {
               onEmitBuffering(false);

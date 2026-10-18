@@ -140,6 +140,45 @@ export const App: React.FC = () => {
     return (localStorage.getItem('druo.viewMode') as any) || 'cinema';
   });
 
+  const [immersiveMode, setImmersiveMode] = useState(false);
+  const [immersiveToast, setImmersiveToast] = useState<string | null>(null);
+  const toastTimerRef = useRef<any>(null);
+  const lastTapRef = useRef<number>(0);
+
+  const toggleImmersiveMode = () => {
+    setImmersiveMode((prev) => {
+      const next = !prev;
+      clearTimeout(toastTimerRef.current);
+      setImmersiveToast(
+        next
+          ? '✨ Modo inmersivo activado · Toca 2 veces para mostrar controles'
+          : '✨ Interfaz visible'
+      );
+      toastTimerRef.current = setTimeout(() => {
+        setImmersiveToast(null);
+      }, 2500);
+      return next;
+    });
+  };
+
+  const handlePointerDown = (e: React.PointerEvent) => {
+    const target = e.target as HTMLElement | null;
+    if (
+      target?.closest(
+        'button, input, select, textarea, .ctrl-btn, .ctrl-timeline-wrap, .cam-slot, .top-btn, .kawaii-options-popover, .modal-card, .drawing-toolbar, .drawing-canvas, a'
+      )
+    ) {
+      return;
+    }
+    const now = Date.now();
+    if (now - lastTapRef.current < 380) {
+      toggleImmersiveMode();
+      lastTapRef.current = 0;
+    } else {
+      lastTapRef.current = now;
+    }
+  };
+
   useEffect(() => {
     if (mobile && viewMode !== 'cinema') {
       setViewMode('cinema');
@@ -472,7 +511,9 @@ export const App: React.FC = () => {
     <div
       className={`theater-shell view-${viewMode} activity-${activeActivity} ${
         activeActivity !== 'cinema' ? 'is-interactive-activity' : 'is-cinema-activity'
-      }`}
+      } ${immersiveMode ? 'is-ui-hidden' : ''}`}
+      onPointerDown={handlePointerDown}
+      onDoubleClick={toggleImmersiveMode}
     >
       {/* Barra superior Pastel Kawaii minimalista (Solo Iconos SVG, Sin Textos, Sin Emojis) */}
       <header className="theater-topbar kawaii-topbar">
@@ -652,7 +693,7 @@ export const App: React.FC = () => {
             playback={playback}
             subs={subs}
             serverNow={() => sigRef.current?.clock.now() || Date.now()}
-            someoneSpeaking={meSpeaking || peerSpeaking || peerSpeakingNet}
+            someoneSpeaking={peerSpeaking || peerSpeakingNet}
             duckingEnabled={duckingEnabled}
             waitOnBuffer={waitOnBuffer}
             peerBuffering={peerBuffering}
@@ -810,6 +851,12 @@ export const App: React.FC = () => {
         viewMode={viewMode}
         onSelectViewMode={handleSelectViewMode}
       />
+
+      {immersiveToast && (
+        <div className="immersive-toast" aria-live="polite">
+          {immersiveToast}
+        </div>
+      )}
     </div>
   );
 };
