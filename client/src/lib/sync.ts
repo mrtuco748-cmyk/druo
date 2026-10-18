@@ -4,6 +4,7 @@ export interface PlaybackState {
   playing: boolean;
   position: number;
   rate: number;
+  playlistIndex?: number;
   updatedAt: number;
   by?: string | null;
 }

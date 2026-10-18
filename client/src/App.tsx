@@ -255,6 +255,15 @@ export const App: React.FC = () => {
       .then((r) => r.json())
       .catch(() => ({ iceServers: [{ urls: 'stun:stun.cloudflare.com:3478' }] }));
 
+    const rtc = new PeerCall(
+      myId,
+      (data) => sigRef.current?.send({ t: 'signal', data }),
+      (rem) => setRemoteStream(new MediaStream(rem.getTracks())),
+      (st) => setStats(st)
+    );
+    rtcRef.current = rtc;
+    await rtc.init(iceRes.iceServers || [], stream);
+
     const sig = new Signaling(
       {
         id: myId,
@@ -325,15 +334,6 @@ export const App: React.FC = () => {
       (online) => setWsOnline(online)
     );
     sigRef.current = sig;
-
-    const rtc = new PeerCall(
-      myId,
-      (data) => sig.send({ t: 'signal', data }),
-      (rem) => setRemoteStream(new MediaStream(rem.getTracks())),
-      (st) => setStats(st)
-    );
-    rtcRef.current = rtc;
-    await rtc.init(iceRes.iceServers || [], stream);
   };
 
   // Sincronizar con el otro peer cuando entra o sale de la sala
@@ -378,17 +378,21 @@ export const App: React.FC = () => {
     }
   };
 
-  const handleEmitSync = (state: { playing: boolean; position: number }, reason: string) => {
+  const handleEmitSync = (
+    state: { playing: boolean; position: number; playlistIndex?: number },
+    reason: string
+  ) => {
     const now = sigRef.current?.clock.now() || Date.now();
     const next: PlaybackState = {
       playing: state.playing,
       position: state.position,
       rate: 1,
+      playlistIndex: state.playlistIndex ?? playback.playlistIndex ?? 0,
       updatedAt: now,
       by: myId,
     };
     setPlayback(next);
-    sigRef.current?.send({ t: 'sync', state, at: now, reason });
+    sigRef.current?.send({ t: 'sync', state: { ...state, playlistIndex: next.playlistIndex }, at: now, reason });
   };
 
   const toggleFullscreen = async () => {

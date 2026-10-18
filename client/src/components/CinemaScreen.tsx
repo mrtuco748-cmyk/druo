@@ -16,6 +16,9 @@ export interface RoomSource {
   title: string;
   url?: string;
   id?: string; // youtube id
+  listId?: string;
+  playlist?: string[];
+  playlistIndex?: number;
   versions?: MovieVersion[];
   via?: string;
   size?: number;
@@ -42,7 +45,7 @@ interface Props {
   movieCapBps: number; // 0 = sin tope
   onLevelsLoaded: (levels: { index: number; label: string; bitrate: number }[]) => void;
   onSelectVersionKey: (key: string) => void;
-  onEmitSync: (state: { playing: boolean; position: number }, reason: string) => void;
+  onEmitSync: (state: { playing: boolean; position: number; playlistIndex?: number }, reason: string) => void;
   onEmitBuffering: (buffering: boolean) => void;
   onOpenSources: () => void;
   localFileUrl: string | null;
@@ -126,6 +129,9 @@ export const CinemaScreen: React.FC<Props> = ({
   const ytPlayerRef = useRef<any>(null);
 
   const suppressEventsUntil = useRef<number>(0);
+  const lastSeekAtRef = useRef<number>(0);
+  const currentPlaylistIdxRef = useRef<number>(0);
+  const [playlistIdx, setPlaylistIdx] = useState<number>(0);
   const [resolvedUrl, setResolvedUrl] = useState<string | null>(null);
   const [duration, setDuration] = useState(0);
   const [currentPos, setCurrentPos] = useState(0);
@@ -277,12 +283,22 @@ export const CinemaScreen: React.FC<Props> = ({
     if (source.kind === 'hls' && Hls.isSupported()) {
       const hls = new Hls({
         capLevelToPlayerSize: true,
-        maxBufferLength: 25,
+        maxBufferLength: 30,
         backBufferLength: 20,
+        enableWorker: true,
       });
       hlsRef.current = hls;
       hls.loadSource(resolvedUrl);
       hls.attachMedia(v);
+      hls.on(Hls.Events.ERROR, (_ev, data) => {
+        if (data.fatal) {
+          if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
+            hls.startLoad();
+          } else if (data.type === Hls.ErrorTypes.MEDIA_ERROR) {
+            hls.recoverMediaError();
+          }
+        }
+      });
       hls.on(Hls.Events.MANIFEST_PARSED, () => {
         const lvls = hls.levels.map((l, idx) => ({
           index: idx,
@@ -355,6 +371,28 @@ export const CinemaScreen: React.FC<Props> = ({
     }
   }, [hlsLevel, movieCapBps]);
 
+  const jumpToPlaylistIndex = (nextIdx: number, emit = true) => {
+    const list = source?.playlist;
+    if (!list || nextIdx < 0 || nextIdx >= list.length) return;
+    currentPlaylistIdxRef.current = nextIdx;
+    setPlaylistIdx(nextIdx);
+    setCurrentPos(0);
+    const p = ytPlayerRef.current;
+    suppressEventsUntil.current = Date.now() + 900;
+    lastSeekAtRef.current = Date.now();
+    if (p && typeof p.loadVideoById === 'function') {
+      p.loadVideoById({ videoId: list[nextIdx], startSeconds: 0 });
+      if (playback.playing || emit) {
+        try {
+          p.playVideo?.();
+        } catch {}
+      }
+    }
+    if (emit) {
+      onEmitSync({ playing: true, position: 0, playlistIndex: nextIdx }, 'playlist-part');
+    }
+  };
+
   // Montar YouTube cuando source.kind === 'youtube'
   useEffect(() => {
     if (source?.kind !== 'youtube' || !source.id) {
@@ -367,39 +405,75 @@ export const CinemaScreen: React.FC<Props> = ({
       return;
     }
     let cancelled = false;
+    const initIdx = playback.playlistIndex ?? source.playlistIndex ?? 0;
+    currentPlaylistIdxRef.current = initIdx;
+    setPlaylistIdx(initIdx);
+    const initialVideoId = source.playlist?.[initIdx] || source.id;
+
     loadYouTubeApi().then((YT) => {
       if (cancelled || !ytHostRef.current) return;
       try {
         ytPlayerRef.current?.destroy();
       } catch {}
       ytPlayerRef.current = new YT.Player(ytHostRef.current, {
-        videoId: source.id,
+        videoId: initialVideoId,
         playerVars: {
           autoplay: playback.playing ? 1 : 0,
           controls: 0,
           rel: 0,
           modestbranding: 1,
           playsinline: 1,
+          iv_load_policy: 3,
           start: Math.floor(expectedPosition(playback, serverNow())),
         },
         events: {
           onReady: (ev: any) => {
             setDuration(ev.target.getDuration() || 0);
             const target = expectedPosition(playback, serverNow());
-            ev.target.seekTo(target, true);
+            if (target > 1) ev.target.seekTo(target, true);
             if (playback.playing) ev.target.playVideo();
             else ev.target.pauseVideo();
           },
           onStateChange: (ev: any) => {
-            if (Date.now() < suppressEventsUntil.current) return;
             const p = ev.target;
+            if (ev.data === YT.PlayerState.BUFFERING) {
+              onEmitBuffering(true);
+              return;
+            }
+            if (ev.data === YT.PlayerState.PLAYING || ev.data === YT.PlayerState.PAUSED) {
+              onEmitBuffering(false);
+            }
+            // Avance automático continuo sin cortes al terminar una parte de la playlist
+            if (ev.data === YT.PlayerState.ENDED) {
+              const list = source.playlist;
+              const nextIdx = currentPlaylistIdxRef.current + 1;
+              if (list && nextIdx < list.length) {
+                jumpToPlaylistIndex(nextIdx, true);
+                return;
+              }
+            }
+            if (Date.now() < suppressEventsUntil.current) return;
             if (ev.data === YT.PlayerState.PLAYING) {
               setIsPlaying(true);
               setDuration(p.getDuration() || 0);
-              onEmitSync({ playing: true, position: p.getCurrentTime() || 0 }, 'play');
+              onEmitSync(
+                {
+                  playing: true,
+                  position: p.getCurrentTime() || 0,
+                  playlistIndex: currentPlaylistIdxRef.current,
+                },
+                'play'
+              );
             } else if (ev.data === YT.PlayerState.PAUSED) {
               setIsPlaying(false);
-              onEmitSync({ playing: false, position: p.getCurrentTime() || 0 }, 'pause');
+              onEmitSync(
+                {
+                  playing: false,
+                  position: p.getCurrentTime() || 0,
+                  playlistIndex: currentPlaylistIdxRef.current,
+                },
+                'pause'
+              );
             }
           },
         },
@@ -408,7 +482,7 @@ export const CinemaScreen: React.FC<Props> = ({
     return () => {
       cancelled = true;
     };
-  }, [source?.kind, source?.id]);
+  }, [source?.kind, source?.listId || source?.id]);
 
   // Subtítulos compartidos (.srt / .vtt -> WebVTT Blob URL)
   useEffect(() => {
@@ -475,17 +549,55 @@ export const CinemaScreen: React.FC<Props> = ({
         try {
           p.setVolume?.(Math.round(effVol * 100));
         } catch {}
-        const pos = Number(p.getCurrentTime()) || 0;
-        setCurrentPos(pos);
-        setDuration(Number(p.getDuration?.()) || duration);
+
         const target = expectedPosition(playback, now);
-        if (Math.abs(target - pos) > 1.8) {
-          suppressEventsUntil.current = Date.now() + 700;
+
+        // Sincronizar parte de la playlist si el otro participante avanzó o cambió de parte
+        if (
+          source.playlist?.length &&
+          typeof playback.playlistIndex === 'number' &&
+          playback.playlistIndex !== currentPlaylistIdxRef.current &&
+          source.playlist[playback.playlistIndex]
+        ) {
+          currentPlaylistIdxRef.current = playback.playlistIndex;
+          setPlaylistIdx(playback.playlistIndex);
+          suppressEventsUntil.current = Date.now() + 900;
+          lastSeekAtRef.current = Date.now();
+          p.loadVideoById?.({
+            videoId: source.playlist[playback.playlistIndex],
+            startSeconds: Math.max(0, target),
+          });
+          return;
+        }
+
+        const pos = Number(p.getCurrentTime()) || 0;
+        const dur = Number(p.getDuration?.()) || duration;
+        setCurrentPos(pos);
+        if (dur > 0) setDuration(dur);
+
+        // Transición anticipada (0.35s antes del final) para que la playlist corra de corrido sin pantallas finales ni cortes
+        if (
+          source.playlist &&
+          source.playlist.length > 1 &&
+          dur > 3 &&
+          pos >= dur - 0.35 &&
+          currentPlaylistIdxRef.current + 1 < source.playlist.length
+        ) {
+          jumpToPlaylistIndex(currentPlaylistIdxRef.current + 1, true);
+          return;
+        }
+
+        const state = p.getPlayerState?.();
+        // No hacer seek ni forzar play mientras YouTube está buffereando (state === 3) para evitar bucle infinito de carga
+        if (state === 3) return;
+
+        if (Math.abs(target - pos) > 2.2 && Date.now() - lastSeekAtRef.current > 2500) {
+          suppressEventsUntil.current = Date.now() + 800;
+          lastSeekAtRef.current = Date.now();
           p.seekTo(target, true);
         }
-        const state = p.getPlayerState?.();
         const shouldPlay = playback.playing && !(waitOnBuffer && peerBuffering);
-        if (shouldPlay && state !== 1) {
+        if (shouldPlay && state !== 1 && state !== 3) {
           suppressEventsUntil.current = Date.now() + 700;
           p.playVideo?.();
         } else if (!shouldPlay && state === 1) {
@@ -503,12 +615,15 @@ export const CinemaScreen: React.FC<Props> = ({
       setCurrentPos(v.currentTime || 0);
       if (v.duration && Number.isFinite(v.duration)) setDuration(v.duration);
 
+      if (v.seeking) return;
+
       const shouldPlay = playback.playing && !(waitOnBuffer && peerBuffering);
       const dec = decideSync(v.currentTime || 0, { ...playback, playing: shouldPlay }, now);
       const recentlySpoke = someoneSpeakingRef.current || Date.now() - lastSpeechAtRef.current < 2200;
 
-      if (dec.action === 'seek') {
-        suppressEventsUntil.current = Date.now() + 600;
+      if (dec.action === 'seek' && Date.now() - lastSeekAtRef.current > 2000) {
+        suppressEventsUntil.current = Date.now() + 700;
+        lastSeekAtRef.current = Date.now();
         v.currentTime = dec.target;
         if (v.playbackRate !== 1) v.playbackRate = 1;
       } else if (dec.action === 'rate' && !recentlySpoke && Math.abs(dec.drift) > 0.48) {
@@ -542,7 +657,7 @@ export const CinemaScreen: React.FC<Props> = ({
     syncOnce();
     const t = setInterval(syncOnce, 600);
     return () => clearInterval(t);
-  }, [playback, resolvedUrl, source?.kind, waitOnBuffer, peerBuffering]);
+  }, [playback, resolvedUrl, source?.kind, source?.playlist, waitOnBuffer, peerBuffering]);
 
   // Fullscreen support
   useEffect(() => {
@@ -605,16 +720,23 @@ export const CinemaScreen: React.FC<Props> = ({
       if (nextPlaying) ytPlayerRef.current.playVideo?.();
       else ytPlayerRef.current.pauseVideo?.();
     }
-    onEmitSync({ playing: nextPlaying, position: pos }, nextPlaying ? 'play' : 'pause');
+    onEmitSync(
+      { playing: nextPlaying, position: pos, playlistIndex: currentPlaylistIdxRef.current },
+      nextPlaying ? 'play' : 'pause'
+    );
   };
 
   const seekTo = (pos: number) => {
     const clamped = Math.max(0, Math.min(duration || Infinity, pos));
     suppressEventsUntil.current = Date.now() + 700;
+    lastSeekAtRef.current = Date.now();
     if (videoRef.current) videoRef.current.currentTime = clamped;
     if (ytPlayerRef.current?.seekTo) ytPlayerRef.current.seekTo(clamped, true);
     setCurrentPos(clamped);
-    onEmitSync({ playing: playback.playing, position: clamped }, 'seek');
+    onEmitSync(
+      { playing: playback.playing, position: clamped, playlistIndex: currentPlaylistIdxRef.current },
+      'seek'
+    );
   };
 
   const toggleMute = () => {
@@ -771,7 +893,6 @@ export const CinemaScreen: React.FC<Props> = ({
             ref={videoRef}
             className={`cinema-video ${!resolvedUrl ? 'is-hidden' : ''}`}
             playsInline
-            crossOrigin="anonymous"
             onWaiting={() => onEmitBuffering(true)}
             onPlaying={() => {
               onEmitBuffering(false);
@@ -871,6 +992,38 @@ export const CinemaScreen: React.FC<Props> = ({
                 <text x="12" y="15" fontSize="7.5" fontWeight="bold" fill="currentColor" stroke="none" textAnchor="middle">10</text>
               </svg>
             </button>
+
+            {source.playlist && source.playlist.length > 1 && (
+              <>
+                <button
+                  type="button"
+                  className="ctrl-btn"
+                  disabled={playlistIdx <= 0}
+                  onClick={() => jumpToPlaylistIndex(playlistIdx - 1, true)}
+                  title="Parte anterior de la playlist"
+                  aria-label="Parte anterior"
+                >
+                  <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+                    <path d="M6 6h2v12H6zm3.5 6 8.5 6V6z" />
+                  </svg>
+                </button>
+                <span className="ctrl-time" title={`Parte ${playlistIdx + 1} de ${source.playlist.length}`}>
+                  {playlistIdx + 1}/{source.playlist.length}
+                </span>
+                <button
+                  type="button"
+                  className="ctrl-btn"
+                  disabled={playlistIdx >= source.playlist.length - 1}
+                  onClick={() => jumpToPlaylistIndex(playlistIdx + 1, true)}
+                  title="Siguiente parte de la playlist"
+                  aria-label="Siguiente parte"
+                >
+                  <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+                    <path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z" />
+                  </svg>
+                </button>
+              </>
+            )}
 
             <div
               ref={timelineRef}

@@ -110,10 +110,12 @@ const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, 'http://x');
   const key = `${req.method} ${url.pathname}`;
   try {
-    if (key === 'GET /api/hls-proxy') {
+    if (url.pathname === '/api/hls-proxy' && (req.method === 'GET' || req.method === 'HEAD')) {
       return await proxyHls(req, res, url.searchParams.get('url') || '', url.searchParams.get('ref') || '');
     }
-    if (key === 'GET /api/stream') return await streamLink(req, res, url.searchParams.get('link') || '');
+    if (url.pathname === '/api/stream' && (req.method === 'GET' || req.method === 'HEAD')) {
+      return await streamLink(req, res, url.searchParams.get('link') || '');
+    }
     const handler = routes[key];
     if (handler) {
       const body = req.method === 'POST' ? await readBody(req) : null;
@@ -261,7 +263,7 @@ setInterval(() => {
       ws.ping();
     } catch {}
   }
-}, 10_000).unref();
+}, 30_000).unref();
 
 // Keep-alive: si hay personas en la sala, ping a sí mismo cada 6 minutos para que Render no suspenda el servicio
 const renderUrl = process.env.RENDER_EXTERNAL_URL || 'https://druo.onrender.com';

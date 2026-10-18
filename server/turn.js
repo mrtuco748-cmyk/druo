@@ -1,6 +1,15 @@
 // Credenciales ICE: STUN gratis + TURN de Cloudflare (si hay credenciales).
 
-const STUN = [{ urls: ['stun:stun.cloudflare.com:3478', 'stun:stun.l.google.com:19302'] }];
+const STUN = [
+  {
+    urls: [
+      'stun:stun.cloudflare.com:3478',
+      'stun:stun.l.google.com:19302',
+      'stun:stun1.l.google.com:19302',
+      'stun:stun2.l.google.com:19302',
+    ],
+  },
+];
 let cache = { at: 0, servers: null };
 const TTL = 24 * 3600;
 

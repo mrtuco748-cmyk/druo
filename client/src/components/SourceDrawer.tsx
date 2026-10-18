@@ -285,7 +285,7 @@ export const SourceDrawer: React.FC<Props> = ({
             <p className="hint-text">
               • <strong>Cuevana (cuevanapro.org):</strong> pegás el link de la película o serie (ej. <em>https://cuevanapro.org/pelicula/buddy-wXqOV4</em>) y Druo extrae el video en alta definición sin popups ni anuncios, sincronizado para ambos.
               <br />• <strong>MediaFire / Google Drive / Dropbox:</strong> reproducen directo con soporte para adelantar/atrasar.
-              <br />• <strong>YouTube:</strong> se reproduce sincronizado para los dos.
+              <br />• <strong>YouTube y Playlists:</strong> pegá un video o una playlist (`?list=...`) y se reproduce de corrido sin cortes y sincronizada para los dos.
               <br />• <strong>Stream .m3u8 (HLS) o .mp4 directo:</strong> permite elegir calidad en vivo.
             </p>
             {linkErr && <div className="err-text">{linkErr}</div>}

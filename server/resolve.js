@@ -15,6 +15,95 @@ export function youtubeId(url) {
   return m ? m[1] : null;
 }
 
+export function youtubePlaylistId(url) {
+  const m = String(url).match(/(?:youtube\.com|youtu\.be)\/.*[?&]list=([A-Za-z0-9_-]+)/);
+  return m ? m[1] : null;
+}
+
+function decodeHtmlEntities(str) {
+  return String(str || '')
+    .replace(/&amp;/g, '&')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;|&apos;/g, "'")
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>');
+}
+
+function toTranslateProxyUrl(targetUrl) {
+  try {
+    const u = new URL(targetUrl);
+    const host = u.hostname.replace(/\./g, '-');
+    const sep = u.search ? '&' : '?';
+    return `https://${host}.translate.goog${u.pathname}${u.search}${sep}_x_tr_sl=auto&_x_tr_tl=es&_x_tr_hl=es&_x_tr_pto=wapp`;
+  } catch {
+    return null;
+  }
+}
+
+export async function resolveYoutubePlaylist(listId, initialVideoId = null) {
+  const playlistUrl = `https://www.youtube.com/playlist?list=${encodeURIComponent(listId)}`;
+  let html = '';
+  try {
+    const r = await fetch(playlistUrl, {
+      headers: BROWSER_HEADERS,
+      signal: AbortSignal.timeout(8000),
+    });
+    if (r.ok) html = await r.text();
+  } catch {}
+
+  if (!html || !html.includes('"videoId"')) {
+    const proxyUrl = toTranslateProxyUrl(playlistUrl);
+    if (proxyUrl) {
+      try {
+        const r2 = await fetch(proxyUrl, {
+          headers: BROWSER_HEADERS,
+          signal: AbortSignal.timeout(8000),
+        });
+        if (r2.ok) html = await r2.text();
+      } catch {}
+    }
+  }
+
+  // Extraer IDs de playlistVideoRenderer primero para evitar videos recomendados fuera de la lista
+  let ids = [
+    ...new Set(
+      [...html.matchAll(/"playlistVideoRenderer":\s*\{[\s\S]{0,120}?"videoId":"([A-Za-z0-9_-]{11})"/g)].map(
+        (m) => m[1]
+      )
+    ),
+  ];
+  if (ids.length === 0) {
+    ids = [...new Set([...html.matchAll(/"videoId":"([A-Za-z0-9_-]{11})"/g)].map((m) => m[1]))];
+  }
+
+  if (ids.length === 0 && initialVideoId) {
+    return { kind: 'youtube', id: initialVideoId, listId, title: 'YouTube' };
+  }
+  if (ids.length === 0) {
+    const e = new Error('No se encontraron videos públicos en esa playlist de YouTube');
+    e.status = 404;
+    throw e;
+  }
+
+  const titleMatch =
+    html.match(/<meta\s+property="og:title"\s+content="([^"]+)"/i) ||
+    html.match(/<title>([^<]+)<\/title>/i);
+  const rawTitle = decodeHtmlEntities(titleMatch ? titleMatch[1] : 'Playlist de YouTube')
+    .replace(/\s*-\s*YouTube$/i, '')
+    .trim();
+
+  const startIdx = initialVideoId ? Math.max(0, ids.indexOf(initialVideoId)) : 0;
+
+  return {
+    kind: 'youtube',
+    id: ids[startIdx] || ids[0],
+    listId,
+    playlist: ids,
+    playlistIndex: startIdx,
+    title: rawTitle || 'Playlist de YouTube',
+  };
+}
+
 function driveId(url) {
   const m = String(url).match(/drive\.google\.com\/(?:file\/d\/|open\?id=|uc\?(?:.*&)?id=)([A-Za-z0-9_-]{10,})/);
   return m ? m[1] : null;
@@ -62,82 +151,122 @@ const BROWSER_HEADERS = {
   'Upgrade-Insecure-Requests': '1',
 };
 
-export async function resolveCuevana(cuevanaUrl) {
-  let html1 = '';
+async function fetchCuevanaHtml(targetUrl, checkFn, referer = '') {
+  // 1. Intento directo rápido (funciona en IP residencial)
   try {
-    const r1 = await fetch(cuevanaUrl, { headers: BROWSER_HEADERS, signal: AbortSignal.timeout(6000) });
+    const headers = { ...BROWSER_HEADERS };
+    if (referer) headers.Referer = referer;
+    const r1 = await fetch(targetUrl, { headers, signal: AbortSignal.timeout(4000) });
     if (r1.ok) {
-      html1 = await r1.text();
+      const t = await r1.text();
+      if (checkFn(t)) return t;
     }
   } catch {}
 
-  // Fallback 1: Jina Reader HTML (bypass ultra-rápido para Cloudflare)
-  if (!html1 || !html1.includes('/vidurl/')) {
+  // 2. Bypass ultra-rápido por Google Translate Proxy (evita bloqueo ASN 1005 de Cloudflare en Render)
+  const gUrl = toTranslateProxyUrl(targetUrl);
+  if (gUrl) {
     try {
-      const rJina = await fetch(`https://r.jina.ai/${cuevanaUrl}`, {
-        headers: { 'X-Return-Format': 'html' },
-        signal: AbortSignal.timeout(10000),
+      const rG = await fetch(gUrl, {
+        headers: BROWSER_HEADERS,
+        signal: AbortSignal.timeout(8000),
       });
-      if (rJina.ok) html1 = await rJina.text();
+      if (rG.ok) {
+        const t = await rG.text();
+        if (checkFn(t)) return t;
+      }
     } catch {}
   }
 
-  // Fallback 2: allorigins
-  if (!html1 || !html1.includes('/vidurl/')) {
-    try {
-      const rProxy = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(cuevanaUrl)}`, {
-        signal: AbortSignal.timeout(12000),
-      });
-      if (rProxy.ok) html1 = await rProxy.text();
-    } catch {}
+  // 3. Fallback Jina Reader HTML
+  try {
+    const rJina = await fetch(`https://r.jina.ai/${targetUrl}`, {
+      headers: { 'X-Return-Format': 'html' },
+      signal: AbortSignal.timeout(9000),
+    });
+    if (rJina.ok) {
+      const t = await rJina.text();
+      if (checkFn(t)) return t;
+    }
+  } catch {}
+
+  return '';
+}
+
+export async function resolveCuevana(cuevanaUrl) {
+  let currentUrl = cuevanaUrl;
+  let html1 = await fetchCuevanaHtml(
+    currentUrl,
+    (t) => t.includes('/vidurl/') || t.includes('/temporada/') || t.includes('/pelicula/')
+  );
+
+  // Si el usuario pegó la portada de una serie (/serie/nombre) o una búsqueda (/search?s=...), abrir el primer episodio o resultado
+  if (html1 && !html1.includes('/vidurl/')) {
+    const epMatch =
+      html1.match(/href=["']([^"']*\/serie\/[^"']+\/temporada\/\d+\/capitulo\/\d+)["']/i) ||
+      html1.match(/href=["'](https?:\/\/[^"']*cuevanapro\.org\/pelicula\/[^"'?_]+)["']/i) ||
+      html1.match(/href=["'](\/pelicula\/[^"'?_]+)["']/i);
+    if (epMatch) {
+      const nextUrl = new URL(decodeHtmlEntities(epMatch[1]).split('?')[0], cuevanaUrl).href;
+      currentUrl = nextUrl;
+      html1 = await fetchCuevanaHtml(currentUrl, (t) => t.includes('/vidurl/'), cuevanaUrl);
+    }
   }
 
   const titleMatch = html1 ? html1.match(/<title>([^<]+)<\/title>/i) : null;
-  const title = (titleMatch ? titleMatch[1] : 'Película')
-    .replace(' - CuevanaPRO', '')
-    .replace('Ver ', '')
-    .replace(' Online', '')
+  const title = decodeHtmlEntities(titleMatch ? titleMatch[1] : 'Película')
+    .replace(/\s*-\s*CuevanaPRO.*$/i, '')
+    .replace(/^Ver\s+/i, '')
+    .replace(/\s+Online.*$/i, '')
     .trim();
 
-  const vidurlMatch = html1 ? html1.match(/<iframe[^>]+src=["'](\/vidurl\/[^"']+)["']/i) : null;
-  const vidurl = vidurlMatch ? new URL(vidurlMatch[1], cuevanaUrl).href : null;
-
-  // Si no pudimos obtener vidurl, fallback al link directo embebido
-  if (!vidurl) {
-    return {
-      kind: 'embed',
-      url: cuevanaUrl,
-      title: title || 'Cuevana',
-      via: 'cuevana',
-    };
+  const vidurlMatch = html1
+    ? html1.match(/<iframe[^>]+src=["']([^"']*\/vidurl\/[^"']+)["']/i) ||
+      html1.match(/(\/vidurl\/[A-Za-z0-9_-]+\/?)/i)
+    : null;
+  let vidurl = null;
+  if (vidurlMatch) {
+    const rawVid = decodeHtmlEntities(vidurlMatch[1]).split('?')[0];
+    const vidPath = rawVid.startsWith('http') ? new URL(rawVid).pathname : rawVid;
+    vidurl = new URL(vidPath, cuevanaUrl).href;
   }
 
-  let html2 = '';
-  try {
-    const r2 = await fetch(vidurl, {
-      headers: {
-        'User-Agent': UA,
-        Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-        Referer: cuevanaUrl,
-      },
-      signal: AbortSignal.timeout(15000),
-    });
-    if (r2.ok) html2 = await r2.text();
-  } catch {}
+  if (!vidurl) {
+    const e = new Error(
+      'No encontré el reproductor en ese link de Cuevana. Asegurate de pegar el link directo de una película o capítulo.'
+    );
+    e.status = 404;
+    throw e;
+  }
+
+  // Obtener HTML del reproductor vidurl (o su espejo directo en embed69.org)
+  let html2 = await fetchCuevanaHtml(
+    vidurl,
+    (t) => t.includes('POW_CHALLENGE') && t.includes('dataLink'),
+    currentUrl
+  );
+
+  if (!html2) {
+    const imdbMatch = vidurl.match(/\/vidurl\/([^/?#]+)/i);
+    if (imdbMatch) {
+      const embed69Url = `https://embed69.org/f/${imdbMatch[1]}/`;
+      html2 = await fetchCuevanaHtml(
+        embed69Url,
+        (t) => t.includes('POW_CHALLENGE') && t.includes('dataLink'),
+        currentUrl
+      );
+    }
+  }
 
   const challengeMatch = html2.match(/const POW_CHALLENGE = '([^']+)';/);
   const difficultyMatch = html2.match(/const POW_DIFFICULTY = (\d+);/);
   const saltMatch = html2.match(/const POW_SALT = '([^']+)';/);
   const dataLinkMatch = html2.match(/let dataLink = (\[[\s\S]*?\]);/);
 
-  // Si no se puede descifrar el reproductor en el servidor, usamos el reproductor vidurl embebido directamente
   if (!challengeMatch || !dataLinkMatch) {
-    return {
-      kind: 'embed',
-      url: vidurl,
-      title: `${title} (Cuevana)`,
-      via: 'cuevana',
-    };
+    const e = new Error('No se pudo descifrar el reproductor de Cuevana en este momento. Probá de nuevo en unos segundos.');
+    e.status = 502;
+    throw e;
   }
 
   const challenge = challengeMatch[1];
@@ -158,14 +287,14 @@ export async function resolveCuevana(cuevanaUrl) {
   // Decodificar enlaces de servidores
   const candidateEmbeds = [];
   for (const file of dataLink) {
-    const lang = file.video_language || 'SUB';
+    const lang = (file.video_language || 'SUB').toUpperCase();
     for (const embed of file.sortedEmbeds || []) {
       try {
         const decryptedUrl = decryptAES(embed.link, keyHash);
         if (decryptedUrl && /^https?:/.test(decryptedUrl)) {
           candidateEmbeds.push({
-            server: embed.servername,
-            url: decryptedUrl,
+            server: String(embed.servername || '').toLowerCase(),
+            url: decryptedUrl.replace(/`/g, '').trim(),
             lang,
           });
         }
@@ -173,11 +302,14 @@ export async function resolveCuevana(cuevanaUrl) {
     }
   }
 
-  // Priorizar servidores que dan streams HLS limpios (vidhide, streamwish)
+  const serverRank = (s) => (s === 'vidhide' ? 0 : s === 'streamwish' ? 1 : 2);
+  const langRank = (l) => (l === 'LAT' ? 0 : l === 'ESP' ? 1 : l === 'SUB' ? 2 : 3);
+
+  // Priorizar servidores HLS directos (vidhide) y audio Latino (LAT > ESP > SUB)
   candidateEmbeds.sort((a, b) => {
-    if (a.server === 'vidhide') return -1;
-    if (b.server === 'vidhide') return 1;
-    return 0;
+    const sr = serverRank(a.server) - serverRank(b.server);
+    if (sr !== 0) return sr;
+    return langRank(a.lang) - langRank(b.lang);
   });
 
   for (const cand of candidateEmbeds) {
@@ -188,20 +320,24 @@ export async function resolveCuevana(cuevanaUrl) {
           headers: {
             'User-Agent': UA,
             Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+            Referer: vidurl,
           },
-          signal: AbortSignal.timeout(6000),
+          signal: AbortSignal.timeout(6500),
         });
         if (rEmbed.ok) embedHtml = await rEmbed.text();
       } catch {}
 
-      // Fallback si direct timeout: proxy allorigins
       if (!embedHtml || !embedHtml.includes('eval(')) {
-        try {
-          const rProxy = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(cand.url)}`, {
-            signal: AbortSignal.timeout(6000),
-          });
-          if (rProxy.ok) embedHtml = await rProxy.text();
-        } catch {}
+        const gEmbed = toTranslateProxyUrl(cand.url);
+        if (gEmbed) {
+          try {
+            const rG = await fetch(gEmbed, {
+              headers: BROWSER_HEADERS,
+              signal: AbortSignal.timeout(6500),
+            });
+            if (rG.ok) embedHtml = await rG.text();
+          } catch {}
+        }
       }
 
       if (!embedHtml) continue;
@@ -217,7 +353,7 @@ export async function resolveCuevana(cuevanaUrl) {
         if (linksObjMatch) {
           try {
             const links = JSON.parse(linksObjMatch[1]);
-            // Priorizar hls3 (master.txt que no tiene padding) o hls2/hls4
+            // Priorizar hls3 (master.txt universal sin restricción de ASN) o hls2/hls4
             hlsUrl = links.hls3 || links.hls2 || links.hls4;
             if (hlsUrl && hlsUrl.startsWith('/')) {
               hlsUrl = new URL(hlsUrl, cand.url).href;
@@ -234,24 +370,30 @@ export async function resolveCuevana(cuevanaUrl) {
           return {
             kind: 'hls',
             url: `/api/hls-proxy?url=${encodeURIComponent(hlsUrl)}&ref=${encodeURIComponent(cand.url)}`,
-            title: `${title} (${cand.lang.toUpperCase()})`,
+            title: `${title} (${cand.lang})`,
             via: 'cuevana',
           };
         }
       }
-    } catch (err) {
+    } catch {
       // Intentar con el siguiente servidor candidato
     }
   }
 
-  // Fallback si ningún servidor extrajo HLS directo: reproducir el reproductor descifrado (no vidurl que falla en mobile por blob worker)
-  const fallbackEmbed = candidateEmbeds[0]?.url || vidurl;
-  return {
-    kind: 'embed',
-    url: fallbackEmbed,
-    title: `${title} (Cuevana)`,
-    via: 'cuevana',
-  };
+  // Fallback solo a un embed que permita iframe cross-origin (nunca cuevanapro.org que tiene X-Frame-Options: SAMEORIGIN)
+  const safeEmbed = candidateEmbeds.find((c) => c.server === 'vidhide' || c.server === 'streamwish') || candidateEmbeds[0];
+  if (safeEmbed) {
+    return {
+      kind: 'embed',
+      url: safeEmbed.url,
+      title: `${title} (${safeEmbed.lang})`,
+      via: 'cuevana',
+    };
+  }
+
+  const e = new Error('No se encontraron servidores disponibles para esa película en Cuevana');
+  e.status = 502;
+  throw e;
 }
 
 // ---------- HLS Playlist Rewriting & Proxy ----------
@@ -268,14 +410,14 @@ function rewritePlaylist(m3u8Text, baseUrl, referer) {
     }
 
     if (trimmed.startsWith('#')) {
-      // Reescribir atributos URI="..." en etiquetas (#EXT-X-KEY o #EXT-X-I-FRAME-STREAM-INF)
+      // Reescribir atributos URI="..." en etiquetas (#EXT-X-KEY, #EXT-X-MAP, #EXT-X-MEDIA, #EXT-X-I-FRAME-STREAM-INF)
       line = line.replace(/URI="([^"]+)"/g, (_, uri) => {
         const full = new URL(uri, baseUrl).href;
         return `URI="/api/hls-proxy?url=${encodeURIComponent(full)}&ref=${encodeURIComponent(referer)}"`;
       });
       out.push(line);
     } else {
-      // Es una URL de sub-playlist o segmento (.m3u8 / .ts / .woff2 / .image)
+      // Es una URL de sub-playlist o segmento (.m3u8 / .ts / .woff2 / .image / .txt)
       const full = new URL(trimmed, baseUrl).href;
       out.push(`/api/hls-proxy?url=${encodeURIComponent(full)}&ref=${encodeURIComponent(referer)}`);
     }
@@ -284,10 +426,21 @@ function rewritePlaylist(m3u8Text, baseUrl, referer) {
   return out.join('\n');
 }
 
-/** Proxy de HLS con CORS universal y descifrado de padding/PNG para cualquier navegador */
+/** Proxy de HLS con CORS universal y descifrado de padding/PNG para cualquier navegador (PC y Celular) */
 export async function proxyHls(req, res, targetUrl, referer = '') {
   if (!targetUrl || !/^https?:/.test(targetUrl)) {
-    res.writeHead(400, { 'Content-Type': 'text/plain' }).end('URL inválida');
+    res.writeHead(400, { 'Content-Type': 'text/plain', 'Access-Control-Allow-Origin': '*' }).end('URL inválida');
+    return;
+  }
+
+  if (req.method === 'HEAD') {
+    res.writeHead(200, {
+      'Content-Type': 'application/vnd.apple.mpegurl',
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, HEAD, OPTIONS',
+      'Access-Control-Allow-Headers': '*',
+    });
+    res.end();
     return;
   }
 
@@ -306,35 +459,31 @@ export async function proxyHls(req, res, targetUrl, referer = '') {
     });
 
     if (!up.ok && up.status !== 206) {
-      res.writeHead(up.status, { 'Content-Type': 'text/plain' }).end(`Error upstream: ${up.status}`);
+      res
+        .writeHead(up.status, { 'Content-Type': 'text/plain', 'Access-Control-Allow-Origin': '*' })
+        .end(`Error upstream: ${up.status}`);
       return;
     }
 
-    const ct = (up.headers.get('content-type') || '').toLowerCase();
-    const isPlaylist =
-      ct.includes('mpegurl') ||
-      ct.includes('application/x-mpegurl') ||
-      targetUrl.includes('.m3u8') ||
-      targetUrl.includes('master.txt') ||
-      (targetUrl.includes('index-') && targetUrl.endsWith('.txt'));
+    const buf = Buffer.from(await up.arrayBuffer());
+    const headAscii = buf.subarray(0, 160).toString('utf8').trimStart();
+    const isPlaylist = headAscii.startsWith('#EXTM3U') || headAscii.includes('#EXTINF');
 
     if (isPlaylist) {
-      const text = await up.text();
-      if (text.includes('#EXTM3U') || text.includes('#EXTINF')) {
-        const rewritten = rewritePlaylist(text, targetUrl, referer);
-        res.writeHead(200, {
-          'Content-Type': 'application/vnd.apple.mpegurl',
-          'Access-Control-Allow-Origin': '*',
-          'Access-Control-Allow-Methods': 'GET, HEAD, OPTIONS',
-          'Access-Control-Allow-Headers': '*',
-          'Cache-Control': 'no-cache',
-        });
-        res.end(rewritten);
-        return;
-      }
+      const text = buf.toString('utf8');
+      const rewritten = rewritePlaylist(text, targetUrl, referer);
+      res.writeHead(200, {
+        'Content-Type': 'application/vnd.apple.mpegurl',
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, HEAD, OPTIONS',
+        'Access-Control-Allow-Headers': '*',
+        'Cache-Control': 'no-cache',
+      });
+      res.end(rewritten);
+      return;
     }
 
-    // Segmento binario de video
+    // Segmento binario de video (.ts / .m4s)
     const outHeaders = {
       'Content-Type': 'video/mp2t',
       'Access-Control-Allow-Origin': '*',
@@ -347,7 +496,6 @@ export async function proxyHls(req, res, targetUrl, referer = '') {
     const cr = up.headers.get('content-range');
     if (cr) outHeaders['Content-Range'] = cr;
 
-    const buf = Buffer.from(await up.arrayBuffer());
     let payload = buf;
     // Si el host disfrazó el segmento TS con cabecera PNG falsa, removerla
     if (buf.length > 70 && buf[0] === 0x89 && buf[1] === 0x50 && buf[2] === 0x4e && buf[3] === 0x47) {
@@ -363,7 +511,7 @@ export async function proxyHls(req, res, targetUrl, referer = '') {
   } catch (err) {
     if (ac.signal.aborted) return;
     if (!res.headersSent) {
-      res.writeHead(502, { 'Content-Type': 'text/plain' });
+      res.writeHead(502, { 'Content-Type': 'text/plain', 'Access-Control-Allow-Origin': '*' });
     }
     res.end(err.message || 'Error proxying HLS');
   }
@@ -387,7 +535,11 @@ export async function classify(raw) {
     throw e;
   }
   const href = url.href;
+  const ytList = youtubePlaylistId(href);
   const yt = youtubeId(href);
+  if (ytList) {
+    return await resolveYoutubePlaylist(ytList, yt);
+  }
   if (yt) return { kind: 'youtube', id: yt, title: 'YouTube' };
 
   const host = url.hostname.replace(/^www\./, '');

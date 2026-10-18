@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { Room } from '../server/room.js';
-import { classify, youtubeId } from '../server/resolve.js';
+import { classify, youtubeId, youtubePlaylistId } from '../server/resolve.js';
 
 test('Room asigna asientos izquierdo y derecho a los 2 participantes y rechaza un tercero', () => {
   let clock = 1000;
@@ -34,17 +34,22 @@ test('Room asigna asientos izquierdo y derecho a los 2 participantes y rechaza u
   assert.equal(room.peers.size, 2);
 });
 
-test('Room sincroniza play/pausa/seek acotando timestamps', () => {
+test('Room sincroniza play/pausa/seek y playlistIndex acotando timestamps', () => {
   let clock = 10_000;
   const room = new Room({ now: () => clock });
-  const pb = room.setPlayback({ playing: true, position: 42.5 }, 'pc-1', 9_800);
+  const pb = room.setPlayback({ playing: true, position: 42.5, playlistIndex: 3 }, 'pc-1', 9_800);
   assert.equal(pb.playing, true);
   assert.equal(pb.position, 42.5);
+  assert.equal(pb.playlistIndex, 3);
   assert.equal(pb.updatedAt, 9_800);
 });
 
-test('classify reconoce YouTube, MediaFire, Google Drive, Dropbox y HLS', async () => {
+test('classify reconoce YouTube, Playlists, MediaFire, Google Drive, Dropbox y HLS', async () => {
   assert.equal(youtubeId('https://youtu.be/dQw4w9WgXcQ'), 'dQw4w9WgXcQ');
+  assert.equal(
+    youtubePlaylistId('https://www.youtube.com/watch?v=1EMkCJWQIDY&list=PL50s7qYEW5_tuK8gUQnzZfUtO2wYjWlQ9'),
+    'PL50s7qYEW5_tuK8gUQnzZfUtO2wYjWlQ9'
+  );
   assert.equal((await classify('https://www.youtube.com/watch?v=dQw4w9WgXcQ')).kind, 'youtube');
 
   const mf = await classify('https://www.mediafire.com/file/abc123/peli.mp4/file');

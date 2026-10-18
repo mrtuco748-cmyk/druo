@@ -67,10 +67,14 @@ export class Room {
     const now = this.now();
     const t = Number.isFinite(at) ? Math.min(now, Math.max(now - 3000, at)) : now;
     const position = Math.max(0, Number(state?.position) || 0);
+    const playlistIndex = Number.isFinite(Number(state?.playlistIndex))
+      ? Math.max(0, Math.floor(Number(state.playlistIndex)))
+      : this.playback?.playlistIndex || 0;
     this.playback = {
       playing: !!state?.playing,
       position,
       rate: 1,
+      playlistIndex,
       updatedAt: t,
       by,
     };
@@ -79,7 +83,14 @@ export class Room {
 
   setSource(source, by) {
     this.source = source ? { ...source, by, setAt: this.now() } : null;
-    this.playback = { playing: false, position: 0, rate: 1, updatedAt: this.now(), by };
+    this.playback = {
+      playing: false,
+      position: 0,
+      rate: 1,
+      playlistIndex: Number(source?.playlistIndex) || 0,
+      updatedAt: this.now(),
+      by,
+    };
     this.subs = null;
   }
 
