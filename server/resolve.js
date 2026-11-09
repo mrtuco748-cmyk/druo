@@ -353,17 +353,38 @@ export async function resolveCuevana(cuevanaUrl) {
         if (linksObjMatch) {
           try {
             const links = JSON.parse(linksObjMatch[1]);
-            // Priorizar hls3 (master.txt universal sin restricción de ASN) o hls2/hls4
-            hlsUrl = links.hls3 || links.hls2 || links.hls4;
-            if (hlsUrl && hlsUrl.startsWith('/')) {
-              hlsUrl = new URL(hlsUrl, cand.url).href;
+            // Priorizar hls4 (stream directo en el mismo host) o verificar cuál responde realmente
+            const rawCandidates = [links.hls4, links.hls3, links.hls2, links.hls]
+              .filter(Boolean)
+              .map((u) => (u.startsWith('/') ? new URL(u, cand.url).href : u));
+
+            for (const candHls of rawCandidates) {
+              try {
+                const check = await fetch(candHls, {
+                  headers: { 'User-Agent': UA, Referer: cand.url },
+                  signal: AbortSignal.timeout(2500),
+                });
+                if (check.ok) {
+                  hlsUrl = candHls;
+                  break;
+                }
+              } catch {}
             }
           } catch {}
         }
 
         if (!hlsUrl) {
           const m3u8Match = unpacked.match(/https?:[^\s"'<>]+\.(?:m3u8|txt)[^\s"'<>?]*(?:\?[^\s"'<>]*)?/i);
-          if (m3u8Match) hlsUrl = m3u8Match[0];
+          if (m3u8Match) {
+            const testUrl = m3u8Match[0].startsWith('/') ? new URL(m3u8Match[0], cand.url).href : m3u8Match[0];
+            try {
+              const check = await fetch(testUrl, {
+                headers: { 'User-Agent': UA, Referer: cand.url },
+                signal: AbortSignal.timeout(2500),
+              });
+              if (check.ok) hlsUrl = testUrl;
+            } catch {}
+          }
         }
 
         if (hlsUrl) {
