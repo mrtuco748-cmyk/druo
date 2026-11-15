@@ -15,10 +15,11 @@ interface Props {
   onEmitSync: (state: { playing: boolean; position: number; playlistIndex?: number }, reason: string) => void;
   onSelectLocalFile: (f: File, announce: boolean) => void;
   onSelectSource?: (src: any) => void;
+  onClearSource?: () => void;
 }
 
 export const ActivityStage: React.FC<Props> = ({
-  st, otherPeer, onSelectActivity, onSendReaction, onEmitSync, onSelectLocalFile, onSelectSource,
+  st, otherPeer, onSelectActivity, onSendReaction, onEmitSync, onSelectLocalFile, onSelectSource, onClearSource,
 }) => {
   if (st.activeActivity === 'hub') {
     return (
@@ -46,7 +47,7 @@ export const ActivityStage: React.FC<Props> = ({
         onCloseDrawing={() => st.setDrawingActive(false)}
         onClearDrawing={() => st.setInitialDrawings([])}
         onAutoplayBlockedChange={st.setMovieAudioBlocked}
-        onSelectSource={onSelectSource}
+        onSelectSource={onSelectSource} onClearSource={onClearSource}
       />
     );
   }

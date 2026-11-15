@@ -1,6 +1,6 @@
 // Orquestador principal de resolución de Cuevana
 import { BROWSER_HEADERS, UA, toTranslateProxyUrl } from './common.js';
-import { solvePow, unpackDeanEdwards } from './cuevanaCrypto.js';
+import { deriveLinkKey, solvePow, unpackDeanEdwards } from './cuevanaCrypto.js';
 import { findWorkingHls, parseAndRankEmbeds } from './cuevanaEmbed.js';
 import { extractVidUrlAndTitle, fetchCuevanaHtml } from './cuevanaHtml.js';
 
@@ -12,35 +12,37 @@ export async function resolveCuevana(cuevanaUrl) {
     throw e;
   }
 
-  let html2 = await fetchCuevanaHtml(vidurl, (t) => t.includes('POW_CHALLENGE') && t.includes('dataLink'), currentUrl);
+  const checkFn = (t) => t.includes('dataLink');
+  let html2 = await fetchCuevanaHtml(vidurl, checkFn, currentUrl);
   if (!html2) {
     const imdbMatch = vidurl.match(/\/vidurl\/([^/?#]+)/i);
     if (imdbMatch) {
-      html2 = await fetchCuevanaHtml(
-        `https://embed69.org/f/${imdbMatch[1]}/`,
-        (t) => t.includes('POW_CHALLENGE') && t.includes('dataLink'),
-        currentUrl
-      );
+      html2 = await fetchCuevanaHtml(`https://embed69.org/f/${imdbMatch[1]}/`, checkFn, currentUrl);
     }
   }
 
-  const challengeMatch = html2.match(/const POW_CHALLENGE = '([^']+)';/);
-  const difficultyMatch = html2.match(/const POW_DIFFICULTY = (\d+);/);
-  const saltMatch = html2.match(/const POW_SALT = '([^']+)';/);
-  const dataLinkMatch = html2.match(/let dataLink = (\[[\s\S]*?\]);/);
+  const linkC = html2?.match(/const LINK_CHALLENGE = '([^']+)';/)?.[1];
+  const linkS = html2?.match(/const LINK_SALT = '([^']+)';/)?.[1];
+  const powC = html2?.match(/const POW_CHALLENGE = '([^']+)';/)?.[1];
+  const powD = html2?.match(/const POW_DIFFICULTY = (\d+);/)?.[1];
+  const powS = html2?.match(/const POW_SALT = '([^']+)';/)?.[1];
+  const dataLinkMatch = html2?.match(/let dataLink = (\[[\s\S]*?\]);/);
 
-  if (!challengeMatch || !dataLinkMatch) {
-    const e = new Error('No se pudo descifrar el reproductor de Cuevana en este momento. Probá de nuevo en unos segundos.');
-    e.status = 502;
-    throw e;
+  let keyHash = null;
+  if (linkC && linkS) {
+    keyHash = deriveLinkKey(linkC, linkS);
+  } else if (powC) {
+    keyHash = solvePow(powC, parseInt(powD || '3', 10), powS || '');
   }
 
-  const keyHash = solvePow(
-    challengeMatch[1],
-    parseInt(difficultyMatch ? difficultyMatch[1] : '3', 10),
-    saltMatch ? saltMatch[1] : ''
-  );
-  const candidateEmbeds = parseAndRankEmbeds(JSON.parse(dataLinkMatch[1]), keyHash);
+  if (!keyHash || !dataLinkMatch) {
+    return { kind: 'embed', url: vidurl, title, via: 'cuevana' };
+  }
+
+  let candidateEmbeds = [];
+  try {
+    candidateEmbeds = parseAndRankEmbeds(JSON.parse(dataLinkMatch[1]), keyHash);
+  } catch {}
 
   for (const cand of candidateEmbeds) {
     try {
@@ -88,7 +90,5 @@ export async function resolveCuevana(cuevanaUrl) {
     return { kind: 'embed', url: safeEmbed.url, title: `${title} (${safeEmbed.lang})`, via: 'cuevana' };
   }
 
-  const e = new Error('No se encontraron servidores disponibles para esa película en Cuevana');
-  e.status = 502;
-  throw e;
+  return { kind: 'embed', url: vidurl, title, via: 'cuevana' };
 }

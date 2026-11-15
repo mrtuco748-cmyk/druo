@@ -1,6 +1,10 @@
 // Utilidades criptográficas y desempaquetado para Cuevana / Embeds
 import crypto from 'node:crypto';
 
+export function deriveLinkKey(challenge, salt) {
+  return crypto.createHash('sha256').update(challenge + salt).digest();
+}
+
 export function decryptAES(b64, keyBuf) {
   const raw = Buffer.from(b64, 'base64');
   const iv = raw.subarray(0, 16);

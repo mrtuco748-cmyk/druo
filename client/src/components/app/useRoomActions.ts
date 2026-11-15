@@ -51,5 +51,6 @@ export function useRoomActions(st: AppState) {
     handleMeSpeakingChange: (sp: boolean) => { st.setMeSpeaking(sp); st.sigRef.current?.send({ t: 'speaking', value: sp }); },
     handleChangePeerVolume: (v: number) => { const c = Math.max(0, Math.min(4.0, v)); st.setPeerVolume(c); localStorage.setItem('druo.peerVolume', String(c)); },
     handleSelectSource: (src: RoomSource) => { st.setPreferredVersionKey(null); st.setSource(src); st.setActiveActivity('cinema'); st.sigRef.current?.send({ t: 'source', source: src }); },
+    handleClearSource: () => { st.setPreferredVersionKey(null); st.setSource(null); st.sigRef.current?.send({ t: 'source', source: null }); },
   };
 }

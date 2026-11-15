@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { PlaybackState } from '../lib/sync';
 import { DrawingCanvas, DrawEvent, DrawStroke } from './DrawingCanvas';
+import { CinemaActiveOverlay } from './cinema/CinemaActiveOverlay';
 import { CinemaControls } from './cinema/CinemaControls';
 import { CinemaEmbedScreen, CinemaEmptyScreen, CinemaLocalPrompt } from './cinema/CinemaScreens';
 import { CinemaVideoElement } from './cinema/CinemaVideoElement';
@@ -32,22 +33,20 @@ interface Props {
   onRegisterDrawReceiver?: (receiver: (ev: DrawEvent) => void) => void;
   onCloseDrawing: () => void; onClearDrawing: () => void;
   onAutoplayBlockedChange?: (blocked: boolean) => void;
-  onSelectSource?: (src: RoomSource) => void;
+  onSelectSource?: (src: RoomSource) => void; onClearSource?: () => void;
 }
 
 export const CinemaScreen: React.FC<Props> = (p) => {
+  const [showGallery, setShowGallery] = useState(false);
   const st = useCinemaState(p.someoneSpeaking);
   const { resolvedUrl, trackBlobUrl } = useSourceResolver(p);
   const autoplay = useAutoplayUnlock({ ...st, playback: p.playback, onAutoplayBlockedChange: p.onAutoplayBlockedChange });
   const bufferedPct = useHlsPlayer({ ...st, ...p, ...autoplay, resolvedUrl });
   const { jumpToPlaylistIndex } = useYouTubePlayer({ ...st, ...p });
 
-  useCinemaDucking({ ...st, ...p, resolvedUrl });
-  useCinemaSyncLoop({ ...st, ...p, ...autoplay, resolvedUrl, jumpToPlaylistIndex });
+  useCinemaDucking({ ...st, ...p, resolvedUrl }); useCinemaSyncLoop({ ...st, ...p, ...autoplay, resolvedUrl, jumpToPlaylistIndex });
   const actions = createCinemaActions({ ...st, ...p, ...autoplay });
-  const ui = useCinemaUiControls({
-    ...st, ...p, ...actions, isCurrentlyPlaying: p.playback.playing || st.isPlaying,
-  });
+  const ui = useCinemaUiControls({ ...st, ...p, ...actions, isCurrentlyPlaying: p.playback.playing || st.isPlaying });
 
   return (
     <main className={`cinema-stage ${ui.controlsVisible ? 'show-ui' : 'hide-ui'}`} onMouseMove={ui.bumpControls} onClick={ui.handleStageClick}>
@@ -61,6 +60,12 @@ export const CinemaScreen: React.FC<Props> = (p) => {
             videoRef={st.videoRef} resolvedUrl={resolvedUrl} trackBlobUrl={trackBlobUrl}
             subs={p.subs} suppressEventsUntil={st.suppressEventsUntil}
             setIsPlaying={st.setIsPlaying} onEmitBuffering={p.onEmitBuffering} onEmitSync={p.onEmitSync}
+          />
+        )}
+        {p.source && (
+          <CinemaActiveOverlay
+            source={p.source} showGallery={showGallery} setShowGallery={setShowGallery}
+            onClearSource={p.onClearSource} onSelectSource={p.onSelectSource} onOpenSources={p.onOpenSources}
           />
         )}
         {autoplay.autoplayBlocked && (
@@ -83,6 +88,7 @@ export const CinemaScreen: React.FC<Props> = (p) => {
             onTogglePlay={actions.togglePlay} onSeekTo={actions.seekTo}
             onJumpPlaylist={(idx) => jumpToPlaylistIndex(idx, true)}
             onToggleMute={actions.toggleMute} onChangeVolume={st.setVolume} onToggleFullscreen={ui.toggleFullscreen}
+            onOpenGallery={() => setShowGallery(true)}
           />
         )}
       </div>

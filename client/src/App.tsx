@@ -68,6 +68,7 @@ export const App: React.FC = () => {
           onSendReaction={sendReaction} onEmitSync={actions.handleEmitSync}
           onSelectLocalFile={actions.handleSelectLocalFile}
           onSelectSource={actions.handleSelectSource}
+          onClearSource={actions.handleClearSource}
         />
         <SeatCamera
           st={st} side="right" isMe={!leftIsMe} otherPeer={otherPeer}
