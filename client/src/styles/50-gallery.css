@@ -1,0 +1,93 @@
+.cinema-gallery-container {
+  position: absolute;
+  inset: 0;
+  padding: 18px 20px;
+  overflow-y: auto;
+  background: #0a060d;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  z-index: 10;
+}
+.gallery-header {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding-bottom: 12px;
+}
+.gallery-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.gallery-main-title { font-size: 1.25rem; font-weight: 700; color: #fff; margin: 0; }
+.gallery-sub-title { font-size: 0.78rem; color: var(--text-dim, #b5a7b0); margin-top: 2px; }
+.gallery-upload-btn {
+  font-size: 0.8rem;
+  padding: 6px 14px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  cursor: pointer;
+}
+.gallery-nav-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.gallery-pills { display: flex; gap: 6px; flex-wrap: wrap; }
+.gallery-pill {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #ddd;
+  border-radius: 20px;
+  padding: 6px 14px;
+  font-size: 0.78rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.gallery-pill.active {
+  background: rgba(255, 255, 255, 0.16);
+  border-color: rgba(255, 255, 255, 0.35);
+  color: #fff;
+  font-weight: 600;
+}
+.gallery-search-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  max-width: 360px;
+  min-width: 200px;
+}
+.gallery-search-input {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 10px;
+  padding: 7px 12px;
+  color: #fff;
+  font-size: 0.8rem;
+  outline: none;
+}
+.gallery-quick-play-btn {
+  background: #e8455b;
+  border: none;
+  border-radius: 8px;
+  padding: 7px 12px;
+  color: #fff;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 14px;
+  padding-bottom: 24px;
+}

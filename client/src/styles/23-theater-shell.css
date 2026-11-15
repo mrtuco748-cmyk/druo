@@ -1,0 +1,83 @@
+.theater-shell.is-mobile-device .cam-slot.cam-left {
+  left: calc(12px + env(safe-area-inset-left, 0px)) !important;
+  right: auto !important;
+}
+
+.theater-shell.is-mobile-device .cam-slot.cam-right {
+  right: calc(12px + env(safe-area-inset-right, 0px)) !important;
+  left: auto !important;
+}
+
+.theater-shell.is-mobile-device .cam-slot .cam-frame {
+  width: 100% !important;
+  height: auto !important;
+  aspect-ratio: 4 / 3 !important;
+  max-height: none !important;
+  max-width: none !important;
+  border-radius: 14px !important;
+  border: 1px solid rgba(255, 255, 255, 0.16) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.85) !important;
+  background: rgba(18, 10, 22, 0.94) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+  overflow: hidden !important;
+  margin: 0 !important;
+}
+
+.theater-shell.is-mobile-device .cam-slot .cam-video {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  object-position: center 25% !important;
+}
+
+.theater-shell.is-mobile-device .cam-slot.is-speaking .cam-frame {
+  border-color: rgba(255, 255, 255, 0.45) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.85) !important;
+}
+
+.theater-shell.is-mobile-device .cam-slot .cam-badge-row {
+  display: flex !important;
+  position: absolute !important;
+  bottom: 4px !important;
+  left: 4px !important;
+  right: 4px !important;
+  font-size: 0.65rem !important;
+  padding: 2px 5px !important;
+  background: rgba(0, 0, 0, 0.65) !important;
+  border-radius: 6px !important;
+  backdrop-filter: blur(4px) !important;
+  justify-content: space-between !important;
+  z-index: 5 !important;
+}
+
+.theater-shell.is-mobile-device .cinema-controls {
+  left: 8px !important;
+  right: 8px !important;
+  bottom: calc(8px + env(safe-area-inset-bottom, 0px)) !important;
+  padding: 5px 8px !important;
+  gap: 5px !important;
+  border-radius: 12px !important;
+  z-index: 30 !important;
+}
+
+.theater-shell.is-mobile-device .ctrl-btn {
+  width: 32px !important;
+  height: 32px !important;
+  border-radius: 8px !important;
+}
+
+.theater-shell.is-mobile-device .ctrl-btn svg {
+  width: 15px !important;
+  height: 15px !important;
+}
+
+.theater-shell.is-mobile-device .ctrl-vol,
+.theater-shell.is-mobile-device .now-playing {
+  display: none !important;
+}
+
+.theater-shell.is-mobile-device .ctrl-time {
+  font-size: 0.68rem !important;
+  padding: 0 2px !important;
+}

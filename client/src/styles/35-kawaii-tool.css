@@ -1,0 +1,79 @@
+.kawaii-tool-icon-btn {
+  width: 46px;
+  height: 40px;
+  border-radius: 14px;
+  border: 1.5px solid #632b45;
+  background: #2b1424;
+  color: #e8abc4;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.14s ease;
+}
+
+.kawaii-tool-icon-btn:hover {
+  background: #3d1c33;
+  border-color: #ff85a2;
+  color: #ffc2d9;
+}
+
+.kawaii-tool-icon-btn.active {
+  background: linear-gradient(135deg, #e0537c, #ff85a2);
+  border-color: #ff9ebb;
+  color: #fff;
+  box-shadow: 0 4px 10px rgba(224, 83, 124, 0.35);
+}
+
+.kawaii-tool-icon-btn.danger:hover {
+  background: #4f1929;
+  color: #ff85a2;
+}
+
+.kawaii-swatches-row {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+  align-items: center;
+  justify-items: center;
+}
+
+.kawaii-custom-color {
+  position: relative;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2px dashed #ff85a2;
+  cursor: pointer;
+  display: inline-flex;
+  overflow: hidden;
+}
+
+.kawaii-custom-color input {
+  opacity: 0;
+  position: absolute;
+  inset: 0;
+  cursor: pointer;
+}
+
+.kawaii-color-ring {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+}
+
+.kawaii-swatch-dot {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid #4a2238;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.35);
+  cursor: pointer;
+  transition: transform 0.14s ease;
+}
+
+.kawaii-swatch-dot.active {
+  transform: scale(1.25);
+  border-color: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+}

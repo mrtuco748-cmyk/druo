@@ -1,0 +1,48 @@
+import { GalleryMovie } from './types';
+
+export const YOUTUBE_CATALOG: GalleryMovie[] = [
+  {
+    id: 'yt-big-buck-bunny',
+    title: 'Big Buck Bunny (4K Ultra HD)',
+    category: 'youtube',
+    badge: 'YouTube · 4K',
+    year: '2008',
+    duration: '9m 56s',
+    desc: 'El clásico cortometraje animado de código abierto en máxima calidad.',
+    url: 'https://www.youtube.com/watch?v=aqz-KE-bpKQ',
+    posterUrl: 'https://i.ytimg.com/vi/aqz-KE-bpKQ/hqdefault.jpg',
+  },
+  {
+    id: 'yt-ghibli-lofi',
+    title: 'Studio Ghibli · Lofi Chill Beats',
+    category: 'youtube',
+    badge: 'YouTube · Música',
+    year: '2024',
+    duration: '1h 30m',
+    desc: 'Música relajante inspirada en Ghibli para ver, dibujar o charlar.',
+    url: 'https://www.youtube.com/watch?v=5wRw34466EQ',
+    posterUrl: 'https://i.ytimg.com/vi/5wRw34466EQ/hqdefault.jpg',
+  },
+  {
+    id: 'yt-cyberpunk-4k',
+    title: 'Cyberpunk 2077 Night City Ambient 4K',
+    category: 'youtube',
+    badge: 'YouTube · 4K',
+    year: '2023',
+    duration: '2h 00m',
+    desc: 'Paseo inmersivo de noche bajo la lluvia futurista en 4K.',
+    url: 'https://www.youtube.com/watch?v=7uN2tK8r_uU',
+    posterUrl: 'https://i.ytimg.com/vi/7uN2tK8r_uU/hqdefault.jpg',
+  },
+  {
+    id: 'yt-space-nasa',
+    title: 'Viaje Espacial Interestelar 4K NASA',
+    category: 'youtube',
+    badge: 'YouTube · Cosmos',
+    year: '2023',
+    duration: '3h 15m',
+    desc: 'Imágenes reales de nebulosas y galaxias con música ambiental.',
+    url: 'https://www.youtube.com/watch?v=libKVRa01L8',
+    posterUrl: 'https://i.ytimg.com/vi/libKVRa01L8/hqdefault.jpg',
+  },
+];

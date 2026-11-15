@@ -1,0 +1,87 @@
+.top-btn.is-off {
+  background: rgba(232, 69, 91, 0.18);
+  border-color: rgba(232, 69, 91, 0.45);
+}
+
+.react-bar {
+  display: flex;
+  gap: 3px;
+}
+
+.react-btn {
+  background: transparent;
+  border: none;
+  font-size: 1.05rem;
+  cursor: pointer;
+  padding: 3px 5px;
+  border-radius: 6px;
+}
+
+.react-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* ---------------- Grid 3 columnas: Cam Izq | Pantalla Grande | Cam Der ---------------- */
+.theater-grid {
+  display: grid;
+  grid-template-columns: clamp(160px, 15vw, 260px) minmax(0, 1fr) clamp(160px, 15vw, 260px);
+  grid-template-rows: 1fr;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 8px 14px;
+  height: 100%;
+  max-height: 100%;
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Cámaras laterales con encuadre cómodo y centrado */
+.cam-slot {
+  height: 100%;
+  max-height: 100%;
+  width: 100%;
+  max-width: 260px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.cam-frame {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  max-height: min(72vh, 460px);
+  aspect-ratio: 9 / 14;
+  border-radius: 18px;
+  overflow: hidden;
+  background: #0d080f;
+  border: 1.5px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.7);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  margin: auto;
+}
+
+.cam-slot.is-speaking .cam-frame {
+  border-color: rgba(255, 255, 255, 0.4);
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.7);
+}
+
+.cam-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 25%;
+  transform-origin: center center;
+  transition: transform 0.12s ease-out;
+}
+
+.cam-video.is-hidden {
+  opacity: 0;
+}

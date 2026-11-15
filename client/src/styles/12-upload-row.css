@@ -1,0 +1,80 @@
+.upload-row input[type='text'],
+.upload-row select {
+  flex: 1;
+  min-width: 150px;
+}
+
+.hint-text {
+  font-size: 0.78rem;
+  color: var(--text-dim);
+  line-height: 1.45;
+}
+
+.err-text {
+  color: #ff7b8b;
+  font-size: 0.82rem;
+}
+
+.progress-bar {
+  height: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.progress-bar > div {
+  height: 100%;
+  background: var(--gold);
+  transition: width 0.2s ease;
+}
+
+.lib-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.lib-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.lib-badges {
+  display: flex;
+  gap: 6px;
+  margin-top: 4px;
+  flex-wrap: wrap;
+}
+
+.badge {
+  font-size: 0.72rem;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(255, 207, 107, 0.15);
+  color: var(--gold);
+}
+
+.lib-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.btn-ghost {
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: var(--text-main);
+  padding: 7px 11px;
+  border-radius: 9px;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.file-label {
+  cursor: pointer;
+}

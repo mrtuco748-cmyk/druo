@@ -1,0 +1,85 @@
+.rc-dot {
+  display: block;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2.5px solid #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.45);
+}
+
+/* Botones flotantes Superiores Izquierda (Home + Mover Lienzo) */
+.kawaii-floating-top-left {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  z-index: 20;
+}
+
+.kawaii-icon-circle {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: rgba(43, 20, 36, 0.94);
+  border: 2px solid #7a3756;
+  color: #f4b8d0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.45);
+  transition: all 0.16s ease;
+}
+
+.kawaii-icon-circle.small {
+  width: 34px;
+  height: 34px;
+}
+
+.kawaii-icon-circle:hover {
+  transform: scale(1.07);
+  border-color: #ff85a2;
+  background: #3d1c33;
+  color: #ffc2d9;
+}
+
+.kawaii-icon-circle.active {
+  background: linear-gradient(135deg, #e0537c, #ff85a2);
+  border-color: #ff9ebb;
+  color: #fff;
+}
+
+/* Botones < > Superiores Derecha (Deshacer y Rehacer TUS trazos) */
+.kawaii-floating-top-right {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 20;
+}
+
+.kawaii-undo-pill {
+  display: inline-flex;
+  align-items: center;
+  background: rgba(43, 20, 36, 0.94);
+  border: 2px solid #7a3756;
+  border-radius: 999px;
+  padding: 3px;
+  gap: 2px;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.45);
+}
+
+.kawaii-chevron-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  color: #f4b8d0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}

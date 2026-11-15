@@ -1,0 +1,81 @@
+.ctrl-btn:hover {
+  background: rgba(255, 255, 255, 0.16);
+  border-color: rgba(255, 255, 255, 0.32);
+  color: #fff;
+  transform: translateY(-1px);
+}
+
+.ctrl-btn:active {
+  transform: scale(0.94);
+}
+
+.ctrl-play-btn {
+  background: linear-gradient(135deg, rgba(232, 69, 91, 0.9), rgba(200, 35, 60, 0.95));
+  border-color: rgba(255, 255, 255, 0.3);
+  box-shadow: 0 4px 14px rgba(232, 69, 91, 0.35);
+}
+
+.ctrl-play-btn:hover {
+  background: linear-gradient(135deg, rgba(245, 80, 105, 1), rgba(220, 45, 75, 1));
+  box-shadow: 0 6px 18px rgba(232, 69, 91, 0.5);
+}
+
+.ctrl-timeline-wrap {
+  flex: 1;
+  position: relative;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  touch-action: none;
+  user-select: none;
+}
+
+.ctrl-timeline-track {
+  position: relative;
+  width: 100%;
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.14);
+  overflow: visible;
+  transition: height 0.15s ease;
+}
+
+.ctrl-timeline-wrap:hover .ctrl-timeline-track,
+.ctrl-timeline-wrap.is-scrubbing .ctrl-timeline-track {
+  height: 8px;
+}
+
+.ctrl-timeline-buffer {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.22);
+  pointer-events: none;
+  transition: width 0.2s linear;
+}
+
+.ctrl-timeline-progress {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  border-radius: 999px;
+  background: var(--crimson, #e8455b);
+  pointer-events: none;
+}
+
+.ctrl-timeline-thumb {
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+  pointer-events: none;
+  transition: width 0.15s ease, height 0.15s ease, box-shadow 0.15s ease;
+}

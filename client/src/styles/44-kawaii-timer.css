@@ -1,0 +1,52 @@
+.kawaii-timer-Quick {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.kawaii-num-pill {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1.5px solid #6e304c;
+  background: #2b1424;
+  color: #e8abc4;
+  font-weight: 800;
+  font-size: 0.78rem;
+  cursor: pointer;
+}
+
+.kawaii-num-pill.active {
+  background: #e0537c;
+  border-color: #ff85a2;
+  color: #fff;
+}
+
+.kawaii-ambience-row {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.kawaii-amb-circle {
+  width: 56px;
+  height: 56px;
+  border-radius: 20px;
+  background: var(--amb-bg, #2b1424);
+  border: 2.5px solid #753451;
+  color: #ffc2d9;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.45);
+  transition: all 0.18s ease;
+}
+
+.kawaii-amb-circle.active {
+  transform: translateY(-4px) scale(1.08);
+  border-color: #ff85a2;
+  color: #fff;
+  box-shadow: 0 10px 22px rgba(255, 117, 151, 0.35);
+}

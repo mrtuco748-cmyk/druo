@@ -1,0 +1,80 @@
+.kawaii-bg-dot.custom input {
+  opacity: 0;
+  position: absolute;
+  inset: 0;
+  cursor: pointer;
+}
+
+.kawaii-bg-dot-fill {
+  width: 100%;
+  height: 100%;
+}
+
+.kawaii-bg-dot.active {
+  border: 2px solid #ff85a2;
+  transform: scale(1.16);
+}
+
+.kawaii-util-btns {
+  display: flex;
+  gap: 4px;
+}
+
+.kawaii-util-btns .kawaii-tool-icon-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+}
+
+/* ---------------- 3, 4, 7. ACTIVIDADES ROSA OSCURO PASTEL (Juegos, Ruleta, Relax) ---------------- */
+.kawaii-pastel-surface {
+  position: relative;
+  padding: 14px 18px;
+  gap: 10px;
+}
+
+.kawaii-top-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-shrink: 0;
+  z-index: 15;
+}
+
+.kawaii-nav-cluster {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.kawaii-emoji-Trigger-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(43, 20, 36, 0.92);
+  border: 2px solid #753451;
+  padding: 3px 6px;
+  border-radius: 999px;
+}
+
+.kawaii-emoji-avatar-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 1.5px solid transparent;
+  background: #36182c;
+  font-size: 1.15rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.15s ease, border-color 0.15s ease;
+}
+
+.kawaii-emoji-avatar-btn:hover,
+.kawaii-emoji-avatar-btn.active {
+  transform: scale(1.12);
+  border-color: #ff85a2;
+  background: #4d213d;
+}

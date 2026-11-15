@@ -1,0 +1,87 @@
+.kawaii-wheel-options {
+  background: rgba(41, 19, 34, 0.9);
+  border: 2px solid #753451;
+  border-radius: 22px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 100%;
+  overflow-y: auto;
+}
+
+.kawaii-add-input-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.kawaii-add-input-row.full-width {
+  width: 100%;
+}
+
+.kawaii-add-input-row input {
+  flex: 1;
+  background: #22101c;
+  border: 1.5px solid #6e304c;
+  border-radius: 999px;
+  padding: 7px 12px;
+  color: #fce4ef;
+  font-size: 0.82rem;
+}
+
+.kawaii-chips-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.kawaii-opt-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: #fde8f1;
+  border: 1px solid rgba(255, 194, 217, 0.25);
+}
+
+.kawaii-opt-chip button {
+  background: transparent;
+  border: none;
+  color: #ffc2d9;
+  display: inline-flex;
+  cursor: pointer;
+  padding: 0;
+}
+
+/* Relax Rosa Oscuro Pastel */
+.kawaii-relax-center {
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+}
+
+.kawaii-timer-circle {
+  background: rgba(41, 19, 34, 0.92);
+  border: 3px solid #803959;
+  border-radius: 32px;
+  padding: 18px 28px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5);
+}
+
+.kawaii-timer-digits {
+  font-size: 2.5rem;
+  font-weight: 900;
+  color: #ff9ebb;
+  letter-spacing: 0.05em;
+}

@@ -1,0 +1,71 @@
+/* Reacciones flotantes */
+.floating-reacts {
+  position: fixed;
+  bottom: 60px;
+  right: 26vw;
+  pointer-events: none;
+  z-index: 30;
+}
+
+.float-emoji {
+  display: inline-block;
+  font-size: 2.1rem;
+  animation: riseFade 2.5s ease-out forwards;
+}
+
+@keyframes riseFade {
+  0% {
+    transform: translateY(0) scale(0.8);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-170px) scale(1.35);
+    opacity: 0;
+  }
+}
+
+/* ---------------- Modos de Vista (Cine / Solo Videollamada / Enfoque / Dúo) ---------------- */
+
+.view-pill-group {
+  display: inline-flex;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 999px;
+  padding: 2px;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.view-pill-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-dim);
+  font-size: 0.74rem;
+  padding: 4px 9px;
+  border-radius: 999px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+
+.view-pill-btn:hover {
+  color: var(--text-main);
+}
+
+.view-pill-btn.active {
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+/* ---------------- Menú Desplegable Superior Unificado ---------------- */
+.topbar-menu-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 80;
+  animation: fadeIn 0.15s ease-out;
+}

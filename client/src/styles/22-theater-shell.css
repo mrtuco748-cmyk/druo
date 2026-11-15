@@ -1,0 +1,85 @@
+.theater-shell.is-mobile-device .theater-topbar {
+  padding: 4px 8px !important;
+  gap: 4px !important;
+  flex-wrap: nowrap !important;
+}
+
+.theater-shell.is-mobile-device .brand-title {
+  font-size: 1.25rem !important;
+}
+
+.theater-shell.is-mobile-device .action-cluster {
+  flex-wrap: nowrap !important;
+  gap: 5px !important;
+}
+
+.theater-shell.is-mobile-device .now-playing {
+  display: none !important;
+}
+
+.theater-shell.is-mobile-device .theater-grid {
+  position: relative !important;
+  display: block !important;
+  width: 100% !important;
+  height: 100% !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  overflow: hidden !important;
+  background: #07050a !important;
+}
+
+.theater-shell.is-mobile-device .cinema-stage,
+.theater-shell.is-mobile-device .kawaii-pastel-hub,
+.theater-shell.is-mobile-device .kawaii-clean-studio,
+.theater-shell.is-mobile-device .kawaii-pastel-surface {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
+  margin: 0 !important;
+  box-sizing: border-box !important;
+  z-index: 10 !important;
+}
+
+.theater-shell.is-mobile-device .cinema-stage {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: #000 !important;
+}
+
+.theater-shell.is-mobile-device .screen-bezel {
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
+  aspect-ratio: unset !important;
+  border-radius: 0 !important;
+  border: none !important;
+  box-shadow: none !important;
+  background: #000 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.theater-shell.is-mobile-device .screen-bezel video,
+.theater-shell.is-mobile-device .screen-bezel .yt-wrap,
+.theater-shell.is-mobile-device .screen-bezel iframe {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: contain !important;
+}
+
+.theater-shell.is-mobile-device .cam-slot {
+  position: absolute !important;
+  z-index: 35 !important;
+  pointer-events: auto !important;
+  margin: 0 !important;
+  max-width: none !important;
+  max-height: none !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}

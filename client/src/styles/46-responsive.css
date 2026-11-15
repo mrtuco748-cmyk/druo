@@ -1,0 +1,82 @@
+@media (max-width: 820px) {
+.kawaii-hub-reacts {
+    padding: 4px 10px !important;
+    gap: 8px !important;
+  }
+
+.kawaii-react-circle {
+    width: 36px !important;
+    height: 36px !important;
+  }
+
+.kawaii-cards-grid {
+    gap: 10px !important;
+  }
+
+.kawaii-hub-card {
+    width: 82px !important;
+    height: 82px !important;
+    border-radius: 20px !important;
+  }
+
+.kawaii-hub-card svg {
+    width: 30px !important;
+    height: 30px !important;
+  }
+
+/* 6. Estudio de Dibujo en móvil */
+  .kawaii-floating-top-left {
+    top: 8px !important;
+    left: 8px !important;
+    gap: 5px !important;
+  }
+
+.kawaii-floating-top-right {
+    top: 8px !important;
+    right: 8px !important;
+  }
+
+.kawaii-icon-circle {
+    width: 36px !important;
+    height: 36px !important;
+  }
+
+.kawaii-icon-circle.small {
+    width: 30px !important;
+    height: 30px !important;
+  }
+
+.kawaii-chevron-btn {
+    width: 32px !important;
+    height: 32px !important;
+  }
+
+.kawaii-fab-wrapper {
+    bottom: 8px !important;
+    right: 8px !important;
+  }
+
+.kawaii-main-fab {
+    width: 46px !important;
+    height: 46px !important;
+  }
+
+.kawaii-fab-popover {
+    position: absolute !important;
+    bottom: 54px !important;
+    right: 0 !important;
+    width: min(236px, calc(100vw - 28px)) !important;
+    max-height: calc(100% - 62px) !important;
+    overflow-y: auto !important;
+    padding: 10px !important;
+    gap: 8px !important;
+    border-radius: 20px !important;
+  }
+
+.kawaii-bg-popover {
+    top: 42px !important;
+    left: 0 !important;
+    width: min(180px, calc(100vw - 28px)) !important;
+    padding: 8px !important;
+  }
+}

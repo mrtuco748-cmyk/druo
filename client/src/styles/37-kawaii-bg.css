@@ -1,0 +1,84 @@
+.kawaii-bg-swatch:hover {
+  transform: scale(1.1);
+  border-color: #ff9ebb;
+}
+
+.kawaii-bg-swatch.active {
+  border: 2px solid #fff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  transform: scale(1.12);
+}
+
+.kawaii-bg-swatch.custom {
+  border: 2px dashed #ff85a2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.kawaii-bg-swatch.custom input {
+  opacity: 0;
+  position: absolute;
+  inset: 0;
+  cursor: pointer;
+}
+
+.kawaii-bg-swatch-fill {
+  position: absolute;
+  inset: 0;
+}
+
+.kawaii-bg-plus {
+  position: relative;
+  z-index: 1;
+  font-size: 0.95rem;
+  font-weight: 900;
+  color: #fff;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.85);
+  pointer-events: none;
+}
+
+.kawaii-bg-swatch.pattern-grid,
+.kawaii-bg-dot.pattern-grid {
+  background-image:
+    linear-gradient(to right, rgba(255, 133, 162, 0.38) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 133, 162, 0.38) 1px, transparent 1px);
+  background-size: 8px 8px;
+}
+
+.kawaii-bg-swatch.pattern-dots,
+.kawaii-bg-dot.pattern-dots {
+  background-image: radial-gradient(rgba(224, 83, 124, 0.55) 1.5px, transparent 1.5px);
+  background-size: 7px 7px;
+}
+
+.kawaii-bottom-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.kawaii-bg-dots {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.kawaii-bg-dot {
+  position: relative;
+  width: 19px;
+  height: 19px;
+  border-radius: 6px;
+  border: 1.5px solid #753451;
+  cursor: pointer;
+  padding: 0;
+  overflow: hidden;
+  transition: transform 0.14s ease;
+}
+
+.kawaii-bg-dot.custom {
+  border: 1.5px dashed #ff85a2;
+  display: inline-flex;
+}

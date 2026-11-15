@@ -1,0 +1,77 @@
+.dropdown-draw-box {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 8px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.draw-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.82rem;
+}
+
+.draw-switch-btn {
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.74rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+
+.draw-switch-btn.on {
+  background: rgba(76, 217, 123, 0.2);
+  border-color: #4cd97b;
+  color: #4cd97b;
+}
+
+.draw-switch-btn.off {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.15);
+  color: var(--text-dim);
+}
+
+.draw-palette-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.palette-label {
+  font-size: 0.74rem;
+  color: var(--text-dim);
+}
+
+.palette-dots {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.palette-dot {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 1px solid rgba(0, 0, 0, 0.4);
+  cursor: pointer;
+  padding: 0;
+  transition: transform 0.15s ease;
+}
+
+.palette-dot.selected {
+  transform: scale(1.2);
+  border: 2px solid #fff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.6);
+}
+
+/* Dispositivos mic / cam */
+.dropdown-device-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}

@@ -1,0 +1,80 @@
+.device-btn {
+  padding: 8px 10px;
+  border-radius: 10px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-main);
+  text-align: center;
+}
+
+.device-btn.active {
+  background: rgba(76, 217, 123, 0.15);
+  border-color: rgba(76, 217, 123, 0.45);
+  color: #7ef7b2;
+}
+
+.device-btn.is-off {
+  background: rgba(232, 69, 91, 0.18);
+  border-color: rgba(232, 69, 91, 0.45);
+  color: #ff8b99;
+}
+
+/* Sliders */
+.dropdown-sliders {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 12px;
+  padding: 8px 12px;
+}
+
+.slider-item {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.slider-title {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.74rem;
+  color: var(--text-dim);
+}
+
+.slider-title strong {
+  color: var(--gold);
+}
+
+.slider-item input[type='range'] {
+  accent-color: var(--gold);
+  width: 100%;
+  cursor: pointer;
+}
+
+/* Footer del menú */
+.dropdown-footer {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  padding-top: 4px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.footer-btn {
+  padding: 8px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  color: var(--text-main);
+  font-size: 0.75rem;
+  cursor: pointer;
+  text-align: center;
+}
+
+.footer-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+}

@@ -1,0 +1,80 @@
+/* Botón flotante Volver al Cine */
+.call-return-btn {
+  position: absolute;
+  top: 58px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(14, 8, 16, 0.94);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 999px;
+  padding: 7px 18px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #fff;
+  cursor: pointer;
+  z-index: 60;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+
+.call-return-btn:hover {
+  transform: translateX(-50%) scale(1.05);
+  background: rgba(25, 14, 28, 0.96);
+}
+
+/* Botón único de Menú en Topbar */
+.menu-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 9px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  color: var(--text-main);
+}
+
+.menu-toggle-btn:hover,
+.menu-toggle-btn.accent {
+  background: rgba(255, 255, 255, 0.16);
+  border-color: rgba(255, 255, 255, 0.3);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+.menu-btn-icon {
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.quick-mic-btn {
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9px;
+  font-size: 1rem;
+}
+
+/* Modo 2: Solo Videollamada (PC) */
+.theater-shell.view-call-only .cinema-stage {
+  display: none !important;
+}
+
+.theater-shell.view-call-only .theater-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr;
+  gap: 16px;
+  padding: 12px 18px;
+  height: 100%;
+  max-height: 100%;
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+  position: relative;
+}

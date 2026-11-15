@@ -1,0 +1,79 @@
+.topbar-dropdown-menu {
+  position: fixed;
+  top: 54px;
+  right: 14px;
+  width: min(390px, calc(100vw - 20px));
+  max-height: calc(100dvh - 68px);
+  background: #140b17;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 20px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.9);
+  overflow-y: auto;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  z-index: 85;
+  animation: dropMenuIn 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes dropMenuIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.dropdown-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.dropdown-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--gold);
+}
+
+.dropdown-close-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-dim);
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+}
+
+.dropdown-close-btn:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.dropdown-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.dropdown-section-label {
+  font-size: 0.74rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-dim);
+  font-weight: 600;
+}
+
+/* Modos de vista grid */
+.dropdown-modes-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}

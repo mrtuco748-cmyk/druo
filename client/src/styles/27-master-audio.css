@@ -1,0 +1,87 @@
+/* Banner global de audio para celulares y navegadores estrictos */
+.master-audio-banner {
+  position: fixed;
+  top: 52px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: linear-gradient(135deg, #e8455b, #ff7b8b);
+  color: #fff;
+  border: 1.5px solid rgba(255, 255, 255, 0.6);
+  border-radius: 999px;
+  padding: 10px 22px;
+  font-size: 0.92rem;
+  font-weight: 700;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
+  cursor: pointer;
+  z-index: 100;
+  animation: pulseAudio 1.8s infinite;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+@keyframes pulseAudio {
+  0% { transform: translateX(-50%) scale(1); }
+  50% { transform: translateX(-50%) scale(1.04); }
+  100% { transform: translateX(-50%) scale(1); }
+}
+
+/* ============================================================================
+   DARK ROSE PASTEL KAWAII UI (Mismas tonalidades rosa pastel kawaii pero en modo nocturno)
+   ============================================================================ */
+
+/* Fondo general y barra superior Rosa Oscuro Pastel */
+.theater-shell {
+  background: linear-gradient(160deg, #1b0e18 0%, #160d1c 52%, #110a15 100%) !important;
+  color: #fce4ef !important;
+}
+
+.kawaii-lobby {
+  background: radial-gradient(circle at 30% 25%, #2d1424 0%, #1c0f24 55%, #110916 100%) !important;
+}
+
+.kawaii-lobby-card {
+  background: rgba(39, 19, 33, 0.94) !important;
+  border: 1px solid rgba(255, 255, 255, 0.16) !important;
+  border-radius: 28px !important;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.65) !important;
+  color: #fce4ef !important;
+  align-items: center;
+}
+
+.kawaii-lobby-heart {
+  color: #ff85a2;
+  margin-bottom: 4px;
+}
+
+.kawaii-lobby-card .lobby-logo {
+  color: #ff9ebb !important;
+  text-shadow: 0 0 18px rgba(255, 133, 162, 0.3) !important;
+}
+
+.kawaii-lobby-card input {
+  background: #1d0e19 !important;
+  border: 2px solid #753451 !important;
+  color: #fce4ef !important;
+  border-radius: 16px !important;
+  text-align: center;
+  font-weight: 700;
+}
+
+.kawaii-lobby-card .seat-btn {
+  background: #23111e !important;
+  border: 2px solid #692e49 !important;
+  color: #d9a3bc !important;
+  border-radius: 18px !important;
+  padding: 12px !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.kawaii-lobby-card .seat-btn.active {
+  background: #5c253f !important;
+  border-color: rgba(255, 255, 255, 0.4) !important;
+  color: #ffe8f1 !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4) !important;
+}

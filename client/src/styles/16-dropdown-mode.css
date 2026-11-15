@@ -1,0 +1,83 @@
+.dropdown-mode-card {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  padding: 8px 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-align: left;
+  cursor: pointer;
+  color: var(--text-main);
+  transition: all 0.16s ease;
+}
+
+.dropdown-mode-card:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+.dropdown-mode-card.active {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.4);
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+}
+
+.mode-emoji {
+  font-size: 1.25rem;
+}
+
+.mode-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.mode-text strong {
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
+.mode-text small {
+  font-size: 0.68rem;
+  color: var(--text-dim);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dropdown-mode-card.active .mode-text small {
+  color: rgba(255, 207, 107, 0.85);
+}
+
+/* Acciones de pelis y dibujo */
+.dropdown-action-row {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 12px;
+  color: var(--text-main);
+  font-size: 0.84rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.dropdown-action-row.accent {
+  background: rgba(255, 207, 107, 0.12);
+  border-color: rgba(255, 207, 107, 0.4);
+  color: var(--gold);
+}
+
+.dropdown-action-row:hover {
+  background: rgba(255, 207, 107, 0.22);
+}
+
+.row-chevron {
+  font-size: 1.1rem;
+}

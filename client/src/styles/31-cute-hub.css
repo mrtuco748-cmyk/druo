@@ -1,0 +1,84 @@
+/* ---------------- 0. MENÚ PRINCIPAL CUTE (CuteHub - Solo Iconos Rosa Oscuro Pastel) ---------------- */
+.cute-hub-stage,
+.studio-stage,
+.games-stage,
+.wheel-stage,
+.relax-stage {
+  overflow: hidden;
+  width: 100% !important;
+  height: 100% !important;
+  max-height: 100% !important;
+  min-height: 0 !important;
+}
+
+.kawaii-pastel-hub,
+.kawaii-pastel-surface,
+.kawaii-clean-studio {
+  aspect-ratio: unset !important;
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
+  min-height: 0 !important;
+  background: radial-gradient(circle at 20% 20%, #291323 0%, #1e1024 52%, #150c1b 100%) !important;
+  border: 2.5px solid #783554 !important;
+  border-radius: 26px !important;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 16px 44px rgba(0, 0, 0, 0.65) !important;
+  color: #fce4ef;
+}
+
+.kawaii-hub-inner {
+  width: 100%;
+  height: 100%;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 22px;
+  overflow-y: auto;
+}
+
+.kawaii-hub-reacts {
+  display: flex;
+  gap: 12px;
+  background: rgba(45, 21, 38, 0.9);
+  border: 2px solid #753451;
+  padding: 6px 14px;
+  border-radius: 999px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
+}
+
+.kawaii-react-circle {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.18s ease;
+}
+
+.kawaii-react-circle:hover {
+  transform: scale(1.16) translateY(-2px);
+}
+
+.kawaii-react-circle.pink {
+  background: #471d33;
+  color: #ff9ebb;
+}
+
+.kawaii-react-circle.gold {
+  background: #422c1d;
+  color: #ffd180;
+}
+
+.kawaii-react-circle.lavender {
+  background: #321f47;
+  color: #cfb0ff;
+}

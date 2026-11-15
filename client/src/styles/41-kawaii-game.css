@@ -1,0 +1,79 @@
+.kawaii-game-nav-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.kawaii-action-circle {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: none;
+  background: linear-gradient(135deg, #e0537c, #ff85a2);
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 6px 16px rgba(224, 83, 124, 0.4);
+}
+
+.kawaii-action-circle.big {
+  width: 56px;
+  height: 56px;
+}
+
+.kawaii-action-circle.small {
+  width: 36px;
+  height: 36px;
+}
+
+.kawaii-reading-card {
+  background: #2b1323;
+  border: 2px dashed #8a3d5f;
+  border-radius: 20px;
+  padding: 18px 20px;
+  width: 100%;
+}
+
+.kawaii-ttt-scores {
+  display: flex;
+  gap: 14px;
+}
+
+.kawaii-score-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: #2b1424;
+  border: 2px solid #6b2f4b;
+  padding: 6px 14px;
+  border-radius: 999px;
+  color: #e8abc4;
+  cursor: pointer;
+  transition: transform 0.14s ease, border-color 0.14s ease;
+}
+
+.kawaii-score-badge:hover {
+  transform: scale(1.06);
+  border-color: #ff85a2;
+}
+
+.kawaii-score-badge.active {
+  background: #4f2037;
+  border-color: #ff85a2;
+  color: #ffc2d9;
+}
+
+.kawaii-badge-emoji {
+  font-size: 1.15rem;
+  line-height: 1;
+}
+
+.kawaii-ttt-grid {
+  display: grid;
+  grid-template-columns: repeat(3, clamp(58px, 8vh, 72px));
+  grid-template-rows: repeat(3, clamp(58px, 8vh, 72px));
+  gap: 8px;
+}

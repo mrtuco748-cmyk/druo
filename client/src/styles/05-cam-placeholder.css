@@ -1,0 +1,80 @@
+.cam-placeholder {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: var(--text-dim);
+  font-size: 0.78rem;
+  text-align: center;
+  padding: 8px;
+}
+
+.cam-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: rgba(255, 207, 107, 0.14);
+  border: 1px solid rgba(255, 207, 107, 0.4);
+  color: var(--gold);
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  font-size: 1.2rem;
+}
+
+.cam-vignette {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.72) 0%, transparent 38%, rgba(0, 0, 0, 0.28) 100%);
+}
+
+.cam-badge-row {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  bottom: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  z-index: 2;
+}
+
+.cam-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.76rem;
+  font-weight: 600;
+  background: rgba(0, 0, 0, 0.55);
+  padding: 3px 8px;
+  border-radius: 999px;
+}
+
+.cam-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #777;
+}
+
+.cam-dot.on {
+  background: #4cd97b;
+}
+
+.cam-pill {
+  font-size: 0.7rem;
+  background: rgba(0, 0, 0, 0.65);
+  color: var(--text-main);
+  padding: 3px 7px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+}
+
+.cam-pill.btn {
+  cursor: pointer;
+}

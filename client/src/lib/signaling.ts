@@ -49,11 +49,7 @@ export class Signaling {
 
     ws.onmessage = (ev) => {
       let m: any;
-      try {
-        m = JSON.parse(ev.data);
-      } catch {
-        return;
-      }
+      try { m = JSON.parse(ev.data); } catch { return; }
       if (m.t === 'pong') {
         this.clock.addSample(m.c, m.s, Date.now());
         return;
@@ -68,16 +64,14 @@ export class Signaling {
       this.connected = false;
       this.onStatus(false);
       clearInterval(this.pingTimer);
-      if (this.closed || ev.code === 4002) return; // 4002 = reemplazado por otra pestaña
+      if (this.closed || ev.code === 4002) return;
       const wait = Math.min(8000, this.backoff);
       this.backoff = Math.min(8000, this.backoff * 1.6);
       this.timer = setTimeout(() => this.connect(), wait);
     };
 
     ws.onerror = () => {
-      try {
-        ws.close();
-      } catch {}
+      try { ws.close(); } catch {}
     };
   }
 

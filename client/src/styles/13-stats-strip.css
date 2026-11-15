@@ -1,0 +1,83 @@
+.stats-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+  font-size: 0.78rem;
+  color: var(--text-dim);
+  background: rgba(255, 255, 255, 0.04);
+  padding: 9px 12px;
+  border-radius: 10px;
+}
+
+.stats-strip strong {
+  color: var(--gold);
+}
+
+.q-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.q-section h4 {
+  font-size: 0.86rem;
+  color: var(--text-main);
+}
+
+.chip-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(135px, 1fr));
+  gap: 8px;
+}
+
+.q-chip {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 11px;
+  padding: 9px 10px;
+  color: var(--text-main);
+  text-align: left;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.q-chip small {
+  color: var(--text-dim);
+  font-size: 0.71rem;
+}
+
+.q-chip.active {
+  border-color: var(--gold);
+  background: rgba(255, 207, 107, 0.14);
+}
+
+.slider-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  font-size: 0.8rem;
+}
+
+.slider-row label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.toggle-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.check-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.82rem;
+  color: var(--text-dim);
+  cursor: pointer;
+}
