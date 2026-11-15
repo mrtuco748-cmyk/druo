@@ -53,4 +53,5 @@
 .theater-stage,
 .cinema-stage {
   border: none !important;
+  outline: none !important;
 }

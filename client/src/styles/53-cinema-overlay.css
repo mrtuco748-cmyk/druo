@@ -1,81 +1,36 @@
-/* Floating top bar and controls for cinema playback */
-.cinema-floating-bar {
+/* Popcorn FAB button top-left during cinema playback */
+.cinema-popcorn-fab {
   position: absolute;
-  top: 12px;
+  top: 14px;
   left: 14px;
-  right: 14px;
-  display: flex;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(24, 14, 28, 0.88);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: none;
+  font-size: 1.35rem;
+  display: inline-flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  z-index: 25;
-  pointer-events: auto;
-  transition: opacity 0.25s ease, transform 0.25s ease;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 28;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.6);
+  transition: transform 0.18s ease, background 0.18s ease, opacity 0.25s ease;
+  user-select: none;
 }
-.hide-ui .cinema-floating-bar {
+.cinema-popcorn-fab:hover {
+  transform: scale(1.12);
+  background: rgba(50, 22, 52, 0.96);
+}
+.hide-ui .cinema-popcorn-fab {
   opacity: 0;
   pointer-events: none;
-  transform: translateY(-8px);
+  transform: translateY(-6px);
 }
-.show-ui .cinema-floating-bar {
+.show-ui .cinema-popcorn-fab {
   opacity: 1;
   pointer-events: auto;
   transform: translateY(0);
 }
-.cinema-bar-actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.cinema-bar-btn {
-  background: rgba(22, 14, 28, 0.85);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  color: #fff;
-  border: none;
-  padding: 6px 14px;
-  border-radius: 999px;
-  font-size: 0.8rem;
-  font-weight: 600;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
-  transition: background 0.15s ease, transform 0.15s ease;
-}
-.cinema-bar-btn:hover {
-  background: rgba(45, 25, 55, 0.95);
-  transform: translateY(-1px);
-}
-.cinema-bar-title {
-  color: rgba(255, 255, 255, 0.85);
-  font-size: 0.8rem;
-  font-weight: 500;
-  background: rgba(15, 10, 20, 0.65);
-  backdrop-filter: blur(6px);
-  padding: 5px 12px;
-  border-radius: 999px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 45%;
-}
-.cinema-bar-exit {
-  background: rgba(45, 15, 25, 0.85);
-  border: none;
-  color: #ffb8c5;
-}
-.cinema-bar-exit:hover {
-  background: rgba(70, 20, 35, 0.95);
-}
-.ctrl-cartelera-btn {
-  padding: 0 10px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: #fff;
-  border-radius: 999px;
-  gap: 4px;
-  background: rgba(255, 255, 255, 0.08);
-}
-.ctrl-cartelera-btn:hover { background: rgba(255, 255, 255, 0.16); }

@@ -4,11 +4,10 @@ import { expectedPosition, PlaybackState } from '../../lib/sync';
 import { RoomSource } from './types';
 
 interface Opts {
-  videoRef: React.RefObject<HTMLVideoElement | null>;
-  hlsRef: React.MutableRefObject<Hls | null>;
-  suppressEventsUntil: React.MutableRefObject<number>;
-  source: RoomSource | null; resolvedUrl: string | null; playback: PlaybackState;
-  serverNow: () => number; hlsLevel: number; movieCapBps: number;
+  videoRef: React.RefObject<HTMLVideoElement | null>; hlsRef: React.MutableRefObject<Hls | null>;
+  suppressEventsUntil: React.MutableRefObject<number>; source: RoomSource | null;
+  resolvedUrl: string | null; playback: PlaybackState; serverNow: () => number;
+  hlsLevel: number; movieCapBps: number;
   onLevelsLoaded: (lvls: { index: number; label: string; bitrate: number }[]) => void;
   setDuration: (d: number) => void; setAutoplayBlocked: (b: boolean) => void;
   onAutoplayBlockedChange?: (b: boolean) => void;

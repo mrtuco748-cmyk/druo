@@ -13,15 +13,11 @@ export function createSyllableVoiceDetector(opts: SyllableDetectorOptions): () =
   const { stream, isMicEnabled, onSpeakingChange } = opts;
   const audioTracks = stream.getAudioTracks();
   if (!audioTracks.length) { onSpeakingChange(false); return () => {}; }
-
   const ctx = getSharedAudioContext();
   if (!ctx) return () => {};
 
-  let src: MediaStreamAudioSourceNode | null = null;
-  let hpFilter: BiquadFilterNode | null = null;
-  let analyser: AnalyserNode | null = null;
-  let silentGain: GainNode | null = null;
-  let timer: any = null;
+  let src: MediaStreamAudioSourceNode | null = null, hpFilter: BiquadFilterNode | null = null;
+  let analyser: AnalyserNode | null = null, silentGain: GainNode | null = null, timer: any = null;
 
   try {
     src = ctx.createMediaStreamSource(new MediaStream([audioTracks[0]]));

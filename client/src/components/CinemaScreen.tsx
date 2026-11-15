@@ -88,7 +88,6 @@ export const CinemaScreen: React.FC<Props> = (p) => {
             onTogglePlay={actions.togglePlay} onSeekTo={actions.seekTo}
             onJumpPlaylist={(idx) => jumpToPlaylistIndex(idx, true)}
             onToggleMute={actions.toggleMute} onChangeVolume={st.setVolume} onToggleFullscreen={ui.toggleFullscreen}
-            onOpenGallery={() => setShowGallery(true)}
           />
         )}
       </div>

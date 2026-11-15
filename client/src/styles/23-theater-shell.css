@@ -32,7 +32,6 @@
 }
 
 .theater-shell.is-mobile-device .cam-slot.is-speaking .cam-frame {
-  border-color: rgba(255, 255, 255, 0.45) !important;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.85) !important;
 }
 

@@ -12,31 +12,40 @@ interface Props {
 }
 
 export const CinemaActiveOverlay: React.FC<Props> = ({
-  source, showGallery, setShowGallery, onClearSource, onSelectSource, onOpenSources,
+  source: _source, showGallery, setShowGallery, onClearSource, onSelectSource, onOpenSources,
 }) => (
   <>
-    <div className="cinema-floating-bar" onClick={(e) => e.stopPropagation()}>
-      <div className="cinema-bar-actions">
-        <button type="button" className="cinema-bar-btn" onClick={() => setShowGallery(true)}>
-          🍿 Cartelera
-        </button>
-        {onClearSource && (
-          <button type="button" className="cinema-bar-btn cinema-bar-exit" onClick={onClearSource} title="Quitar película y volver a la cartelera">
-            ✕ Volver a cartelera
-          </button>
-        )}
-      </div>
-      <span className="cinema-bar-title" title={source.title}>{source.title}</span>
-    </div>
+    <button
+      type="button"
+      className="cinema-popcorn-fab"
+      onClick={(e) => { e.stopPropagation(); setShowGallery(true); }}
+      title="Cartelera de películas"
+      aria-label="Cartelera"
+    >
+      🍿
+    </button>
 
     {showGallery && (
       <div className="cinema-gallery-overlay" onClick={() => setShowGallery(false)}>
         <div className="cinema-gallery-dialog" onClick={(e) => e.stopPropagation()}>
           <div className="cinema-gallery-header">
             <span className="cinema-gallery-header-title">🍿 Cartelera de Películas</span>
-            <button type="button" className="cinema-gallery-close-btn" onClick={() => setShowGallery(false)}>
-              ✕ Volver a la película
-            </button>
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+              {onClearSource && (
+                <button
+                  type="button"
+                  className="cinema-gallery-close-btn"
+                  style={{ background: 'rgba(232, 69, 91, 0.25)', color: '#ffb3c0' }}
+                  onClick={() => { setShowGallery(false); onClearSource(); }}
+                  title="Quitar película actual"
+                >
+                  ⏹ Cerrar película
+                </button>
+              )}
+              <button type="button" className="cinema-gallery-close-btn" onClick={() => setShowGallery(false)}>
+                ✕ Volver a la película
+              </button>
+            </div>
           </div>
           <div className="cinema-gallery-scroll">
             <CinemaGallery

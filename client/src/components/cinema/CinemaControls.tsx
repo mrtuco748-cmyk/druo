@@ -25,13 +25,12 @@ interface Props {
   onToggleMute: () => void;
   onChangeVolume: (v: number) => void;
   onToggleFullscreen: () => void;
-  onOpenGallery?: () => void;
 }
 
 export const CinemaControls: React.FC<Props> = ({
   source, playing, currentPos, duration, volume, isFullscreen, bufferedPct, playlistIdx,
   isScrubbing, scrubPos, setIsScrubbing, setScrubPos,
-  onTogglePlay, onSeekTo, onJumpPlaylist, onToggleMute, onChangeVolume, onToggleFullscreen, onOpenGallery,
+  onTogglePlay, onSeekTo, onJumpPlaylist, onToggleMute, onChangeVolume, onToggleFullscreen,
 }) => {
   const displayPos = isScrubbing ? scrubPos : currentPos;
 
@@ -81,12 +80,6 @@ export const CinemaControls: React.FC<Props> = ({
           onChange={(e) => onChangeVolume(Number(e.target.value))} title={`Volumen: ${Math.round(volume * 100)}%`}
         />
       </div>
-
-      {onOpenGallery && (
-        <button type="button" className="ctrl-btn ctrl-cartelera-btn" onClick={onOpenGallery} title="Ver cartelera de películas">
-          🍿 Cartelera
-        </button>
-      )}
 
       <button type="button" className="ctrl-btn ctrl-fs-btn" onClick={onToggleFullscreen} title={isFullscreen ? 'Salir (F)' : 'Pantalla completa (F)'}>
         <IconCinemaFullscreen active={isFullscreen} />
