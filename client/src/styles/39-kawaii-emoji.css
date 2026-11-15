@@ -5,7 +5,7 @@
   width: min(280px, calc(100% - 32px));
   background: rgba(36, 16, 30, 0.98);
   backdrop-filter: blur(16px);
-  border: 2.5px solid #964267;
+  border: none;
   border-radius: 22px;
   padding: 12px;
   display: flex;
@@ -40,27 +40,26 @@
 .kawaii-emoji-cell {
   height: 36px;
   border-radius: 12px;
-  border: 1.5px solid #5e2942;
+  border: none;
   background: #2b1424;
   font-size: 1.18rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: transform 0.14s ease, border-color 0.14s ease;
+  transition: transform 0.14s ease;
 }
 
 .kawaii-emoji-cell:hover,
 .kawaii-emoji-cell.active {
   transform: scale(1.14);
-  border-color: #ff85a2;
   background: #4a2038;
 }
 
 .kawaii-pill-tabs {
   display: inline-flex;
   background: rgba(43, 20, 36, 0.92);
-  border: 2px solid #753451;
+  border: none;
   padding: 4px;
   border-radius: 999px;
   gap: 6px;

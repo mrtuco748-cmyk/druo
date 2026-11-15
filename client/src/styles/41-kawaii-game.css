@@ -31,7 +31,7 @@
 
 .kawaii-reading-card {
   background: #2b1323;
-  border: 2px dashed #8a3d5f;
+  border: none;
   border-radius: 20px;
   padding: 18px 20px;
   width: 100%;
@@ -47,22 +47,20 @@
   align-items: center;
   gap: 7px;
   background: #2b1424;
-  border: 2px solid #6b2f4b;
+  border: none;
   padding: 6px 14px;
   border-radius: 999px;
   color: #e8abc4;
   cursor: pointer;
-  transition: transform 0.14s ease, border-color 0.14s ease;
+  transition: transform 0.14s ease;
 }
 
 .kawaii-score-badge:hover {
   transform: scale(1.06);
-  border-color: #ff85a2;
 }
 
 .kawaii-score-badge.active {
   background: #4f2037;
-  border-color: #ff85a2;
   color: #ffc2d9;
 }
 

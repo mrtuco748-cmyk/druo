@@ -1,6 +1,6 @@
 .kawaii-ttt-cell {
   background: #2b1424;
-  border: 2px solid #6e304c;
+  border: none;
   border-radius: 18px;
   display: flex;
   align-items: center;
@@ -73,7 +73,7 @@
   align-items: center;
   gap: 6px;
   background: #3d1a2e;
-  border: 2px solid #ff85a2;
+  border: none;
   color: #ffd6e6;
   padding: 6px 14px;
   border-radius: 999px;

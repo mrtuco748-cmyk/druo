@@ -23,26 +23,26 @@
   align-items: center;
   justify-content: center;
   background: #281322 !important;
-  border: 2px solid #6b2f4b !important;
+  border: none !important;
   color: #f4b8d0 !important;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.35);
 }
 
 .kawaii-topbar .top-btn.accent {
   background: #e0537c !important;
-  border-color: #ff85a2 !important;
+  border: none !important;
   color: #fff !important;
 }
 
 .kawaii-topbar .top-btn.is-off {
   background: #471b2d !important;
-  border-color: #a63a5c !important;
+  border: none !important;
   color: #ff9ebb !important;
 }
 
 /* Cámaras con marco Rosa Oscuro Pastel */
 .cam-frame {
-  border: 2.5px solid #753451 !important;
+  border: none !important;
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.65) !important;
   background: #1a0d16 !important;
 }
@@ -55,7 +55,7 @@
   width: 250px;
   background: rgba(38, 18, 32, 0.96);
   backdrop-filter: blur(16px);
-  border: 2.5px solid #853b5c;
+  border: none !important;
   border-radius: 26px;
   padding: 14px;
   display: flex;
@@ -74,7 +74,7 @@
   width: 30px;
   height: 30px;
   border-radius: 50%;
-  border: 1.5px solid #753451;
+  border: none !important;
   background: #33182b;
   color: #f4b8d0;
   display: inline-flex;

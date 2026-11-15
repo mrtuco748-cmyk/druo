@@ -32,7 +32,7 @@
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   color: #fff;
-  border: 1px solid rgba(255, 255, 255, 0.14);
+  border: none;
   padding: 6px 14px;
   border-radius: 999px;
   font-size: 0.8rem;
@@ -63,7 +63,7 @@
 }
 .cinema-bar-exit {
   background: rgba(45, 15, 25, 0.85);
-  border-color: rgba(232, 69, 91, 0.35);
+  border: none;
   color: #ffb8c5;
 }
 .cinema-bar-exit:hover {

@@ -8,7 +8,7 @@
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  border: 1.5px solid #6e304c;
+  border: none;
   background: #2b1424;
   color: #e8abc4;
   font-weight: 800;
@@ -18,7 +18,6 @@
 
 .kawaii-num-pill.active {
   background: #e0537c;
-  border-color: #ff85a2;
   color: #fff;
 }
 
@@ -34,7 +33,7 @@
   height: 56px;
   border-radius: 20px;
   background: var(--amb-bg, #2b1424);
-  border: 2.5px solid #753451;
+  border: none;
   color: #ffc2d9;
   display: inline-flex;
   align-items: center;
@@ -46,7 +45,6 @@
 
 .kawaii-amb-circle.active {
   transform: translateY(-4px) scale(1.08);
-  border-color: #ff85a2;
   color: #fff;
   box-shadow: 0 10px 22px rgba(255, 117, 151, 0.35);
 }

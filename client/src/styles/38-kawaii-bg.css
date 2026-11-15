@@ -53,7 +53,7 @@
   align-items: center;
   gap: 4px;
   background: rgba(43, 20, 36, 0.92);
-  border: 2px solid #753451;
+  border: none;
   padding: 3px 6px;
   border-radius: 999px;
 }
@@ -62,19 +62,18 @@
   width: 34px;
   height: 34px;
   border-radius: 50%;
-  border: 1.5px solid transparent;
+  border: none;
   background: #36182c;
   font-size: 1.15rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: transform 0.15s ease, border-color 0.15s ease;
+  transition: transform 0.15s ease;
 }
 
 .kawaii-emoji-avatar-btn:hover,
 .kawaii-emoji-avatar-btn.active {
   transform: scale(1.12);
-  border-color: #ff85a2;
   background: #4d213d;
 }

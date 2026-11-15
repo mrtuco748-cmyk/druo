@@ -71,7 +71,7 @@
   width: 19px;
   height: 19px;
   border-radius: 6px;
-  border: 1.5px solid #753451;
+  border: none;
   cursor: pointer;
   padding: 0;
   overflow: hidden;
@@ -79,6 +79,6 @@
 }
 
 .kawaii-bg-dot.custom {
-  border: 1.5px dashed #ff85a2;
+  border: none;
   display: inline-flex;
 }

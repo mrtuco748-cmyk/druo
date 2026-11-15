@@ -27,7 +27,11 @@ export function useAutoplayUnlock({ videoRef, ytPlayerRef, playback, onAutoplayB
     const onUserInteraction = () => {
       hasUserInteractedRef.current = true;
       const v = videoRef.current;
-      if (v && v.muted && !autoplayBlocked) v.muted = false;
+      if (v && v.muted) {
+        v.muted = false;
+        setAutoplayBlocked(false);
+        onAutoplayBlockedChange?.(false);
+      }
     };
     window.addEventListener('click', onUserInteraction, { passive: true });
     window.addEventListener('touchstart', onUserInteraction, { passive: true });
@@ -37,7 +41,7 @@ export function useAutoplayUnlock({ videoRef, ytPlayerRef, playback, onAutoplayB
       window.removeEventListener('touchstart', onUserInteraction);
       window.removeEventListener('pointerdown', onUserInteraction);
     };
-  }, [autoplayBlocked]);
+  }, []);
 
   useEffect(() => {
     if (!autoplayBlocked) return;

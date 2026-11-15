@@ -29,7 +29,7 @@
   font-size: 0.8rem;
   padding: 6px 14px;
   border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.16);
+  border: none;
   cursor: pointer;
 }
 .gallery-nav-row {
@@ -42,7 +42,7 @@
 .gallery-pills { display: flex; gap: 6px; flex-wrap: wrap; }
 .gallery-pill {
   background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: none;
   color: #ddd;
   border-radius: 20px;
   padding: 6px 14px;
@@ -52,7 +52,6 @@
 }
 .gallery-pill.active {
   background: rgba(255, 255, 255, 0.16);
-  border-color: rgba(255, 255, 255, 0.35);
   color: #fff;
   font-weight: 600;
 }
@@ -67,7 +66,7 @@
 .gallery-search-input {
   width: 100%;
   background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.14);
+  border: none;
   border-radius: 10px;
   padding: 7px 12px;
   color: #fff;

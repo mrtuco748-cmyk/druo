@@ -61,7 +61,7 @@ body {
 .lobby-card {
   width: min(440px, 100%);
   background: var(--bg-panel);
-  border: 1px solid var(--border-soft);
+  border: none;
   border-radius: 22px;
   padding: 28px 24px;
   text-align: center;

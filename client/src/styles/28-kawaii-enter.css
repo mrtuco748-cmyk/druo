@@ -8,14 +8,14 @@
   justify-content: center;
   background: linear-gradient(135deg, #e0537c, #ff85a2) !important;
   color: #fff !important;
-  border: 3px solid #ffc2d9 !important;
+  border: none !important;
   box-shadow: 0 10px 24px rgba(224, 83, 124, 0.45) !important;
 }
 
 .kawaii-topbar {
   background: rgba(29, 14, 25, 0.92) !important;
   backdrop-filter: blur(12px);
-  border-bottom: 2px solid #57263d !important;
+  border-bottom: none !important;
   padding: 6px 14px !important;
 }
 
@@ -24,7 +24,7 @@
   align-items: center;
   gap: 6px;
   background: #281322;
-  border: 2px solid #6b2f4b;
+  border: none;
   padding: 4px;
   border-radius: 999px;
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
@@ -61,7 +61,7 @@
   height: 11px;
   border-radius: 50%;
   display: inline-block;
-  border: 2px solid #381a2c;
+  border: none;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
 }
 
@@ -79,7 +79,7 @@
 
 .kawaii-react-bar {
   background: #281322 !important;
-  border: 2px solid #6b2f4b !important;
+  border: none !important;
   padding: 3px !important;
   border-radius: 999px !important;
   gap: 4px !important;

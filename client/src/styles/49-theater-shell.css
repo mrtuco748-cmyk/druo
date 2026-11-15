@@ -21,7 +21,7 @@
   left: 50%;
   transform: translateX(-50%);
   background: rgba(14, 8, 18, 0.94);
-  border: 1px solid rgba(255, 255, 255, 0.16);
+  border: none;
   color: #fff;
   font-size: 0.82rem;
   font-weight: 500;
@@ -45,4 +45,12 @@
     opacity: 1;
     transform: translate(-50%, 0);
   }
+}
+
+.cam-frame,
+.cam-slot,
+.screen-bezel,
+.theater-stage,
+.cinema-stage {
+  border: none !important;
 }

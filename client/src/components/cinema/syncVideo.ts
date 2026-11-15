@@ -22,6 +22,7 @@ export interface SyncVideoOpts {
 export function syncVideoFrame(opts: SyncVideoOpts) {
   const { v, playback, now, effVol, waitOnBuffer, peerBuffering, someoneSpeaking, lastSpeechAt } = opts;
   if (Math.abs(v.volume - effVol) > 0.015) { try { v.volume = effVol; } catch {} }
+  if (effVol > 0 && v.muted && opts.hasUserInteractedRef.current) v.muted = false;
   opts.setCurrentPos(v.currentTime || 0);
   if (v.duration && Number.isFinite(v.duration)) opts.setDuration(v.duration);
   if (v.seeking) return;

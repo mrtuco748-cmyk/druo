@@ -47,7 +47,7 @@
 .kawaii-fab-popover {
   background: rgba(38, 18, 32, 0.96);
   backdrop-filter: blur(16px);
-  border: 2.5px solid #853b5c;
+  border: none;
   border-radius: 26px;
   padding: 12px;
   width: 248px;

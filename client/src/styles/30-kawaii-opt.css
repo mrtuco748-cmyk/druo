@@ -9,7 +9,7 @@
   width: 46px;
   height: 46px;
   border-radius: 16px;
-  border: 2px solid #632b45;
+  border: none;
   background: #2b1424;
   color: #e8abc4;
   display: inline-flex;
@@ -21,7 +21,6 @@
 
 .kawaii-opt-icon-btn:hover {
   transform: translateY(-2px);
-  border-color: #ff85a2;
   background: #3b1b31;
   color: #ffc2d9;
 }
@@ -29,14 +28,12 @@
 .kawaii-opt-icon-btn.active,
 .kawaii-opt-icon-btn.pink {
   background: linear-gradient(135deg, #e0537c, #ff85a2);
-  border-color: #ff9ebb;
   color: #fff;
   box-shadow: 0 6px 14px rgba(224, 83, 124, 0.38);
 }
 
 .kawaii-opt-icon-btn.off {
   background: #421829;
-  border-color: #9e3558;
   color: #ff9ebb;
 }
 
@@ -58,7 +55,7 @@
   align-items: center;
   gap: 8px;
   background: #2b1424;
-  border: 1.5px solid #6b2f4b;
+  border: none;
   padding: 6px 12px;
   border-radius: 999px;
   color: #ff9ebb;

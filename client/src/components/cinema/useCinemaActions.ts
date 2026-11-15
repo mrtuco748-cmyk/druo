@@ -43,15 +43,23 @@ export function createCinemaActions(opts: Opts) {
     const clamped = Math.max(0, Math.min(opts.duration || Infinity, pos));
     opts.suppressEventsUntil.current = Date.now() + 700;
     opts.lastSeekAtRef.current = Date.now();
-    if (opts.videoRef.current) opts.videoRef.current.currentTime = clamped;
+    if (opts.videoRef.current) {
+      opts.videoRef.current.currentTime = clamped;
+      if (opts.volume > 0) opts.videoRef.current.muted = false;
+    }
     if (opts.ytPlayerRef.current?.seekTo) opts.ytPlayerRef.current.seekTo(clamped, true);
     opts.setCurrentPos(clamped);
     opts.onEmitSync({ playing: opts.playback.playing, position: clamped, playlistIndex: opts.currentPlaylistIdxRef.current }, 'seek');
   };
 
   const toggleMute = () => {
-    if (opts.volume > 0) { opts.setPrevVol(opts.volume); opts.setVolume(0); }
-    else opts.setVolume(opts.prevVol > 0 ? opts.prevVol : 1);
+    if (opts.volume > 0) {
+      opts.setPrevVol(opts.volume); opts.setVolume(0);
+      if (opts.videoRef.current) opts.videoRef.current.muted = true;
+    } else {
+      opts.setVolume(opts.prevVol > 0 ? opts.prevVol : 1);
+      if (opts.videoRef.current) opts.videoRef.current.muted = false;
+    }
   };
 
   return { togglePlay, seekTo, toggleMute };

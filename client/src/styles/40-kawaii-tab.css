@@ -19,7 +19,7 @@
   width: 100%;
   max-width: 540px;
   background: rgba(41, 19, 34, 0.92);
-  border: 2.5px solid #803959;
+  border: none;
   border-radius: 26px;
   padding: clamp(14px, 2.2vh, 22px);
   display: flex;
@@ -50,7 +50,7 @@
   flex: 1;
   max-width: 185px;
   background: #2e1526;
-  border: 2px solid #6e304c;
+  border: none;
   border-radius: 20px;
   padding: 12px 14px;
   color: #f4b8d0;
@@ -69,13 +69,11 @@
 
 .kawaii-vote-card.selected {
   background: #54213a;
-  border-color: #ff85a2;
   color: #ffe3ee;
   transform: scale(1.04);
 }
 
 .kawaii-vote-card.matched {
   background: #1d4232;
-  border-color: #63e6be;
   color: #b8f2d8;
 }

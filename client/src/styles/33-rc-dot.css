@@ -23,7 +23,7 @@
   height: 42px;
   border-radius: 50%;
   background: rgba(43, 20, 36, 0.94);
-  border: 2px solid #7a3756;
+  border: none;
   color: #f4b8d0;
   display: inline-flex;
   align-items: center;
@@ -40,14 +40,12 @@
 
 .kawaii-icon-circle:hover {
   transform: scale(1.07);
-  border-color: #ff85a2;
   background: #3d1c33;
   color: #ffc2d9;
 }
 
 .kawaii-icon-circle.active {
   background: linear-gradient(135deg, #e0537c, #ff85a2);
-  border-color: #ff9ebb;
   color: #fff;
 }
 
@@ -63,7 +61,7 @@
   display: inline-flex;
   align-items: center;
   background: rgba(43, 20, 36, 0.94);
-  border: 2px solid #7a3756;
+  border: none;
   border-radius: 999px;
   padding: 3px;
   gap: 2px;

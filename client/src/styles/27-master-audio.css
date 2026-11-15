@@ -42,7 +42,7 @@
 
 .kawaii-lobby-card {
   background: rgba(39, 19, 33, 0.94) !important;
-  border: 1px solid rgba(255, 255, 255, 0.16) !important;
+  border: none !important;
   border-radius: 28px !important;
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.65) !important;
   color: #fce4ef !important;
@@ -61,7 +61,7 @@
 
 .kawaii-lobby-card input {
   background: #1d0e19 !important;
-  border: 2px solid #753451 !important;
+  border: none !important;
   color: #fce4ef !important;
   border-radius: 16px !important;
   text-align: center;
@@ -70,7 +70,7 @@
 
 .kawaii-lobby-card .seat-btn {
   background: #23111e !important;
-  border: 2px solid #692e49 !important;
+  border: none !important;
   color: #d9a3bc !important;
   border-radius: 18px !important;
   padding: 12px !important;
@@ -81,7 +81,7 @@
 
 .kawaii-lobby-card .seat-btn.active {
   background: #5c253f !important;
-  border-color: rgba(255, 255, 255, 0.4) !important;
+  border: none !important;
   color: #ffe8f1 !important;
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4) !important;
 }

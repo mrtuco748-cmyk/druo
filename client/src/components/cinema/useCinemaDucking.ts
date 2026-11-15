@@ -17,8 +17,11 @@ export function useCinemaDucking({
     const applyVol = (val: number) => {
       const clamped = Math.max(0, Math.min(1, val));
       smoothVolRef.current = clamped;
-      if (videoRef.current && Math.abs(videoRef.current.volume - clamped) > 0.005) {
-        try { videoRef.current.volume = clamped; } catch {}
+      if (videoRef.current) {
+        if (Math.abs(videoRef.current.volume - clamped) > 0.005) {
+          try { videoRef.current.volume = clamped; } catch {}
+        }
+        if (clamped > 0 && videoRef.current.muted) videoRef.current.muted = false;
       }
       if (ytPlayerRef.current?.setVolume) {
         try { ytPlayerRef.current.setVolume(Math.round(clamped * 100)); } catch {}
