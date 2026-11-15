@@ -1,5 +1,4 @@
-import React, { useState } from 'react';
-import { CinemaGallery } from './cinema/gallery/CinemaGallery';
+import React, { useEffect, useState } from 'react';
 import { RoomSource, RoomSubs } from './CinemaScreen';
 import { CloudTab } from './sources/CloudTab';
 import { LinkTab } from './sources/LinkTab';
@@ -18,7 +17,11 @@ interface Props {
 export const SourceDrawer: React.FC<Props> = ({
   open, storageReady, subs, onClose, onSelectSource, onSelectLocalFile, onSetSubs,
 }) => {
-  const [tab, setTab] = useState<'gallery' | 'cloud' | 'link' | 'local'>('gallery');
+  const [tab, setTab] = useState<'cloud' | 'link' | 'local'>('cloud');
+
+  useEffect(() => {
+    if (open) setTab('cloud');
+  }, [open]);
 
   if (!open) return null;
 
@@ -26,16 +29,13 @@ export const SourceDrawer: React.FC<Props> = ({
     <div className="modal-backdrop" onClick={onClose}>
       <div className="modal-card" onClick={(e) => e.stopPropagation()}>
         <header className="modal-head">
-          <h3>🎬 Película / Serie en pantalla</h3>
+          <h3>☁️ Subir o elegir película</h3>
           <button type="button" className="icon-close" onClick={onClose}>✕</button>
         </header>
 
         <div className="modal-tabs">
-          <button type="button" className={tab === 'gallery' ? 'active' : ''} onClick={() => setTab('gallery')}>
-            🍿 Cartelera
-          </button>
           <button type="button" className={tab === 'cloud' ? 'active' : ''} onClick={() => setTab('cloud')}>
-            ☁️ Biblioteca nube
+            ☁️ Subir a la nube
           </button>
           <button type="button" className={tab === 'link' ? 'active' : ''} onClick={() => setTab('link')}>
             🔗 Link directo
@@ -45,14 +45,6 @@ export const SourceDrawer: React.FC<Props> = ({
           </button>
         </div>
 
-        {tab === 'gallery' && (
-          <div style={{ maxHeight: 'min(520px, calc(80vh - 120px))', overflowY: 'auto' }}>
-            <CinemaGallery
-              onSelectSource={(s) => { onSelectSource(s); onClose(); }}
-              onOpenSources={() => setTab('cloud')}
-            />
-          </div>
-        )}
         {tab === 'cloud' && (
           <CloudTab open={open} storageReady={storageReady} onSelectSource={onSelectSource} onClose={onClose} />
         )}
