@@ -27,23 +27,23 @@ export function syncVideoFrame(opts: SyncVideoOpts) {
   if (v.duration && Number.isFinite(v.duration)) opts.setDuration(v.duration);
   if (v.seeking) return;
 
-  const shouldPlay = playback.playing && !(waitOnBuffer && peerBuffering);
+  const shouldPlay = playback.playing;
   const dec = decideSync(v.currentTime || 0, { ...playback, playing: shouldPlay }, now);
   const recentlySpoke = someoneSpeaking || Date.now() - lastSpeechAt < 2200;
 
-  if (dec.action === 'seek' && Date.now() - opts.lastSeekAtRef.current > 2000) {
-    opts.suppressEventsUntil.current = Date.now() + 700;
+  if (dec.action === 'seek' && Date.now() - opts.lastSeekAtRef.current > 3500) {
+    opts.suppressEventsUntil.current = Date.now() + 1000;
     opts.lastSeekAtRef.current = Date.now();
     v.currentTime = dec.target;
     if (v.playbackRate !== 1) v.playbackRate = 1;
-  } else if (dec.action === 'rate' && !recentlySpoke && Math.abs(dec.drift) > 0.48) {
+  } else if (dec.action === 'rate' && !recentlySpoke) {
     if (Math.abs(v.playbackRate - dec.rate) > 0.01) v.playbackRate = dec.rate;
   } else if (v.playbackRate !== 1) {
     v.playbackRate = 1;
   }
 
   if (shouldPlay && v.paused) {
-    opts.suppressEventsUntil.current = Date.now() + 600;
+    opts.suppressEventsUntil.current = Date.now() + 1000;
     v.play()
       .then(() => { opts.setAutoplayBlocked(false); opts.onAutoplayBlockedChange?.(false); })
       .catch(() => {
@@ -53,7 +53,7 @@ export function syncVideoFrame(opts: SyncVideoOpts) {
         }
       });
   } else if (!shouldPlay && !v.paused) {
-    opts.suppressEventsUntil.current = Date.now() + 600;
+    opts.suppressEventsUntil.current = Date.now() + 1000;
     v.pause();
   }
   opts.setIsPlaying(!v.paused);

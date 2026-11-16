@@ -30,10 +30,15 @@ export async function listLibrary() {
   return { titles: list, used, limit: FREE_LIMIT };
 }
 
-export async function playUrl(key) {
+export async function signedPlayUrl(key) {
   assertKey(key);
   const cmd = new GetObjectCommand({ Bucket: Bucket(), Key: key });
-  return { url: await getSignedUrl(s3(), cmd, { expiresIn: 12 * 3600 }) };
+  return getSignedUrl(s3(), cmd, { expiresIn: 12 * 3600 });
+}
+
+export async function playUrl(key) {
+  assertKey(key);
+  return { url: `/api/stream?key=${encodeURIComponent(key)}` };
 }
 
 export async function deleteKeys(keys) {

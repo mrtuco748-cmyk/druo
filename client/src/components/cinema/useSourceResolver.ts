@@ -18,21 +18,14 @@ export function useSourceResolver({
   const [trackBlobUrl, setTrackBlobUrl] = useState<string | null>(null);
 
   useEffect(() => {
-    let cancelled = false;
     onLevelsLoaded([]);
     if (!source || source.kind === 'youtube') { setResolvedUrl(null); return; }
     if (source.kind === 'local') { setResolvedUrl(localFileUrl); return; }
     if (source.kind === 'library' && source.versions?.length) {
       const chosen = source.versions.find((v) => v.key === preferredVersionKey) || source.versions[source.versions.length - 1];
       if (!preferredVersionKey && chosen) onSelectVersionKey(chosen.key);
-      fetch('/api/play-url', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ key: chosen.key }),
-      })
-        .then((r) => r.json())
-        .then((j) => { if (!cancelled && j.url) setResolvedUrl(j.url); })
-        .catch(() => {});
-      return () => { cancelled = true; };
+      setResolvedUrl(chosen ? `/api/stream?key=${encodeURIComponent(chosen.key)}` : null);
+      return;
     }
     setResolvedUrl(source.url || null);
   }, [source, preferredVersionKey, localFileUrl]);

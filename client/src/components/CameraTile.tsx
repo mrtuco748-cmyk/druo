@@ -66,7 +66,7 @@ export const CameraTile: React.FC<Props> = ({
         {!hasVideo && (
           <div className="cam-placeholder">
             <div className="cam-avatar">{label.slice(0, 1).toUpperCase()}</div>
-            <span>{online ? (isMe ? 'Tu cámara está pausada' : 'Cámara en pausa') : 'Esperando…'}</span>
+            <span>{online ? (isMe ? 'Tu cámara está pausada' : 'Cámara en pausa') : ''}</span>
           </div>
         )}
         <div className="cam-vignette" />

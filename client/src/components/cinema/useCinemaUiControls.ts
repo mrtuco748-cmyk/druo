@@ -14,6 +14,7 @@ interface Opts {
   seekTo: (pos: number) => void;
   toggleMute: () => void;
   setVolume: React.Dispatch<React.SetStateAction<number>>;
+  onToggleDrawing?: () => void;
 }
 
 export function useCinemaUiControls(opts: Opts) {
@@ -68,6 +69,7 @@ export function useCinemaUiControls(opts: Opts) {
       else if (e.code === 'ArrowDown') { e.preventDefault(); opts.setVolume((v) => Math.max(0, Math.round((v - 0.05) * 100) / 100)); }
       else if (e.key === 'm' || e.key === 'M') { e.preventDefault(); opts.toggleMute(); }
       else if (e.key === 'f' || e.key === 'F') { e.preventDefault(); toggleFullscreen(); }
+      else if (e.key === 'd' || e.key === 'D') { e.preventDefault(); opts.onToggleDrawing?.(); }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);

@@ -13,6 +13,7 @@ import { useCinemaState } from './cinema/useCinemaState';
 import { useCinemaSyncLoop } from './cinema/useCinemaSyncLoop';
 import { useCinemaUiControls } from './cinema/useCinemaUiControls';
 import { useHlsPlayer } from './cinema/useHlsPlayer';
+import { useMovieAudioBooster } from './cinema/useMovieAudioBooster';
 import { useSourceResolver } from './cinema/useSourceResolver';
 import { useYouTubePlayer } from './cinema/useYouTubePlayer';
 
@@ -24,15 +25,13 @@ interface Props {
   waitOnBuffer: boolean; peerBuffering: boolean; preferredVersionKey: string | null;
   hlsLevel: number; movieCapBps: number;
   onLevelsLoaded: (levels: { index: number; label: string; bitrate: number }[]) => void;
-  onSelectVersionKey: (key: string) => void;
+  onSelectVersionKey: (key: string) => void; localFileUrl: string | null; onPickLocalFile: (f: File) => void;
   onEmitSync: (state: { playing: boolean; position: number; playlistIndex?: number }, reason: string) => void;
   onEmitBuffering: (buffering: boolean) => void; onOpenSources: () => void;
-  localFileUrl: string | null; onPickLocalFile: (f: File) => void;
-  drawingActive: boolean; drawingColor: string; peerName?: string;
-  initialStrokes?: DrawStroke[]; onEmitDraw: (ev: DrawEvent) => void;
-  onRegisterDrawReceiver?: (receiver: (ev: DrawEvent) => void) => void;
-  onCloseDrawing: () => void; onClearDrawing: () => void;
-  onAutoplayBlockedChange?: (blocked: boolean) => void;
+  drawingActive: boolean; drawingColor: string; peerName?: string; initialStrokes?: DrawStroke[];
+  onEmitDraw: (ev: DrawEvent) => void; onRegisterDrawReceiver?: (receiver: (ev: DrawEvent) => void) => void;
+  onCloseDrawing: () => void; onClearDrawing: () => void; onChangeDrawingColor?: (c: string) => void;
+  onToggleDrawing?: () => void; onAutoplayBlockedChange?: (blocked: boolean) => void;
   onSelectSource?: (src: RoomSource) => void; onClearSource?: () => void;
 }
 
@@ -45,8 +44,9 @@ export const CinemaScreen: React.FC<Props> = (p) => {
   const { jumpToPlaylistIndex } = useYouTubePlayer({ ...st, ...p });
 
   useCinemaDucking({ ...st, ...p, resolvedUrl }); useCinemaSyncLoop({ ...st, ...p, ...autoplay, resolvedUrl, jumpToPlaylistIndex });
+  useMovieAudioBooster({ videoRef: st.videoRef, audioBoost: st.audioBoost, resolvedUrl });
   const actions = createCinemaActions({ ...st, ...p, ...autoplay });
-  const ui = useCinemaUiControls({ ...st, ...p, ...actions, isCurrentlyPlaying: p.playback.playing || st.isPlaying });
+  const ui = useCinemaUiControls({ ...st, ...p, ...actions, isCurrentlyPlaying: p.playback.playing || st.isPlaying, onToggleDrawing: p.onToggleDrawing });
 
   return (
     <main className={`cinema-stage ${ui.controlsVisible ? 'show-ui' : 'hide-ui'}`} onMouseMove={ui.bumpControls} onClick={ui.handleStageClick}>
@@ -73,11 +73,10 @@ export const CinemaScreen: React.FC<Props> = (p) => {
             🔊 Tocá acá para activar el sonido de la película
           </button>
         )}
-        {p.waitOnBuffer && p.peerBuffering && <div className="buffer-pill">⏳ Esperando un segundo a que cargue en el otro dispositivo…</div>}
         <DrawingCanvas
           active={p.drawingActive} color={p.drawingColor} width={4} peerName={p.peerName}
-          initialStrokes={p.initialStrokes} onEmitDraw={p.onEmitDraw}
-          onRegisterReceiver={p.onRegisterDrawReceiver} onCloseDrawing={p.onCloseDrawing} onClearDrawing={p.onClearDrawing}
+          initialStrokes={p.initialStrokes} onEmitDraw={p.onEmitDraw} onRegisterReceiver={p.onRegisterDrawReceiver}
+          onCloseDrawing={p.onCloseDrawing} onClearDrawing={p.onClearDrawing} onChangeColor={p.onChangeDrawingColor}
         />
         {p.source && p.source.kind !== 'embed' && (
           <CinemaControls
@@ -88,6 +87,8 @@ export const CinemaScreen: React.FC<Props> = (p) => {
             onTogglePlay={actions.togglePlay} onSeekTo={actions.seekTo}
             onJumpPlaylist={(idx) => jumpToPlaylistIndex(idx, true)}
             onToggleMute={actions.toggleMute} onChangeVolume={st.setVolume} onToggleFullscreen={ui.toggleFullscreen}
+            drawingActive={p.drawingActive} onToggleDrawing={p.onToggleDrawing}
+            audioBoost={st.audioBoost} onCycleBoost={st.cycleBoost}
           />
         )}
       </div>

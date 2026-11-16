@@ -32,13 +32,19 @@ export function decideSync(localPos: number, state: PlaybackState, serverNow: nu
   const abs = Math.abs(drift);
 
   if (!state.playing) {
-    if (abs > 0.25) return { action: 'seek', drift, target, rate: 1 };
+    if (abs > 0.35) return { action: 'seek', drift, target, rate: 1 };
     return { action: 'none', drift, target, rate: 1 };
   }
 
-  if (abs < 0.18) return { action: 'none', drift, target, rate: 1 };
-  if (abs > 1.6) return { action: 'seek', drift, target, rate: 1 };
+  // Espera 1 segundo tras cambios de estado para sincronizar sin cortes ni bucles
+  const timeSinceUpdate = (serverNow - state.updatedAt) / 1000;
+  if (timeSinceUpdate < 1.0 && abs < 2.5) {
+    return { action: 'none', drift, target, rate: 1 };
+  }
 
-  const nudge = Math.max(-0.06, Math.min(0.06, drift * 0.08));
+  if (abs < 0.25) return { action: 'none', drift, target, rate: 1 };
+  if (abs > 2.8) return { action: 'seek', drift, target, rate: 1 };
+
+  const nudge = Math.max(-0.06, Math.min(0.06, drift * 0.05));
   return { action: 'rate', drift, target, rate: Number((1 + nudge).toFixed(3)) };
 }

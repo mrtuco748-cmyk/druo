@@ -38,7 +38,7 @@ const server = http.createServer(async (req, res) => {
       return await proxyHls(req, res, url.searchParams.get('url') || '', url.searchParams.get('ref') || '');
     }
     if (url.pathname === '/api/stream' && (req.method === 'GET' || req.method === 'HEAD')) {
-      return await streamLink(req, res, url.searchParams.get('link') || '');
+      return await streamLink(req, res, url.searchParams.get('link') || '', url.searchParams.get('key') || '');
     }
     const handler = routes[key];
     if (handler) {

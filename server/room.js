@@ -73,7 +73,7 @@ export class Room {
 
   setSource(source, by) {
     this.source = source ? { ...source, by, setAt: this.now() } : null;
-    this.playback = { playing: false, position: 0, rate: 1, playlistIndex: Number(source?.playlistIndex) || 0, updatedAt: this.now(), by };
+    this.playback = { playing: Boolean(source), position: 0, rate: 1, playlistIndex: Number(source?.playlistIndex) || 0, updatedAt: this.now(), by };
     this.subs = null;
   }
 

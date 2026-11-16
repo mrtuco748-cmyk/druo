@@ -29,16 +29,30 @@
   top: 14px;
   left: 50%;
   transform: translateX(-50%);
-  background: rgba(18, 10, 18, 0.92);
-  border: 1px solid var(--gold);
+  background: rgba(22, 12, 26, 0.94);
+  border: none;
   border-radius: 999px;
   padding: 6px 14px;
   display: flex;
   align-items: center;
   gap: 10px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.75);
-  backdrop-filter: blur(8px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  z-index: 25;
 }
+.drawing-toolbar-icon { font-size: 1rem; }
+.drawing-clear-btn {
+  padding: 4px 10px; font-size: 0.78rem; border-radius: 999px; border: none;
+  background: rgba(232, 69, 91, 0.2); color: #ffb8c5; cursor: pointer; transition: background 0.15s ease;
+}
+.drawing-clear-btn:hover { background: rgba(232, 69, 91, 0.35); }
+.drawing-done-btn {
+  padding: 4px 12px; font-size: 0.78rem; font-weight: 600; border-radius: 999px; border: none;
+  background: rgba(255, 255, 255, 0.14); color: #fff; cursor: pointer; transition: background 0.15s ease;
+}
+.drawing-done-btn:hover { background: rgba(255, 255, 255, 0.25); }
+.ctrl-btn.ctrl-btn-active { background: rgba(255, 207, 107, 0.25); color: #ffcf6b; }
 
 .cinema-controls {
   position: absolute;

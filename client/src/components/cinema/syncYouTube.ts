@@ -48,15 +48,15 @@ export function syncYouTubeFrame(opts: SyncYtOpts) {
 
   const state = p.getPlayerState?.();
   if (state === 3) return;
-  if (Math.abs(target - pos) > 2.2 && Date.now() - opts.lastSeekAtRef.current > 2500) {
-    opts.suppressEventsUntil.current = Date.now() + 800;
+  if (Math.abs(target - pos) > 3.0 && Date.now() - opts.lastSeekAtRef.current > 3500) {
+    opts.suppressEventsUntil.current = Date.now() + 1000;
     opts.lastSeekAtRef.current = Date.now();
     p.seekTo(target, true);
   }
-  const shouldPlay = playback.playing && !(waitOnBuffer && peerBuffering);
+  const shouldPlay = playback.playing;
   if (shouldPlay && state !== 1 && state !== 3) {
-    opts.suppressEventsUntil.current = Date.now() + 700; p.playVideo?.();
+    opts.suppressEventsUntil.current = Date.now() + 1000; p.playVideo?.();
   } else if (!shouldPlay && state === 1) {
-    opts.suppressEventsUntil.current = Date.now() + 700; p.pauseVideo?.();
+    opts.suppressEventsUntil.current = Date.now() + 1000; p.pauseVideo?.();
   }
 }

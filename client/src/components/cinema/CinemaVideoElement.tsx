@@ -17,6 +17,7 @@ export const CinemaVideoElement: React.FC<Props> = ({
   setIsPlaying, onEmitBuffering, onEmitSync,
 }) => (
   <video
+    key={resolvedUrl || 'idle'}
     ref={videoRef}
     className={`cinema-video ${!resolvedUrl ? 'is-hidden' : ''}`}
     playsInline
@@ -26,17 +27,11 @@ export const CinemaVideoElement: React.FC<Props> = ({
     x5-playsinline="true"
     onWaiting={() => onEmitBuffering(true)}
     onPlaying={() => { onEmitBuffering(false); setIsPlaying(true); }}
-    onPause={() => {
-      if (Date.now() < suppressEventsUntil.current) return;
+    onPause={() => setIsPlaying(false)}
+    onPlay={() => setIsPlaying(true)}
+    onEnded={() => {
       setIsPlaying(false);
-      if (videoRef.current && !videoRef.current.ended) {
-        onEmitSync({ playing: false, position: videoRef.current.currentTime }, 'pause');
-      }
-    }}
-    onPlay={() => {
-      if (Date.now() < suppressEventsUntil.current) return;
-      setIsPlaying(true);
-      if (videoRef.current) onEmitSync({ playing: true, position: videoRef.current.currentTime }, 'play');
+      if (videoRef.current) onEmitSync({ playing: false, position: videoRef.current.duration || 0 }, 'ended');
     }}
   >
     {trackBlobUrl && <track kind="subtitles" src={trackBlobUrl} srcLang="es" label={subs?.name || 'Subtítulos'} default />}

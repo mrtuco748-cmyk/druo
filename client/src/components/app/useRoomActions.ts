@@ -50,7 +50,12 @@ export function useRoomActions(st: AppState) {
     updateMyFraming, handleSelectViewMode, handleSelectActivity, handleEmitSync, handleSelectLocalFile,
     handleMeSpeakingChange: (sp: boolean) => { st.setMeSpeaking(sp); st.sigRef.current?.send({ t: 'speaking', value: sp }); },
     handleChangePeerVolume: (v: number) => { const c = Math.max(0, Math.min(4.0, v)); st.setPeerVolume(c); localStorage.setItem('druo.peerVolume', String(c)); },
-    handleSelectSource: (src: RoomSource) => { st.setPreferredVersionKey(null); st.setSource(src); st.setActiveActivity('cinema'); st.sigRef.current?.send({ t: 'source', source: src }); },
+    handleSelectSource: (src: RoomSource) => {
+      const now = st.sigRef.current?.clock.now() || Date.now();
+      st.setPreferredVersionKey(null); st.setSource(src);
+      st.setPlayback({ playing: true, position: 0, rate: 1, playlistIndex: src.playlistIndex || 0, updatedAt: now, by: st.myId });
+      st.setActiveActivity('cinema'); st.sigRef.current?.send({ t: 'source', source: src });
+    },
     handleClearSource: () => { st.setPreferredVersionKey(null); st.setSource(null); st.sigRef.current?.send({ t: 'source', source: null }); },
   };
 }

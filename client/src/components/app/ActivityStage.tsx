@@ -44,10 +44,9 @@ export const ActivityStage: React.FC<Props> = ({
         drawingColor={st.drawingColor} peerName={otherPeer?.name} initialStrokes={st.initialDrawings}
         onEmitDraw={(ev) => st.sigRef.current?.send(ev)}
         onRegisterDrawReceiver={(r) => { st.drawReceiverRef.current = r; }}
-        onCloseDrawing={() => st.setDrawingActive(false)}
-        onClearDrawing={() => st.setInitialDrawings([])}
-        onAutoplayBlockedChange={st.setMovieAudioBlocked}
-        onSelectSource={onSelectSource} onClearSource={onClearSource}
+        onCloseDrawing={() => st.setDrawingActive(false)} onClearDrawing={() => st.setInitialDrawings([])}
+        onChangeDrawingColor={st.setDrawingColor} onToggleDrawing={() => st.setDrawingActive((d) => !d)}
+        onAutoplayBlockedChange={st.setMovieAudioBlocked} onSelectSource={onSelectSource} onClearSource={onClearSource}
       />
     );
   }

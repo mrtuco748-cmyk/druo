@@ -25,11 +25,24 @@ export function useCinemaState(someoneSpeaking: boolean) {
   const [isScrubbing, setIsScrubbing] = useState(false);
   const [scrubPos, setScrubPos] = useState(0);
 
+  const [audioBoost, setAudioBoost] = useState<number>(() => {
+    const s = Number(localStorage.getItem('druo.cinemaBoost'));
+    return s >= 1 && s <= 4 ? s : 1;
+  });
+
+  const cycleBoost = () => {
+    setAudioBoost((b) => {
+      const next = b === 1 ? 4 : b === 4 ? 2 : 1;
+      localStorage.setItem('druo.cinemaBoost', String(next));
+      return next;
+    });
+  };
+
   return {
     videoRef, hlsRef, ytHostRef, ytPlayerRef, suppressEventsUntil, lastSeekAtRef,
     currentPlaylistIdxRef, smoothVolRef, lastSpeechAtRef, someoneSpeakingRef,
     playlistIdx, setPlaylistIdx, duration, setDuration, currentPos, setCurrentPos,
     isPlaying, setIsPlaying, volume, setVolume, prevVol, setPrevVol,
-    isScrubbing, setIsScrubbing, scrubPos, setScrubPos,
+    isScrubbing, setIsScrubbing, scrubPos, setScrubPos, audioBoost, setAudioBoost, cycleBoost,
   };
 }

@@ -4,23 +4,21 @@ import { DrawEvent, DrawPoint, DrawStroke } from './canvas/types';
 import { useCanvasSignaling } from './canvas/useCanvasSignaling';
 import { useDrawingInteractions } from './canvas/useDrawingInteractions';
 
+const DRAW_COLORS = ['#ff85a2', '#ffe082', '#8ce99a', '#91c9ff', '#ffffff'];
+
 export type { DrawEvent, DrawPoint, DrawStroke };
 
 interface Props {
-  active: boolean;
-  color: string;
-  width: number;
-  peerName?: string;
-  initialStrokes?: DrawStroke[];
-  onEmitDraw: (ev: DrawEvent) => void;
+  active: boolean; color: string; width: number; peerName?: string;
+  initialStrokes?: DrawStroke[]; onEmitDraw: (ev: DrawEvent) => void;
   onRegisterReceiver?: (receiver: (ev: DrawEvent) => void) => void;
-  onCloseDrawing: () => void;
-  onClearDrawing: () => void;
+  onCloseDrawing: () => void; onClearDrawing: () => void;
+  onChangeColor?: (color: string) => void;
 }
 
 export const DrawingCanvas: React.FC<Props> = ({
   active, color, width, peerName, initialStrokes,
-  onEmitDraw, onRegisterReceiver, onCloseDrawing, onClearDrawing,
+  onEmitDraw, onRegisterReceiver, onCloseDrawing, onClearDrawing, onChangeColor,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const strokesRef = useRef<DrawStroke[]>([]);
@@ -66,9 +64,25 @@ export const DrawingCanvas: React.FC<Props> = ({
       )}
       {active && (
         <div className="drawing-toolbar" onClick={(e) => e.stopPropagation()}>
-          <span style={{ fontSize: '0.8rem', color: '#ffcf6b', fontWeight: 600 }}>✏️ Pizarra</span>
-          <button type="button" className="btn-ghost" onClick={handleClear} title="Borrar todos los dibujos">🧹 Limpiar</button>
-          <button type="button" className="cta-primary" style={{ padding: '4px 10px', fontSize: '0.78rem' }} onClick={onCloseDrawing}>Listo</button>
+          <span className="drawing-toolbar-icon" title="Pizarra activa">✏️</span>
+          <div className="palette-dots">
+            {DRAW_COLORS.map((c) => (
+              <button
+                key={c}
+                type="button"
+                className={`palette-dot ${color === c ? 'selected' : ''}`}
+                style={{ background: c }}
+                onClick={() => onChangeColor?.(c)}
+                title={`Color ${c}`}
+              />
+            ))}
+          </div>
+          <button type="button" className="drawing-clear-btn" onClick={handleClear} title="Borrar todos los dibujos">
+            🧹 Borrar
+          </button>
+          <button type="button" className="drawing-done-btn" onClick={onCloseDrawing} title="Cerrar dibujo">
+            ✕ Listo
+          </button>
         </div>
       )}
     </div>

@@ -1,6 +1,25 @@
 import { useEffect, useRef, useState } from 'react';
 import { PlaybackState } from '../../lib/sync';
 
+if (typeof window !== 'undefined') {
+  const AC = window.AudioContext || (window as any).webkitAudioContext;
+  if (AC?.prototype?.createMediaElementSource && !(AC.prototype as any).__druoCorsGuarded) {
+    const orig = AC.prototype.createMediaElementSource;
+    (AC.prototype as any).__druoCorsGuarded = true;
+    AC.prototype.createMediaElementSource = function (el: HTMLMediaElement) {
+      const src = el?.currentSrc || el?.src || '';
+      if (!src) throw new DOMException('Media element has no source yet', 'InvalidStateError');
+      if (!src.startsWith('blob:') && !src.startsWith('data:')) {
+        const u = new URL(src, window.location.href);
+        if (u.origin !== window.location.origin && !el.crossOrigin) {
+          throw new DOMException('Cross-origin media without CORS cannot use WebAudio', 'SecurityError');
+        }
+      }
+      return orig.call(this, el);
+    };
+  }
+}
+
 interface Opts {
   videoRef: React.RefObject<HTMLVideoElement | null>;
   ytPlayerRef: React.MutableRefObject<any>;
